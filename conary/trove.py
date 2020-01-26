@@ -325,7 +325,7 @@ _DIGSIG_SIGNATURE     = 1
 _DIGSIG_TIMESTAMP     = 2
 
 class DigitalSignature(streams.StreamSet):
-    __slots__ = ('fingerprint', 'signature', 'timestamp')
+    __slots__ = 'fingerprint', 'signature', 'timestamp'
     streamDict = {
         _DIGSIG_FINGERPRINT  : (SMALL, streams.StringStream,   'fingerprint' ),
         _DIGSIG_SIGNATURE    : (SMALL, streams.StringStream,   'signature'   ),
@@ -433,7 +433,7 @@ _VERSIONED_DIGITAL_SIGNATURES_DIGEST   = 1
 _VERSIONED_DIGITAL_SIGNATURES_DIGSIGS = 2
 
 class VersionedDigitalSignatures(streams.StreamSet):
-    __slots__ = ( 'version', 'digest', 'signatures' )
+    __slots__ = 'version', 'digest', 'signatures'
     streamDict = {
         _VERSIONED_DIGITAL_SIGNATURES_VERSION:
                 (SMALL, streams.ByteStream,    'version'   ),
@@ -515,8 +515,6 @@ class TroveSignatures(streams.StreamSet):
     considered version 0, and this object hides the different storage method
     for those signatures.
     """
-
-    __slots__ = ( 'digitalSigs', 'sha1', 'vSigs', 'ignoreUnknown', 'streamDict' )
 
     ignoreUnknown = True
     streamDict = {
@@ -665,7 +663,7 @@ _METADATA_ITEM_TAG_SIZE_OVERRIDE = 13
 _METADATA_ITEM_SIG_VER_ALL = [ 0, 1 ]
 
 class KeyValueItemsStream(streams.OrderedStreamCollection):
-    __slots__ = [ '_map' ]
+    __slots__ = '_map'
 
     streamDict = {
         1 : streams.StringStream,
@@ -764,7 +762,7 @@ class MetadataItem(streams.StreamSet):
     _zeroIsValidSet = set(('sizeOverride',))
 
     _skipSet = { 'id' : True, 'signatures': True, 'oldSignatures' : True }
-    _keys = [ x[2] for x in streamDict.values() if x[2] not in _skipSet ]
+    _keys = [ x[2] for x in streamDict.values() ]
 
     def _digest(self, version=0):
         # version 0 is stored in old signatures, and doesn't include any
@@ -783,7 +781,7 @@ class MetadataItem(streams.StreamSet):
             frz = streams.StreamSet.freeze(self, skipSet = skip,
                                            freezeUnknown = False)
         else:
-            frz = streams.StreamSet.freeze(self, skipSet = self._skipSet)
+            frz = streams.StreamSet.freeze(self, skipSet = self.skipSet)
 
         digest = streams.NonStandardSha256Stream()
         digest.compute(frz)

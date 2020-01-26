@@ -1535,6 +1535,7 @@ def parseFlavor(s, mergeBase = None, raiseError = False):
         except UnicodeEncodeError:
             raise ParseError("invalid characters in flavor '%s'" % s)
     s = s.strip()
+    s = s.decode('utf-8')
     match = flavorRegexp.match(s)
     if not match:
         if raiseError:

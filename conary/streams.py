@@ -457,7 +457,6 @@ class StreamCollection(InfoStream):
     """
 
     ignoreSkipSet = False
-    __slots__ = ( '_data', '_items', 'streamDict', '_thawedItems' )
 
     def getItems(self):
         if self._data is not None:
