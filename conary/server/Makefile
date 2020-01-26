@@ -15,8 +15,6 @@
 #
 
 
-SUBDIRS=templates
-
 python_files = $(wildcard *.py)
 
 extra_dist = Makefile
