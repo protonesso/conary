@@ -194,7 +194,7 @@ class PgSQLDatabase(Database):
             ret = cu.fetchone()[0]
             assert (ret == seqval)
             if self.verbose:
-                print("SETVAL %s = %d (%s.%s)" % (seqname, ret, table, col))
+                print(("SETVAL %s = %d (%s.%s)" % (seqname, ret, table, col)))
     # functions for when the instance is a target
     def prepareInsert(self, table, fields):
         return PgSQLLoader(self.db, table, fields)

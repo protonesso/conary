@@ -228,7 +228,7 @@ if __name__ == '__main__':
         elif opt == "-i" or opt.startswith("--i"):
             driver = "ingres"
         elif opt in ["-h", "--help"]:
-            print("%s [--mysql | --postgresql | --sqlite | --ingres  ]" % (sys.argv[0],))
+            print(("%s [--mysql | --postgresql | --sqlite | --ingres  ]" % (sys.argv[0],)))
             print("Prints the network server repository schema")
             sys.exit(0)
     assert(driver in DRIVERS)
