@@ -297,7 +297,7 @@ class MSI(Magic):
         ("version", rpmhelper.VERSION, str),
     ]
     def __init__(self, path, basedir=''):
-	Magic.__init__(self, path, basedir)
+        Magic.__init__(self, path, basedir)
         self.version = '(unknown)'
         try:
             open(path)
@@ -310,7 +310,7 @@ class MSI(Magic):
 
 class WIM(Magic):
     def __init__(self, path, basedir=''):
-	Magic.__init__(self, path, basedir)
+        Magic.__init__(self, path, basedir)
         try:
             open(path)
         except:
