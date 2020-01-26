@@ -102,7 +102,7 @@ class SysLog:
             except:
                 pass
         if not self.f:
-            raise IOError, 'could not open any of: ' + ', '.join(logList)
+            raise IOError('could not open any of: ' + ', '.join(logList))
 
     def close(self):
         """Close the logger's open files"""
@@ -198,7 +198,7 @@ class ConaryLogger(logging.Logger):
         if self.manager.disable >= LOWLEVEL:
             return
         if LOWLEVEL >= self.getEffectiveLevel():
-            apply(self._log, (LOWLEVEL, msg, args), kwargs)
+            self._log(*(LOWLEVEL, msg, args), **kwargs)
 
 def openFormattedLog(path):
     fmtHdlr = xmllog.XmlHandler(path)
@@ -226,7 +226,7 @@ def delLogRecordData(key):
     for fmtHdlr in fmtLogger.handlers:
         fmtHdlr.delRecordData(key)
 
-if not globals().has_key("logger"):
+if "logger" not in globals():
     # override the default logger class with one that has a more low-level
     # level
     logging.setLoggerClass(ConaryLogger)
@@ -243,7 +243,7 @@ if not globals().has_key("logger"):
         logger.setLevel(logging.WARNING)
         logger._loaded = True
 
-if not globals().has_key('fmtLogger'):
+if 'fmtLogger' not in globals():
     fmtLogger = logging.getLogger(LOGGER_CONARY_FORMATTED)
     # all messages should be emitted by the formatted logger.
     fmtLogger.setLevel(1)
@@ -296,7 +296,7 @@ def _getFormatter(format):
     """
     if format in FORMATS:
         format = FORMATS[format]
-    if isinstance(format, basestring):
+    if isinstance(format, str):
         format = (format,)
     if isinstance(format, logging.Formatter):
         return format

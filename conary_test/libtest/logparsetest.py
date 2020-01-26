@@ -30,9 +30,9 @@ class ConaryLogParseTest(testhelp.TestCase):
         events = logparse.getConaryLogEventList(
             logparse.getConaryLogLineList(
                 resources.get_archive() + '/conarylog'))
-        self.assertEquals(len(events), 3136)
+        self.assertEqual(len(events), 3136)
         # test the complete contents of a particular entry
-        self.assertEquals(events[3093],
+        self.assertEqual(events[3093],
                 ('Oct 02 14:56:17', [
                     'version 1.0.22: update dstat',
                     'installed dstat:runtime=/contrib.rpath.org@rpl:devel/0.6.2-2-1[]',
@@ -42,12 +42,12 @@ class ConaryLogParseTest(testhelp.TestCase):
                     'command complete']))
         # test the datestamp of the last entry in the initial tested format
         # DO NOT CHANGE 3132 in the next line
-        self.assertEquals(events[3132][0], 'Nov 14 14:14:54')
+        self.assertEqual(events[3132][0], 'Nov 14 14:14:54')
         # When adding new formats, append lines to the log and then
         # test some of them
 
         # For the addition of the year to the date timestamp:
-        self.assertEquals(events[3133],
+        self.assertEqual(events[3133],
                 ('2006 Dec 18 14:50:54', [
                     'version 1.0.40: update inkscape=conary.rpath.com@rpl:1',
                     'updated inkscape:data=/conary.rpath.com@rpl:devel/0.44-1-1[~!inkscape.lcms is: x86]--/conary.rpath.com@rpl:devel//1/0.42.2-9-0.1[is: x86]',
@@ -58,8 +58,8 @@ class ConaryLogParseTest(testhelp.TestCase):
                     'command complete']))
 
         # Ensure that Tracebacks are presented correctly
-        self.assertEquals(events[3134][0], '2007 Jan 24 17:24:45')
-        self.assertEquals(events[3134][1][0],
+        self.assertEqual(events[3134][0], '2007 Jan 24 17:24:45')
+        self.assertEqual(events[3134][1][0],
                           'version 1.1.15: remove logrotate')
-        self.assertEquals(events[3134][1][-1],
+        self.assertEqual(events[3134][1][-1],
                           'ProgrammingError: database disk image is malformed')

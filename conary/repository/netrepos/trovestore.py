@@ -198,7 +198,7 @@ class TroveStore:
         # then using all of the and's in this join
 
         schema.resetTable(cu, 'tmpIVF')
-        for troveName in troveDict.keys():
+        for troveName in list(troveDict.keys()):
             outD[troveName] = {}
             for version in troveDict[troveName]:
                 outD[troveName][version] = []
@@ -287,7 +287,7 @@ class TroveStore:
                 flavorsNeeded[flavor] = True
 
         if len(flavorsNeeded) == 1:
-            newFlavor = flavorsNeeded.keys()[0]
+            newFlavor = list(flavorsNeeded.keys())[0]
             i = self.flavors.get(newFlavor, None)
             if i is None:
                 i = self.flavors.createFlavor(newFlavor)
@@ -296,7 +296,7 @@ class TroveStore:
         else:
             flavorIndex = {}
             schema.resetTable(cu, "tmpItems")
-            for flavor in flavorsNeeded.iterkeys():
+            for flavor in flavorsNeeded.keys():
                 flavorIndex[flavor.freeze()] = flavor
                 cu.execute("INSERT INTO tmpItems(item) VALUES(?)",
                            flavor.freeze(), start_transaction=False)
@@ -348,7 +348,7 @@ class TroveStore:
         self.db.analyze("tmpNewFiles")
 
         if len(self.newStreamsByFileId):
-            self.db.bulkload("tmpNewStreams", self.newStreamsByFileId.values(),
+            self.db.bulkload("tmpNewStreams", list(self.newStreamsByFileId.values()),
                              [ "fileId", "stream", "sha1" ] )
         self.db.analyze("tmpNewStreams")
 
@@ -609,10 +609,10 @@ class TroveStore:
         # indicate which kind we're looking at when
         insertList = []
         for ((name, version, flavor), weakFlag) in itertools.chain(
-                itertools.izip(trv.iterTroveList(strongRefs = True,
+                zip(trv.iterTroveList(strongRefs = True,
                                                    weakRefs   = False),
                                itertools.repeat(0)),
-                itertools.izip(trv.iterTroveList(strongRefs = False,
+                zip(trv.iterTroveList(strongRefs = False,
                                                    weakRefs   = True),
                                itertools.repeat(schema.TROVE_TROVES_WEAKREF))):
 
@@ -818,7 +818,7 @@ class TroveStore:
                 self.versionTable.addId(version)
         else: # if this is a translation, update the current version
             if not latestVersion:
-                raise KeyError, troveName
+                raise KeyError(troveName)
             version = versions.VersionFromString(latestVersion)
 
         versionId = self.versionTable.get(version, None)
@@ -834,7 +834,7 @@ class TroveStore:
         md = None
         while not md:
             # make sure we're on the same server
-            if self.branchTable.has_key(branch):
+            if branch in self.branchTable:
                 branchId = self.branchTable[branch]
             else:
                 return None
@@ -878,7 +878,7 @@ class TroveStore:
         self.log(3, troveName, troveVersion, troveFlavor)
 
         if not troveVersion:
-            return self.items.has_key(troveName)
+            return troveName in self.items
 
         assert(troveFlavor is not None)
 
@@ -953,7 +953,7 @@ class TroveStore:
         troveIdList = [ x for x in cu ]
         # short-circuit for cases when nothing matches
         if not troveIdList:
-            for i in xrange(len(troveInfoList)):
+            for i in range(len(troveInfoList)):
                 yield None
             return
         self.db.bulkload("tmpInstanceId",
@@ -1059,7 +1059,7 @@ class TroveStore:
 
             v = singleTroveInfo[1]
             key = (v, timeStamps)
-            if versionCache.has_key(key):
+            if key in versionCache:
                 v = versionCache(key)
             else:
                 v = v.copy()
@@ -1071,7 +1071,7 @@ class TroveStore:
                               setVersion = False)
 
             try:
-                next = troveTrovesCursor.next()
+                next = next(troveTrovesCursor)
                 while next[0] == idx:
                     idxA, name, version, flavor, flags, timeStamps = next
                     version = versionCache.get(version, timeStamps)
@@ -1080,7 +1080,7 @@ class TroveStore:
                     weakRef = (flags & schema.TROVE_TROVES_WEAKREF) != 0
                     trv.addTrove(name, version, flavor, byDefault = byDefault,
                                  weakRef = weakRef)
-                    next = troveTrovesCursor.next()
+                    next = next(troveTrovesCursor)
 
                 troveTrovesCursor.push(next)
             except StopIteration:
@@ -1089,7 +1089,7 @@ class TroveStore:
 
             fileContents = {}
             try:
-                next = troveFilesCursor.next()
+                next = next(troveFilesCursor)
                 while next[0] == idx:
                     (idxA, pathId, dirname, basename, versionId, fileId,
                      stream) = next
@@ -1100,7 +1100,7 @@ class TroveStore:
                     trv.addFile(cu.frombinary(pathId), path, version, fileId)
                     if stream is not None:
                         fileContents[fileId] = stream
-                    next = troveFilesCursor.next()
+                    next = next(troveFilesCursor)
 
                 troveFilesCursor.push(next)
             except StopIteration:
@@ -1108,7 +1108,7 @@ class TroveStore:
                 pass
 
             try:
-                next = troveRedirectsCursor.next()
+                next = next(troveRedirectsCursor)
                 while next[0] == idx:
                     idxA, targetName, targetBranch, targetFlavor = next
                     targetBranch = versions.VersionFromString(targetBranch)
@@ -1116,7 +1116,7 @@ class TroveStore:
                         targetFlavor = deps.ThawFlavor(targetFlavor)
 
                     trv.addRedirect(targetName, targetBranch, targetFlavor)
-                    next = troveRedirectsCursor.next()
+                    next = next(troveRedirectsCursor)
 
                 troveRedirectsCursor.push(next)
             except StopIteration:
@@ -1247,7 +1247,7 @@ class TroveStore:
         """, (name, version.asString(), flavor.freeze()))
 
         try:
-            instanceId, itemId, versionId, flavorId, troveType = cu.next()
+            instanceId, itemId, versionId, flavorId, troveType = next(cu)
         except StopIteration:
             raise errors.TroveMissing(name, version)
 
@@ -1352,7 +1352,7 @@ class TroveStore:
         schema.resetTable(cu, 'tmpRemovals')
         cu.execute("SELECT nodeId, branchId FROM Nodes "
                    "WHERE itemId = ? AND versionId = ?", (itemId, versionId))
-        nodeId, branchId = cu.next()
+        nodeId, branchId = next(cu)
         cu.execute("INSERT INTO tmpRemovals (itemId, versionId, flavorId, branchId) "
                    "VALUES (?, ?, ?, ?)", (itemId, versionId, flavorId, branchId),
                    start_transaction=False)
@@ -1567,7 +1567,7 @@ class FileRetriever:
         self.log = log or tracelog.getLog(None)
 
     def get(self, l):
-        lookup = range(len(l))
+        lookup = list(range(len(l)))
 
         insertL = []
         for itemId, tup in enumerate(l):

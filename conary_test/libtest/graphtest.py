@@ -17,7 +17,7 @@
 
 from testrunner import testhelp
 
-from StringIO import StringIO
+from io import StringIO
 
 #conary
 from conary.lib import graph
@@ -271,7 +271,7 @@ class GraphTest(testhelp.TestCase):
         g.addEdge('a', 'b')
         g.generateDotFile(s)
         s.seek(0)
-        self.assertEquals(s.read(), """\
+        self.assertEqual(s.read(), """\
 digraph graphName {
    n0 [label="a"]
    n1 [label="b"]
@@ -283,7 +283,7 @@ digraph graphName {
                             lambda fromNode, toNode, value: '%s -> %s: %s' % (fromNode, toNode, value))
 
         s.seek(0)
-        self.assertEquals(s.read(), """\
+        self.assertEqual(s.read(), """\
 digraph graphName {
    n0 [label="Node a"]
    n1 [label="Node b"]

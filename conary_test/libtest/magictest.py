@@ -123,7 +123,7 @@ class MagicTest(rephelp.RepositoryHelper):
         def _m(fpath):
             return magic.magic(os.path.join(resources.get_archive(), fpath))
         mobj = _m('tv.cny.vincent.jar')
-        self.assertEquals(sorted(mobj.contents['requires']), [
+        self.assertEqual(sorted(mobj.contents['requires']), [
             'cny.tv.vincent.ConsumerInnerClass',
             'cny.tv.vincent.ConsumerNestedLevel1',
             'cny.tv.vincent.ConsumerNestedLevel11',
@@ -147,7 +147,7 @@ class MagicTest(rephelp.RepositoryHelper):
             'cny.tv.vincent.InnerClasses$StaticInnerClass',
             'java.lang.Object',
             ])
-        self.assertEquals(sorted(mobj.contents['provides']), [
+        self.assertEqual(sorted(mobj.contents['provides']), [
             'cny.tv.vincent.ConsumerInnerClass',
             'cny.tv.vincent.ConsumerNestedLevel1',
             'cny.tv.vincent.ConsumerNestedLevel11',
@@ -170,8 +170,8 @@ class MagicTest(rephelp.RepositoryHelper):
             'cny.tv.vincent.InnerClasses$PublicStaticInnerClass',
             'cny.tv.vincent.InnerClasses$StaticInnerClass',
             ])
-        self.assertEquals(
-                sorted((x, y[0], sorted(y[1])) for (x, y) in mobj.contents['files'].items()), [
+        self.assertEqual(
+                sorted((x, y[0], sorted(y[1])) for (x, y) in list(mobj.contents['files'].items())), [
             ('cny/tv/vincent/ConsumerInnerClass.class',
                 'cny.tv.vincent.ConsumerInnerClass',
                 ['cny.tv.vincent.ConsumerInnerClass',
@@ -342,7 +342,7 @@ class MagicTest(rephelp.RepositoryHelper):
                 ])
 
         mobj = _m('tv.cny.jules.jar')
-        self.assertEquals(sorted(mobj.contents['requires']), [
+        self.assertEqual(sorted(mobj.contents['requires']), [
             'cny.tv.jules.Consumer', 'cny.tv.jules.ConsumerNestedLevel1',
             'cny.tv.jules.ConsumerNestedLevel2',
             'cny.tv.jules.ConsumerPublicInnerClass',
@@ -353,13 +353,13 @@ class MagicTest(rephelp.RepositoryHelper):
             'cny.tv.vincent.InnerClasses$PublicInnerClass',
             'cny.tv.vincent.InnerClasses$PublicStaticInnerClass',
             'java.lang.Object'])
-        self.assertEquals(sorted(mobj.contents['provides']), [
+        self.assertEqual(sorted(mobj.contents['provides']), [
             'cny.tv.jules.Consumer', 'cny.tv.jules.ConsumerNestedLevel1',
             'cny.tv.jules.ConsumerNestedLevel2',
             'cny.tv.jules.ConsumerPublicInnerClass',
             'cny.tv.jules.ConsumerPublicStaticInnerClass'])
-        self.assertEquals(
-                sorted((x, y[0], sorted(y[1])) for (x, y) in mobj.contents['files'].items()), [
+        self.assertEqual(
+                sorted((x, y[0], sorted(y[1])) for (x, y) in list(mobj.contents['files'].items())), [
             ('cny/tv/jules/Consumer.class',
                 'cny.tv.jules.Consumer',
                 ['cny.tv.jules.Consumer', 'java.lang.Object']),
@@ -422,8 +422,8 @@ class MagicTest(rephelp.RepositoryHelper):
                 'and anything that was longer than 262 bytes would trigger')
         g.close()
         m = magic.magic(archivePath)
-        self.assertEquals(m.name, 'gzip')
-        self.assertEquals(sorted(m.contents.keys()), ['compression', 'name'])
+        self.assertEqual(m.name, 'gzip')
+        self.assertEqual(sorted(m.contents.keys()), ['compression', 'name'])
 
     def testGzipCompressedTarArchives(self):
         fooFile = open(os.path.join(self.workDir, 'foo'), 'w')
@@ -436,21 +436,21 @@ class MagicTest(rephelp.RepositoryHelper):
         t.close()
         g.close()
         m = magic.magic(archivePath)
-        self.assertEquals(m.name, 'tar_gz')
-        self.assertEquals(sorted(m.contents.keys()),
+        self.assertEqual(m.name, 'tar_gz')
+        self.assertEqual(sorted(m.contents.keys()),
                 ['GNU', 'compression', 'name'])
         # tarfile in python 2.4 creates tar archives without the complete GNU magic
         # POSIX = "ustar\0"
         # GNU   = "ustar  \0"
         isGnu = (sys.version_info[:2] in ((2, 6), (2, 7)))
-        self.assertEquals(m.contents['GNU'], isGnu)
+        self.assertEqual(m.contents['GNU'], isGnu)
 
     def testGzipCompressedTarArchives3(self):
         fpath = os.path.join(resources.get_archive(), 'logrotate-3.7.1.tar.gz')
         m = magic.magic(fpath)
-        self.assertEquals(m.name, 'tar_gz')
-        self.assertEquals(sorted(m.contents.keys()), ['GNU', 'compression'])
-        self.assertEquals(m.contents['GNU'], True)
+        self.assertEqual(m.name, 'tar_gz')
+        self.assertEqual(sorted(m.contents.keys()), ['GNU', 'compression'])
+        self.assertEqual(m.contents['GNU'], True)
 
     def testBadGzipContents(self):
         archivePath = os.path.join(self.workDir, 'busted.tar.gz')
@@ -475,7 +475,7 @@ class MagicTest(rephelp.RepositoryHelper):
         g.write('some random data')
         g.close()
         m = magic.magic(archivePath, basedir = self.workDir)
-        self.assertEquals(m.name, 'gzip')
+        self.assertEqual(m.name, 'gzip')
 
     def testBzipFile(self):
         archivePath = os.path.join(self.workDir, 'archive.bz')
@@ -483,8 +483,8 @@ class MagicTest(rephelp.RepositoryHelper):
         b.write('testing some random file')
         b.close()
         m = magic.magic(archivePath)
-        self.assertEquals(m.name, 'bzip')
-        self.assertEquals(sorted(m.contents.keys()), ['compression'])
+        self.assertEqual(m.name, 'bzip')
+        self.assertEqual(sorted(m.contents.keys()), ['compression'])
 
     def testBzip2CompressedTarArchives(self):
         fooFile = open(os.path.join(self.workDir, 'foo'), 'w')
@@ -497,8 +497,8 @@ class MagicTest(rephelp.RepositoryHelper):
         t.close()
         b.close()
         m = magic.magic(archivePath)
-        self.assertEquals(m.name, 'tar_bz2')
-        self.assertEquals(sorted(m.contents.keys()), ['GNU', 'compression'])
+        self.assertEqual(m.name, 'tar_bz2')
+        self.assertEqual(sorted(m.contents.keys()), ['GNU', 'compression'])
 
     def testBadBzipContents(self):
         archivePath = os.path.join(self.workDir, 'busted.tar.gz')
@@ -519,7 +519,7 @@ class MagicTest(rephelp.RepositoryHelper):
         b.write('some random data')
         b.close()
         m = magic.magic(archivePath, basedir = self.workDir)
-        self.assertEquals(m.name, 'bzip')
+        self.assertEqual(m.name, 'bzip')
 
     def testTarArchives(self):
         fooFile = open(os.path.join(self.workDir, 'foo'), 'w')
@@ -530,13 +530,13 @@ class MagicTest(rephelp.RepositoryHelper):
         t.add(fooFile.name)
         t.close()
         m = magic.magic(archivePath)
-        self.assertEquals(m.name, 'tar')
-        self.assertEquals(m.contents.keys(), ['GNU'])
+        self.assertEqual(m.name, 'tar')
+        self.assertEqual(list(m.contents.keys()), ['GNU'])
 
     def testXzFile(self):
         m = magic.magic(os.path.join(resources.get_archive(), 'foo.tar.xz'))
-        self.assertEquals(m.name, 'xz')
+        self.assertEqual(m.name, 'xz')
 
     def testLzoFile(self):
         m = magic.magic(resources.get_archive('foo.tar.lzo'))
-        self.assertEquals(m.name, 'lzo')
+        self.assertEqual(m.name, 'lzo')

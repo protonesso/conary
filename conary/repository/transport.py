@@ -22,9 +22,9 @@
 import base64
 import cgi
 import socket
-import StringIO
+import io
 import sys
-import xmlrpclib
+import xmlrpc.client
 import zlib
 
 from conary import constants
@@ -90,7 +90,7 @@ class XMLOpener(ConaryURLOpener):
     contentType = 'text/xml'
 
 
-class Transport(xmlrpclib.Transport):
+class Transport(xmlrpc.client.Transport):
 
     # override?
     user_agent = "Conary/%s" % constants.version
@@ -170,7 +170,7 @@ class Transport(xmlrpclib.Transport):
                 response = self.opener.open(req)
             except AbortError:
                 raise
-            except http_error.ResponseError, err:
+            except http_error.ResponseError as err:
                 if err.errcode == 403:
                     raise errors.InsufficientPermission(
                             repoName=self.serverName, url=url)
@@ -195,7 +195,7 @@ class Transport(xmlrpclib.Transport):
                     errmsg = '%s: %s' % (e_name, e_value)
                 raise errors.OpenError(
                         "Error occurred opening repository %s: %s" %
-                        (url, errmsg)), None, e_tb
+                        (url, errmsg)).with_traceback(e_tb)
 
             else:
                 self.responseHeaders = response.headers
@@ -214,7 +214,7 @@ class Transport(xmlrpclib.Transport):
     @staticmethod
     def _parse_multipart_header(response, boundary):
         if response.readline() != "--%s\r\n" % (boundary,):
-            raise xmlrpclib.ResponseError("Response body is corrupted")
+            raise xmlrpc.client.ResponseError("Response body is corrupted")
         ctype = cenc = clen = None
         while True:
             line = response.readline().rstrip('\r\n')
@@ -233,9 +233,9 @@ class Transport(xmlrpclib.Transport):
         ctype = response.headers.get('content-type', '')
         ctype, pdict = cgi.parse_header(ctype)
         if ctype in self.contentTypes:
-            return xmlrpclib.Transport.parse_response(self, response)
+            return xmlrpc.client.Transport.parse_response(self, response)
         elif ctype != self.mixedType:
-            raise xmlrpclib.ResponseError(
+            raise xmlrpc.client.ResponseError(
                     "Response has invalid or missing Content-Type")
         decoder = MultipartDecoder(response, pdict['boundary'])
 
@@ -243,17 +243,17 @@ class Transport(xmlrpclib.Transport):
         rpcHeaders, rpcBody = decoder.get()
         if (cgi.parse_header(rpcHeaders.get('content-type'))[0]
                 not in self.contentTypes):
-            raise xmlrpclib.ResponseError(
+            raise xmlrpc.client.ResponseError(
                     "Response has invalid or missing Content-Type")
-        rpcBody = StringIO.StringIO(rpcBody)
-        result = xmlrpclib.Transport.parse_response(self, rpcBody)
+        rpcBody = io.StringIO(rpcBody)
+        result = xmlrpc.client.Transport.parse_response(self, rpcBody)
 
         # Replace the URL in the XMLRPC response with a file-like object that
         # reads out the second part of the multipart response
         csResponse = decoder.getStream()
         if csResponse.headers.get('content-type') != (
                 'application/x-conary-change-set'):
-            raise xmlrpclib.ResponseError(
+            raise xmlrpc.client.ResponseError(
                     "Response body has wrong Content-Type")
         result[0][1][0] = csResponse
         return result

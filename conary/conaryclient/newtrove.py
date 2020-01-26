@@ -80,7 +80,7 @@ class ClientNewTrove(object):
             troveObj.troveInfo.pkgCreatorData.set(pkgCreatorData)
         if metadata:
             mi = trove.MetadataItem()
-            for k, v in metadata.iteritems():
+            for k, v in metadata.items():
                 mi.keyValue[k] = v
             troveObj.troveInfo.metadata.addItem(mi)
         return self._createTroves([(troveObj, pathDict)])
@@ -107,7 +107,7 @@ class ClientNewTrove(object):
 
         results = repos.findTroves(None, troveSpecs, None, allowMissing=True,
                 getLeaves=False, troveTypes=trovesource.TROVE_QUERY_ALL)
-        for troveSpec, troveObj in troveSpecs.iteritems():
+        for troveSpec, troveObj in troveSpecs.items():
             branch = troveObj.getVersion().branch()
             revision = troveObj.getVersion().trailingRevision()
             tupList = results.get(troveSpec, [])
@@ -120,9 +120,9 @@ class ClientNewTrove(object):
 
     def _addAllNewFiles(self, cs, troveAndPathList, previousVersionMap):
         repos = self.getRepos()
-        existingTroves = repos.getTroves(previousVersionMap.values(),
+        existingTroves = repos.getTroves(list(previousVersionMap.values()),
                                          withFiles=True)
-        troveDict = dict(zip(previousVersionMap.values(), existingTroves))
+        troveDict = dict(list(zip(list(previousVersionMap.values()), existingTroves)))
         for trove, pathDict in troveAndPathList:
             existingTroveTup = previousVersionMap.get(
                                         trove.getNameVersionFlavor(), None)
@@ -144,7 +144,7 @@ class ClientNewTrove(object):
                 existingPaths[path] = (fileId, pathId, fileVer)
         self._removeOldPathIds(trove)
 
-        for path, fileObj in pathDict.iteritems():
+        for path, fileObj in pathDict.items():
             if path in existingPaths:
                 oldFileId, pathId, oldFileVer = existingPaths[path]
             else:

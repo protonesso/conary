@@ -51,8 +51,8 @@ class AbstractCommand(object):
             self.setParser(self.mainHandler.getParserByClass(self))
         self.parser.print_help()
         if log.getVerbosity() > log.INFO:
-            print
-            print '(Use --verbose to get a full option listing)'
+            print()
+            print('(Use --verbose to get a full option listing)')
         return errNo
 
     def setParser(self, parser):
@@ -67,7 +67,7 @@ class AbstractCommand(object):
 
     def addConfigOptions(self, cfgMap, argDef):
         from conary.lib.options import NO_PARAM
-        for name, data in cfgMap.items():
+        for name, data in list(cfgMap.items()):
             if len(data) == 3:
                 cfgName, paramType, shortOpt = data
             else:
@@ -99,7 +99,7 @@ class AbstractCommand(object):
         commandDicts = [argDef]
         while commandDicts:
             commandDict = commandDicts.pop()
-            for name, value in commandDict.items():
+            for name, value in list(commandDict.items()):
                 if isinstance(value, dict):
                     commandDicts.append(value)
                     continue
@@ -125,7 +125,7 @@ class AbstractCommand(object):
             Manage any config maps we've set up, converting
             assigning them to the config object.
         """
-        for (arg, data) in cfgMap.items():
+        for (arg, data) in list(cfgMap.items()):
             cfgName, paramType = data[0:2]
             value = argSet.pop(arg, None)
             if value is not None:

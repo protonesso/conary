@@ -148,7 +148,7 @@ class FilesetTest(rephelp.RepositoryHelper):
     def checkFailure(self, one, two, case, msg):
         try:
             self.build(one, two, { 'case' : case } )
-        except errors.RecipeFileError, e:
+        except errors.RecipeFileError as e:
             self.assertFalse(str(e) != msg, "incorrect exception: %s" % str(e))
         else:
             self.fail("exception expected")

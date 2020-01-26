@@ -16,7 +16,7 @@
 
 
 import copy
-from itertools import chain, izip
+from itertools import chain
 
 from conary.build import defaultrecipes
 from conary.build import lookaside
@@ -77,7 +77,7 @@ class _BaseGroupRecipe(Recipe):
 
     def _addGroup(self, groupName, group):
         if groupName in self.groups:
-            raise RecipeFileError, 'Group %s defined twice' % groupName
+            raise RecipeFileError('Group %s defined twice' % groupName)
         self.groups[groupName] = group
 
     def _hasGroup(self, groupName):
@@ -86,7 +86,7 @@ class _BaseGroupRecipe(Recipe):
     def _getGroup(self, groupName):
         group = self.groups.get(groupName, None)
         if not group:
-            raise RecipeFileError, "No such group '%s'" % groupName
+            raise RecipeFileError("No such group '%s'" % groupName)
         return group
 
     def _getGroups(self, groupName):
@@ -115,10 +115,10 @@ class _BaseGroupRecipe(Recipe):
         return self.groups
 
     def iterGroupList(self):
-        return self.groups.itervalues()
+        return iter(self.groups.values())
 
     def getGroupNames(self):
-        return self.groups.keys()
+        return list(self.groups.keys())
 
     def getPrimaryGroupNames(self):
         """
@@ -238,7 +238,7 @@ class _GroupRecipe(_BaseGroupRecipe):
             return None
         flavorObj = deps.parseFlavor(flavor)
         if flavorObj is None:
-            raise ValueError, 'invalid flavor: %s' % flavor
+            raise ValueError('invalid flavor: %s' % flavor)
         return flavorObj
 
     def Requires(self, requirement, groupName = None):
@@ -983,11 +983,11 @@ class _GroupRecipe(_BaseGroupRecipe):
         #FIXME: this should default to whatever the current byDefault default
         # is!
         if not self._hasGroup(name):
-            raise RecipeFileError, 'group %s has not been created' % name
+            raise RecipeFileError('group %s has not been created' % name)
 
         for group in self._getGroups(groupName):
             if group.name == name:
-                raise RecipeFileError, 'group %s cannot contain itself' % name
+                raise RecipeFileError('group %s cannot contain itself' % name)
             group.addNewGroup(name, byDefault, explicit = True)
 
     def setDefaultGroup(self, groupName):
@@ -1405,9 +1405,9 @@ class _GroupRecipe(_BaseGroupRecipe):
         resolved automatically for this group.
         """
         if self._hasGroup(groupName):
-            raise RecipeFileError, 'group %s was already created' % groupName
+            raise RecipeFileError('group %s was already created' % groupName)
         elif not trove.troveIsGroup(groupName):
-            raise RecipeFileError, 'group names must start with "group-"'
+            raise RecipeFileError('group names must start with "group-"')
 
         origGroup = self._getDefaultGroup()
         if byDefault is None:
@@ -1433,7 +1433,7 @@ class _SingleGroup(object):
     def __init__(self, groupName, checkPathConflicts = False,
                  imageGroup = False):
         if not groupName.startswith('group-'):
-            raise RecipeFileError, 'group names must start with "group-"'
+            raise RecipeFileError('group names must start with "group-"')
 
         self.name = groupName
         self.imageGroup = imageGroup
@@ -1475,7 +1475,7 @@ class _SingleGroup(object):
         setattr(self, scriptName, (contents, fromClass))
 
     def setCompatibilityClass(self, theClass):
-        if not isinstance(theClass, (int, long)):
+        if not isinstance(theClass, int):
             raise RecipeFileError('group compatibility classes must be '
                                   'integers')
 
@@ -1483,7 +1483,7 @@ class _SingleGroup(object):
 
     def iterTroveListInfo(self):
         for troveTup, (explicit, byDefault, comps, childByDefaults,
-                requireLatest) in self.troves.iteritems():
+                requireLatest) in self.troves.items():
             yield troveTup, explicit, byDefault, comps, requireLatest
 
     # below here are function used to get/set the troves found
@@ -1536,7 +1536,7 @@ class _SingleGroup(object):
             strongRefs = weakRefs = True
 
         for troveTup, (explicit, byDefault, comps, childByDefaults,
-                requireLatest) in self.troves.iteritems():
+                requireLatest) in self.troves.items():
             if explicit and strongRefs:
                 yield troveTup
             elif not explicit and weakRefs:
@@ -1597,7 +1597,7 @@ class _SingleGroup(object):
 
     def iterDefaultTroveList(self):
         for troveTup, (explicit, byDefault, comps, childByDefaults,
-                requireLatest) in self.troves.iteritems():
+                requireLatest) in self.troves.items():
             if byDefault:
                 yield troveTup
 
@@ -1627,7 +1627,7 @@ class _SingleGroup(object):
 
     def iterNewGroupList(self):
         for (name, (byDefault, explicit, childDefaults)) \
-                                            in self.newGroupList.iteritems():
+                                            in self.newGroupList.items():
             yield name, byDefault, explicit
 
     def hasNewGroup(self, name):
@@ -1847,7 +1847,7 @@ class GroupReference:
             source = self.upstreamSource
 
         results = source.findTroves(self.troveSpecs)
-        troveTups = [ x for x in chain(*results.itervalues())]
+        troveTups = [ x for x in chain(*iter(results.values()))]
         self.sourceTups = troveTups
         self.source = searchsource.TroveSearchSource(source, troveTups, flavor)
 
@@ -2061,7 +2061,7 @@ def buildGroups(recipeObj, cfg, repos, callback, troveCache=None):
                                    recipeObj.iterGroupList(),
                                    replaceSpecs, resolveSpecs,
                                    labelPath, flavor, callback)
-    troveTupList = list(chain(*chain(*(x.values() for x in troveMap.itervalues()))))
+    troveTupList = list(chain(*chain(*(list(x.values()) for x in troveMap.values()))))
     cache.cacheTroves(troveTupList)
     log.info('Troves cached.')
 
@@ -2082,7 +2082,7 @@ def buildGroups(recipeObj, cfg, repos, callback, troveCache=None):
     for group in groupList:
         group.cache = cache
         for ((troveSpec, ref, requireLatest), allowNoMatch) \
-                in replaceSpecs.iteritems():
+                in replaceSpecs.items():
             group.replaceSpec(isGlobal=True, allowNoMatch=allowNoMatch,
                               ref=ref, requireLatest = requireLatest,
                               *troveSpec)
@@ -2180,8 +2180,8 @@ def findTrovesForGroups(searchSource, defaultSource, groupList, replaceSpecs,
 
     results = {}
 
-    callback.findingTroves(len(list(chain(*toFind.itervalues()))))
-    for (item, requireLatest, allowMissing), troveSpecs in toFind.iteritems():
+    callback.findingTroves(len(list(chain(*iter(toFind.values())))))
+    for (item, requireLatest, allowMissing), troveSpecs in toFind.items():
         if item is None:
             source = defaultSource
         elif isinstance(item, (tuple, list)):
@@ -2204,8 +2204,8 @@ def findTrovesForGroups(searchSource, defaultSource, groupList, replaceSpecs,
             subres.update(queryResults)
 
 
-        except errors.TroveNotFound, e:
-            raise CookError, str(e)
+        except errors.TroveNotFound as e:
+            raise CookError(str(e))
 
     return results
 
@@ -2225,9 +2225,9 @@ def followRedirect(recipeObj, trove, ref, reason):
             break
     try:
         results = searchSource.findTroves(troveSpecs)
-    except errors.TroveNotFound, err:
+    except errors.TroveNotFound as err:
         raise CookError('Could not find redirect target for %s=%s[%s].  Check your search path or remove redirect from recipe: %s' % (trove.getNameVersionFlavor() + (err,)))
-    troveTups = list(chain(*results.itervalues()))
+    troveTups = list(chain(*iter(results.values())))
     for troveTup in troveTups:
         log.info('Found %s=%s[%s] following redirect' % troveTup)
     if not troveTups:
@@ -2271,7 +2271,7 @@ def processOneAddAllDirective(parentGroup, troveTup, flags, recipeObj, cache,
 
         trvs = repos.getTroves(groupTups, withFiles=False)
 
-        groupTrvDict = dict(izip(groupTups, trvs))
+        groupTrvDict = dict(zip(groupTups, trvs))
 
         if len(set(x[0] for x in groupTups)) != len(groupTups):
             # multiple groups with the same name were added.
@@ -2296,7 +2296,7 @@ def processOneAddAllDirective(parentGroup, troveTup, flags, recipeObj, cache,
 
         if flags.copyScripts:
             scriptTypes = sorted(x[2] for x in
-                                    trove.TroveScripts.streamDict.values())
+                                    list(trove.TroveScripts.streamDict.values()))
             for script in scriptTypes:
                 contents = getattr(trv.troveInfo.scripts, script).script()
                 if not contents: continue
@@ -2374,7 +2374,7 @@ def removeDifferences(group, differenceGroupList, differenceSpecs, troveMap,
     for troveSpec, ref in differenceSpecs:
         # trove removal is agnostic towards requireLatest
         troveTups = chain(*[x[1][troveSpec] for x in \
-                troveMap.iteritems() if x[0][0] == ref])
+                troveMap.items() if x[0][0] == ref])
         for troveTup in troveTups:
             trv = cache.getTrove(withFiles = False, *troveTup)
             for childTrove in trv.iterTroveList(strongRefs=True,
@@ -2434,23 +2434,23 @@ def addTrovesToGroup(group, troveMap, cache, childGroups, repos, groupMap,
     if removeSpecs or replaceSpecs:
         groupAsSource = trovesource.GroupRecipeSource(repos, group)
 
-        unmatchedRemoveSpecs = set(x[0] for x in removeSpecs.items()
+        unmatchedRemoveSpecs = set(x[0] for x in list(removeSpecs.items())
                                    if not x[1])
         # remove troves
         results = groupAsSource.findTroves(None, removeSpecs, allowMissing=True)
         unmatchedRemoveSpecs.difference_update(
-                                (x[0] for x in results.iteritems() if x[1]))
+                                (x[0] for x in results.items() if x[1]))
 
-        troveTups = chain(*results.itervalues())
+        troveTups = chain(*iter(results.values()))
         for troveTup in troveTups:
             log.info('Removing %s=%s[%s]' % troveTup)
             group.delTrove(*troveTup)
             groupAsSource.delTrove(*troveTup)
 
         # replace troves
-        unmatchedGlobalReplaceSpecs = set(x[0][0] for x in replaceSpecs.items()
+        unmatchedGlobalReplaceSpecs = set(x[0][0] for x in list(replaceSpecs.items())
                                           if x[1] == (False, True))
-        unmatchedReplaceSpecs = set(x[0][0] for x in replaceSpecs.items()
+        unmatchedReplaceSpecs = set(x[0][0] for x in list(replaceSpecs.items())
                                     if x[1] == (False, False))
         toReplaceSpecs = dict(((x[0][0], None, None), x) for x in replaceSpecs)
 
@@ -2461,7 +2461,7 @@ def addTrovesToGroup(group, troveMap, cache, childGroups, repos, groupMap,
             replaceSpecsByName.setdefault(troveSpec[0], []).append( \
                     (troveSpec, ref, requireLatest, allowMissing))
 
-        for troveName, replaceSpecs in replaceSpecsByName.iteritems():
+        for troveName, replaceSpecs in replaceSpecsByName.items():
             troveTups = toReplace.get((troveName, None, None), [])
 
             if not troveTups:
@@ -2570,7 +2570,7 @@ def addTrovesToGroup(group, troveMap, cache, childGroups, repos, groupMap,
                     (troveSpec, ref, requireLatest, allowMissing))
 
         implicitRemoved = []
-        for troveName, replaceSpecs in replaceSpecsByName.iteritems():
+        for troveName, replaceSpecs in replaceSpecsByName.items():
             troveTups = toReplace.get((troveName, None, None), [])
 
             if not troveTups:
@@ -2623,9 +2623,9 @@ def addTrovesToGroup(group, troveMap, cache, childGroups, repos, groupMap,
         results = groupAsSource.findTroves(None, removeSpecs,
                                            allowMissing=True)
 
-        troveTups = chain(*results.itervalues())
+        troveTups = chain(*iter(results.values()))
         unmatchedRemoveSpecs.difference_update(
-                                (x[0] for x in results.iteritems() if x[1]))
+                                (x[0] for x in results.items() if x[1]))
         for troveTup in findAllWeakTrovesToRemove(group, troveTups, cache,
                                                   childGroups, groupMap):
             group.delTrove(*troveTup)
@@ -2644,7 +2644,7 @@ def addTrovesToGroup(group, troveMap, cache, childGroups, repos, groupMap,
                 pkgs[pkgTup] = True
             elif pkgTup not in pkgs:
                 pkgs[pkgTup] = False
-    toTurnOff = [ x[0] for x in pkgs.iteritems() if not x[1] ]
+    toTurnOff = [ x[0] for x in pkgs.items() if not x[1] ]
     for pkgTup in toTurnOff:
         if not group.hasTrove(*pkgTup):
             continue
@@ -2665,7 +2665,7 @@ def addTrovesToGroup(group, troveMap, cache, childGroups, repos, groupMap,
 
 def addCopiedComponents(fromGroup, componentsToCopy, componentMap):
     newExplicitTups = []
-    for component, groupList in componentMap.items():
+    for component, groupList in list(componentMap.items()):
         for group, byDefaultSetting in groupList:
             for troveTup, byDefault in componentsToCopy.get(component, []):
                 newExplicitTups.append(troveTup)
@@ -2747,7 +2747,7 @@ def checkForRedirects(group, repos, troveCache, buildFlavor):
         allTargets = [ (x[0], str(x[1]), x[2])
                                 for x in trv.iterRedirects() ]
         matches = repos.findTroves([], allTargets, buildFlavor)
-        for troveList in matches.values():
+        for troveList in list(matches.values()):
             targets += troveList
         missing = [ x for x in targets if not group.hasTrove(*x) ]
         if missing:
@@ -2767,7 +2767,7 @@ def checkForRedirects(group, repos, troveCache, buildFlavor):
         errmsg.extend([(' -> %s=%s[%s]' % (n, v.asString(),
                                            deps.formatFlavor(f)))
                             for (n,v,f) in sorted(missingTargets[trv])])
-    raise CookError, ("""\
+    raise CookError("""\
 If you include a redirect in this group, you must also include the
 target of the redirect.
 
@@ -2792,10 +2792,10 @@ def addPackagesForComponents(group, repos, troveCache):
 
     # if the user mentions both foo and foo:runtime, don't remove
     # direct link to foo:runtime
-    troveTups = packages.keys()
+    troveTups = list(packages.keys())
     hasTroves = repos.hasTroves(troveTups)
     if isinstance(hasTroves, list):
-        hasTroves = dict(izip(troveTups, hasTroves))
+        hasTroves = dict(zip(troveTups, hasTroves))
     troveTups = [ x for x in troveTups if hasTroves[x] ]
 
     if not troveTups:
@@ -2806,8 +2806,8 @@ def addPackagesForComponents(group, repos, troveCache):
     for troveTup in troveTups:
         addedComps = packages[troveTup]
 
-        explicit  = bool([x for x in addedComps.iteritems() if x[1][0]])
-        byDefault = bool([x for x in addedComps.iteritems() if x[1][1]])
+        explicit  = bool([x for x in addedComps.items() if x[1][0]])
+        byDefault = bool([x for x in addedComps.items() if x[1][1]])
         group.addTrove(troveTup, explicit, byDefault, [],
                        reason=(ADD_REASON_ADDED,))
 
@@ -2835,7 +2835,7 @@ def getResolveSource(searchSource, troveSpecList, troveMap, cache, flavor):
         # agnostic. we're simply looking up the troveSpec regardless of
         # requireLatest setting
         resolveTups.extend(chain(*[x[1][troveSpec] for x in \
-                troveMap.iteritems() if x[0][0] == ref]))
+                troveMap.items() if x[0][0] == ref]))
     resolveTroves = [ cache.getTrove(withFiles = False, *x)
                             for x in resolveTups ]
     return searchsource.createSearchSourceStack(searchSource, [resolveTroves],
@@ -2894,7 +2894,7 @@ def resolveGroupDependencies(group, cache, cfg, repos, labelPath, flavor,
             log.setVerbosity(log.LOWLEVEL)
 
         neededTups = []
-        for troveTup, needs in suggMap.iteritems():
+        for troveTup, needs in suggMap.items():
             if cfg.fullVersions:
                 verStr = troveTup[1]
             else:
@@ -2988,8 +2988,8 @@ def _getHashConflicts(group, troveCache, callback):
     isColl = trove.troveIsCollection
     neededInfo = [ x[0] for x in group.iterTroveListInfo()
                         if x[2] and not isColl(x[0][0]) ]
-    neededInfo = zip(neededInfo,
-                     troveCache.getPathHashesForTroveList(neededInfo))
+    neededInfo = list(zip(neededInfo,
+                     troveCache.getPathHashesForTroveList(neededInfo)))
 
     # Get set of conflicting pathHashes
     allPaths = set()
@@ -3014,13 +3014,13 @@ def _getHashConflicts(group, troveCache, callback):
     # get the troves into a simple dict; it's easier than calling
     # troveCache.getTroves([something], withFiles=True)[0]
     # over and over
-    allTrovesNeeded = list(set(chain(*conflictLists.values())))
+    allTrovesNeeded = list(set(chain(*list(conflictLists.values()))))
     trovesWithFiles = dict( (troveTup, trv) for troveTup, trv in
-                        izip(allTrovesNeeded,
+                        zip(allTrovesNeeded,
                              troveCache.getTroves(allTrovesNeeded,
                                                   withFiles = True) ) )
 
-    conflictSets = set(tuple(x) for x in conflictLists.itervalues())
+    conflictSets = set(tuple(x) for x in conflictLists.values())
     fileMap = dict((x, [ y for y in trovesWithFiles[x].iterFileList() ])
         for x in set(chain(*conflictSets)))
 
@@ -3061,7 +3061,7 @@ def _getHashConflicts(group, troveCache, callback):
     streamsNeeded = list(streamsNeeded)
 
     fileObjs = troveCache.troveSource.getFileVersions(streamsNeeded)
-    filesByFileId = dict((x[1], y) for (x, y) in izip(streamsNeeded, fileObjs))
+    filesByFileId = dict((x[1], y) for (x, y) in zip(streamsNeeded, fileObjs))
 
     finalConflicts = []
     for conflictSet, pathList in conflictsWithFiles:
@@ -3137,9 +3137,9 @@ def calcSizeAndCheckHashes(group, troveCache, callback):
 
     trvSizes = troveCache.getSizes(x[0] for x in neededInfo)
     for (troveTup, explicit, byDefault, comps, requireLatest), trvSize \
-                in izip(neededInfo, trvSizes):
+                in zip(neededInfo, trvSizes):
         if trvSize is None:
-            raise CookError, ('Cannot include redirect %s=%s[%s] in a group'
+            raise CookError('Cannot include redirect %s=%s[%s] in a group'
                                 % troveTup)
             validSize = False
             size = None
@@ -3230,14 +3230,14 @@ def findSourcesForGroup(repos, recipeObj, callback=None):
         _addFlavors(ref, troveSpec, troveSpec[2], flavorMap)
 
 
-    callback.findingTroves(len(list(chain(*toFind.itervalues()))))
+    callback.findingTroves(len(list(chain(*iter(toFind.values())))))
     results = _findTroves(repos, toFind, labelPath, searchFlavor,
                           defaultSource=recipeObj._getSearchSource())
     toFind = {}
     newFlavorMap = {}
     finalResults = []
-    for troveSource, specMap in results.iteritems():
-        for troveSpec, tupList in specMap.iteritems():
+    for troveSource, specMap in results.items():
+        for troveSpec, tupList in specMap.items():
             if troveSpec[0].endswith(':source'):
                 flavors = flavorMap[troveSource][troveSpec]
                 for troveTup in tupList:
@@ -3256,8 +3256,8 @@ def findSourcesForGroup(repos, recipeObj, callback=None):
         flavorMap = newFlavorMap
         results = _findTroves(repos, toFind, labelPath, searchFlavor,
                               defaultSource=repos)
-        for troveSource, specMap in results.iteritems():
-            for troveSpec, tupList in specMap.iteritems():
+        for troveSource, specMap in results.items():
+            for troveSpec, tupList in specMap.items():
                 flavors = flavorMap[troveSource][troveSpec]
                 for troveTup in tupList:
                     finalResults.extend((troveTup[0], troveTup[1], x)
@@ -3268,7 +3268,7 @@ def _findTroves(repos, toFind, labelPath, searchFlavor, defaultSource):
     results = {}
     reposSource = searchsource.NetworkSearchSource(repos, labelPath,
                                                           searchFlavor)
-    for troveSource, troveSpecs in toFind.iteritems():
+    for troveSource, troveSpecs in toFind.items():
         if troveSource is None:
             if defaultSource is repos:
                 source = reposSource
@@ -3290,8 +3290,8 @@ def _findTroves(repos, toFind, labelPath, searchFlavor, defaultSource):
             # should be including the original package anyway.
             results[troveSource] = source.findTroves(toFind[troveSource],
                                                      allowMissing=True)
-        except errors.TroveNotFound, e:
-            raise CookError, str(e)
+        except errors.TroveNotFound as e:
+            raise CookError(str(e))
     return results
 
-exec defaultrecipes.GroupRecipe
+exec(defaultrecipes.GroupRecipe)

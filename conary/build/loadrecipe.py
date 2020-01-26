@@ -134,7 +134,7 @@ class Importer(object):
         # makes copies of some of the superclass recipes that are
         # created in this module.  (specifically, the ones with buildreqs)
         recipeClassDict = {}
-        for recipeClass in self.module.__dict__.values():
+        for recipeClass in list(self.module.__dict__.values()):
             if (type(recipeClass) != type or
                     not issubclass(recipeClass, recipe.Recipe)):
                 continue
@@ -143,7 +143,7 @@ class Importer(object):
         # create copies of recipes by the number of parents they have
         # a class always has more parents than its parent does,
         # if you copy the superClasses first, the copies will.
-        recipeClasses = [ x[1]  for x in sorted(recipeClassDict.values(),
+        recipeClasses = [ x[1]  for x in sorted(list(recipeClassDict.values()),
                                                 key=lambda x: x[0]) ]
         for recipeClass in recipeClasses:
             className = recipeClass.__name__
@@ -157,7 +157,7 @@ class Importer(object):
                 newMro.append(self.module.__dict__.get(superName, superClass))
 
             newDict = {}
-            for name, attr in recipeClass.__dict__.iteritems():
+            for name, attr in recipeClass.__dict__.items():
                 if type(attr) in [ types.ModuleType, types.MethodType,
                                    types.UnboundMethodType,
                                    types.FunctionType,
@@ -222,7 +222,7 @@ class Importer(object):
                                      self.subloadData.overrides,
                                      self.subloadData.db)
 
-        for name, recipe in loader.allRecipes().items():
+        for name, recipe in list(loader.allRecipes().items()):
             # hide all recipes from RecipeLoader - we don't want to return
             # a recipe that has been loaded by loadRecipe, so we treat them
             # for these purposes as if they are abstract base classes
@@ -308,18 +308,18 @@ class Importer(object):
     def execString(self, codeString):
         try:
             code = compile(codeString, self.fileName, 'exec')
-        except SyntaxError, err:
+        except SyntaxError as err:
             msg = ('Error in recipe file "%s": %s\n' %(self.baseName, err))
             if err.offset is not None:
                 msg += '%s%s^\n' %(err.text, ' ' * (err.offset-1))
             else:
                 msg += err.text
-            raise builderrors.RecipeFileError, msg, sys.exc_info()[2]
+            raise builderrors.RecipeFileError(msg).with_traceback(sys.exc_info()[2])
 
         use.resetUsed()
         try:
-            exec code in self.module.__dict__
-        except (errors.ConaryError, builderrors.CvcError), err:
+            exec(code, self.module.__dict__)
+        except (errors.ConaryError, builderrors.CvcError) as err:
             # don't show the exception for conary and cvc errors -
             # we assume their exception message already contains the
             # required information
@@ -333,8 +333,8 @@ class Importer(object):
                                 (self.baseName, linenum, err))
 
 
-            raise builderrors.RecipeFileError, msg, sys.exc_info()[2]
-        except Exception, err:
+            raise builderrors.RecipeFileError(msg).with_traceback(sys.exc_info()[2])
+        except Exception as err:
             tb = sys.exc_info()[2]
             while tb and tb.tb_frame.f_code.co_filename != self.fileName:
                 tb = tb.tb_next
@@ -345,7 +345,7 @@ class Importer(object):
             err = ''.join(traceback.format_exception(err.__class__, err, tb))
             del tb
             msg = ('Error in recipe file "%s":\n %s' %(self.baseName, err))
-            raise builderrors.RecipeFileError, msg, sys.exc_info()[2]
+            raise builderrors.RecipeFileError(msg).with_traceback(sys.exc_info()[2])
 
 class RecipeLoaderFromString(object):
 
@@ -363,10 +363,8 @@ class RecipeLoaderFromString(object):
                        buildFlavor=buildFlavor, db=db,
                        overrides=overrides, factory = factory,
                        objDict = objDict, loadAutoRecipes = loadAutoRecipes)
-        except Exception, err:
-            raise builderrors.LoadRecipeError, \
-                    'unable to load recipe file %s:\n%s' % (filename, err), \
-                    sys.exc_info()[2]
+        except Exception as err:
+            raise builderrors.LoadRecipeError('unable to load recipe file %s:\n%s' % (filename, err)).with_traceback(sys.exc_info()[2])
 
     @staticmethod
     def _loadAutoRecipes(importer, cfg, repos, db = None, buildFlavor = None):
@@ -376,7 +374,7 @@ class RecipeLoaderFromString(object):
             """
             trovesNeeded = []
             for i, (specStr, spec) in \
-                        enumerate(itertools.izip(troveSpecStrs, troveSpecs)):
+                        enumerate(zip(troveSpecStrs, troveSpecs)):
                 nvf = nvfDict.get(spec, None)
                 if not nvf:
                     raise builderrors.RecipeFileError('no match for '
@@ -392,7 +390,7 @@ class RecipeLoaderFromString(object):
                                      withFiles = False)
 
             result = [ None ] * len(troveSpecs)
-            for ((i, nvf), trv) in itertools.izip(trovesNeeded, troves):
+            for ((i, nvf), trv) in zip(trovesNeeded, troves):
                 result[i] = trv
 
             return result
@@ -419,7 +417,7 @@ class RecipeLoaderFromString(object):
         try:
             nvfDict = searchSource.findTroves(troveSpecs, allowMissing=True,
                     bestFlavor=True)
-        except errors.OpenError, err:
+        except errors.OpenError as err:
             nvfDict = {}
 
         neededTroveSpecs = [ x for x in troveSpecs if x not in nvfDict ]
@@ -449,7 +447,7 @@ class RecipeLoaderFromString(object):
         unorderedTroveList = ts.getTroves(
                 sorted(itertools.chain(
                         *[ ( x, ( x[0].split(':')[0], x[1], x[2] )) for
-                               x in recipeTroves.values() ] ) ),
+                               x in list(recipeTroves.values()) ] ) ),
                        withFiles = True)
         # Last one by name wins. They're sorted by version (thanks to the
         # above) so it's consistent at least.
@@ -482,7 +480,7 @@ class RecipeLoaderFromString(object):
             orderedTroveList = g.getTotalOrdering(
                         lambda a, b: cmp(a[1].getNameVersionFlavor(),
                                          b[1].getNameVersionFlavor()))
-        except graph.BackEdgeError, e:
+        except graph.BackEdgeError as e:
             raise builderrors.RecipeFileError(
                 "Cannot autoload recipes due to a loadedRecipes loop involving"
                 " %s=%s[%s] and %s=%s[%s]" %
@@ -500,7 +498,7 @@ class RecipeLoaderFromString(object):
         objDict = {}
         objDict.update(importer.module.__dict__)
         for (fileContents, fileInfo, trv) in \
-                               itertools.izip(recipes, filesNeeded,
+                               zip(recipes, filesNeeded,
                                               orderedTroveList):
             loader = RecipeLoaderFromString(fileContents.get().read(),
                                   fileInfo[1], cfg, repos = repos,
@@ -519,7 +517,7 @@ class RecipeLoaderFromString(object):
 
     def _findRecipeClass(self, pkgname, basename, objDict, factory = False):
         result = None
-        for (name, obj) in objDict.items():
+        for (name, obj) in list(objDict.items()):
             if not inspect.isclass(obj):
                 continue
             if name == 'FactoryRecipeClass':
@@ -598,7 +596,7 @@ class RecipeLoaderFromString(object):
             # redirects are allowed to have any format
             pass
         else:
-            for prefix in prefixes.itervalues():
+            for prefix in prefixes.values():
                 if recipeClass.name.startswith(prefix):
                     raise builderrors.BadRecipeNameError(
                                     'recipe name cannot start with "%s"' % prefix)
@@ -723,10 +721,8 @@ class RecipeLoader(RecipeLoaderFromString):
             f = open(filename)
             codeString = f.read()
             f.close()
-        except Exception, err:
-            raise builderrors.LoadRecipeError, \
-                   'unable to load recipe file %s:\n%s' % (filename, err), \
-                   sys.exc_info()[2]
+        except Exception as err:
+            raise builderrors.LoadRecipeError('unable to load recipe file %s:\n%s' % (filename, err)).with_traceback(sys.exc_info()[2])
 
         RecipeLoaderFromString.__init__(self, codeString, filename,
                 cfg = cfg, repos = repos, component = component,
@@ -902,7 +898,7 @@ class RecipeLoaderFromRepository(RecipeLoaderFromSourceTrove):
         try:
             pkgs = repos.findTrove(labelPath,
                                    (component, versionStr, deps.Flavor()))
-        except (errors.TroveNotFound, errors.OpenError), err:
+        except (errors.TroveNotFound, errors.OpenError) as err:
             raise builderrors.LoadRecipeError(
                                     'cannot find source component %s: %s' %
                                     (component, err))
@@ -983,7 +979,7 @@ def getBestLoadRecipeChoices(labelPath, troveTups):
                 byBranch[branch] = max(byBranch[branch], (score, troveTup))
             else:
                 byBranch[branch] = (score, troveTup)
-        return [x[1] for x in byBranch.itervalues()]
+        return [x[1] for x in byBranch.values()]
 
 def recipeLoaderFromSourceComponent(name, cfg, repos,
                                     versionStr=None, labelPath=None,

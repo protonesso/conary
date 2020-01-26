@@ -20,8 +20,8 @@ import re
 
 from conary import sqlite3
 
-from base_drv import BaseDatabase, BaseCursor, BaseSequence, BaseKeywordDict
-import sqlerrors, sqllib
+from .base_drv import BaseDatabase, BaseCursor, BaseSequence, BaseKeywordDict
+from . import sqlerrors, sqllib
 
 class KeywordDict(BaseKeywordDict):
     keys = BaseKeywordDict.keys.copy()
@@ -53,14 +53,14 @@ class Cursor(BaseCursor):
     def _tryExecute(self, func, *params, **kw):
         try:
             ret = func(*params, **kw)
-        except sqlite3.ProgrammingError, e:
+        except sqlite3.ProgrammingError as e:
             if ((e.args[0].startswith("column") and e.args[0].endswith("not unique"))
                     or e.args[0].startswith("UNIQUE constraint failed")):
                 raise sqlerrors.ColumnNotUnique(e)
             elif e.args[0] == 'attempt to write a readonly database':
                 raise sqlerrors.ReadOnlyDatabase(str(e))
             raise sqlerrors.CursorError(e.args[0], e)
-        except sqlite3.DatabaseError, e:
+        except sqlite3.DatabaseError as e:
             if e.args[0].startswith('duplicate column name:'):
                 raise sqlerrors.DuplicateColumnName(str(e))
             if e.args[0].startswith('database is locked'):
@@ -148,11 +148,11 @@ class Database(BaseDatabase):
         #kwargs.setdefault("lockJournal", True)
         try:
             self.dbh = sqlite3.connect(self.database, **kwargs)
-        except sqlite3.InternalError, e:
+        except sqlite3.InternalError as e:
             if str(e) == 'database is locked':
                 raise sqlerrors.DatabaseLocked(e)
             raise
-        except sqlite3.DatabaseError, e:
+        except sqlite3.DatabaseError as e:
             raise sqlerrors.DatabaseError(e)
         # add a regexp funtion to enable SELECT FROM bar WHERE bar REGEXP .*
         self.dbh.create_function('regexp', 2, _regexp)
@@ -391,11 +391,11 @@ class Database(BaseDatabase):
             return cu
         try:
             self.dbh._begin()
-        except sqlite3.ProgrammingError, e:
+        except sqlite3.ProgrammingError as e:
             if str(e) == 'attempt to write a readonly database':
                 raise sqlerrors.ReadOnlyDatabase(str(e))
             raise
-        except sqlite3.DatabaseError, e:
+        except sqlite3.DatabaseError as e:
             if e.args[0].startswith('database is locked'):
                 raise sqlerrors.DatabaseLocked(str(e))
             raise
@@ -414,7 +414,7 @@ class Database(BaseDatabase):
         # connection works normally afterwards.
         try:
             self.dbh.rollback()
-        except sqlite3.ProgrammingError, err:
+        except sqlite3.ProgrammingError as err:
             if 'no transaction is active' in str(err):
                 self.dbh.inTransaction = 0
             else:

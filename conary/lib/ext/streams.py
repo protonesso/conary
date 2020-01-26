@@ -118,7 +118,7 @@ class _NumericStream(_ValueStream):
     def set(self, value):
         if isinstance(value, float):
             value = int(value)
-        elif not isinstance(value, (int, long)) and value is not None:
+        elif not isinstance(value, int) and value is not None:
             raise TypeError("invalid type '%s' for numeric stream" %
                     type(value).__name__)
         self._value = value
@@ -180,7 +180,7 @@ class StreamSet(_BaseStream):
                         cls.__name__)
             tags = sorted(_tagInfo(tag, sizeType, type_, name)
                     for (tag, (sizeType, type_, name))
-                    in cls.streamDict.items())
+                    in list(cls.streamDict.items()))
             cls._streamTags = tags
         return tags
 

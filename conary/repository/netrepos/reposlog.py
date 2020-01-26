@@ -15,7 +15,7 @@
 #
 
 
-import cPickle, mmap, os, struct, time
+import pickle, mmap, os, struct, time
 
 from conary.repository import calllog
 from conary.lib import log
@@ -73,14 +73,14 @@ class RepositoryCallLogger(calllog.AbstractCallLogger):
             exception = str(exception)
 
         (user, entitlements) = authToken[0], authToken[2]
-        logStr = cPickle.dumps((self.logFormatRevision, self.serverNameList,
+        logStr = pickle.dumps((self.logFormatRevision, self.serverNameList,
                                 time.time(), remoteIp, (user, entitlements),
                                 methodName, args, kwArgs, exception,
                                 latency, systemId))
         try:
             self.fobj.write(struct.pack("!I", len(logStr)) + logStr)
             self.fobj.flush()
-        except IOError, e:
+        except IOError as e:
             log.warning("'%s' while logging call from (%s,%s) to %s\n",
                         str(e), remoteIp, user, methodName)
 
@@ -94,7 +94,7 @@ class RepositoryCallLogger(calllog.AbstractCallLogger):
         while i < size:
             length = struct.unpack("!I", map[i: i + 4])[0]
             i += 4
-            yield self.EntryClass(cPickle.loads(map[i:i + length]))
+            yield self.EntryClass(pickle.loads(map[i:i + length]))
             i += length
 
         os.close(fd)

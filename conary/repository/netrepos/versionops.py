@@ -358,7 +358,7 @@ class SqlVersioning:
                 self.versionTable.addId(version)
             except sqlerrors.ColumnNotUnique:
                 import sys
-                print >> sys.stderr, 'ERROR: tried to add', version.asString(), 'to version table but it seems to already be there', versionId
+                print('ERROR: tried to add', version.asString(), 'to version table but it seems to already be there', versionId, file=sys.stderr)
                 raise
             versionId = self.versionTable.get(version, None)
 
@@ -382,12 +382,12 @@ class SqlVersioning:
         branchId = self.branchTable.get(branch, None)
         if not branchId:
             branchId = self.branchTable.addId(branch)
-            if not self.labels.has_key(label):
+            if label not in self.labels:
                 self.labels.addId(label)
 
         labelId = self.labels[label]
 
-        if self.labelMap.has_key((itemId, labelId)) and \
+        if (itemId, labelId) in self.labelMap and \
            branchId in self.labelMap[(itemId, labelId)]:
             raise DuplicateBranch
         self.labelMap.addItem((itemId, labelId), branchId)

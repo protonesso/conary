@@ -57,15 +57,15 @@ from conary.build.action import TARGET_WINDOWS
 # make sure that the decimal value really is unreasonable before
 # adding a new translation to this file.
 _permmap = {
-    1755: 01755,
-    2755: 02755,
-    4755: 04755,
-    4711: 04711,
-    4510: 04510,
-    755: 0755,
-    750: 0750,
-    644: 0644,
-    640: 0640,
+    1755: 0o1755,
+    2755: 0o2755,
+    4755: 0o4755,
+    4711: 0o4711,
+    4510: 0o4510,
+    755: 0o755,
+    750: 0o750,
+    644: 0o644,
+    640: 0o640,
 }
 
 class BuildAction(action.RecipeAction):
@@ -147,7 +147,7 @@ class BuildAction(action.RecipeAction):
         @param macros: macro set to be used for expansion
         @type macros: macros.Macros
         """
-        raise AssertionError, "do method not implemented"
+        raise AssertionError("do method not implemented")
 
     def missingFiles(self, files, warn = False):
         if len(files) == 1:
@@ -537,7 +537,7 @@ class Configure(BuildCommand):
         try:
             try:
                 util.execute(self.command %macros)
-            except RuntimeError, info:
+            except RuntimeError as info:
                 if not self.recipe.isatty():
                     # When conary is being scripted, logs might be
                     # redirected to a file, and it might be easier to
@@ -680,7 +680,7 @@ class CMake(Configure):
 
         try:
             util.execute(self.command %macros)
-        except RuntimeError, info:
+        except RuntimeError as info:
             if not self.recipe.isatty():
                 # When conary is being scripted, logs might be
                 # redirected to a file, and it might be easier to
@@ -1555,7 +1555,7 @@ class _FileAction(BuildAction):
             destPath = path
             if isDestFile:
                 destPath = path[len(destdir):]
-            if _permmap.has_key(mode):
+            if mode in _permmap:
                 log.warning('odd permission %o for path %s, correcting to 0%o:'
                             ' add initial "0"?',
                             mode, destPath, _permmap[mode])
@@ -1568,16 +1568,16 @@ class _FileAction(BuildAction):
                 # directly, from a superclass, or from unpacking a
                 # derived package.
                 self.recipe.setModes(destPath,
-                    userbits=(mode & 0700),
-                    sidbits=(mode & 06000))
-                if isdir and (mode & 0700) != 0700:
+                    userbits=(mode & 0o700),
+                    sidbits=(mode & 0o6000))
+                if isdir and (mode & 0o700) != 0o700:
                     # regardless of what permissions go into the package,
                     # we need to be able to traverse this directory as
                     # the non-root build user
-                    os.chmod(path, (mode & 01777) | 0700)
+                    os.chmod(path, (mode & 0o1777) | 0o700)
                 else:
-                    os.chmod(path, mode & 01777)
-                if isdir and mode != 0755:
+                    os.chmod(path, mode & 0o1777)
+                if isdir and mode != 0o755:
                     self.recipe.ExcludeDirectories(
                         exceptions=re.escape(destPath).replace(
                         '%', '%%'))
@@ -1589,10 +1589,9 @@ class _FileAction(BuildAction):
                 except AttributeError:
                     pass
             else:
-                if mode & 06000:
-                    raise RuntimeError, \
-                    "Cannot set setuid/gid file mode %o on %s" % (mode, path)
-                os.chmod(path, mode & 01777)
+                if mode & 0o6000:
+                    raise RuntimeError("Cannot set setuid/gid file mode %o on %s" % (mode, path))
+                os.chmod(path, mode & 0o1777)
 
     def setComponents(self, destdir, paths):
         """
@@ -1613,7 +1612,7 @@ class _FileAction(BuildAction):
             component = self.component
         for path in paths:
             if not path.startswith(destdir):
-                raise RuntimeError, ('can only set component for paths in '
+                raise RuntimeError('can only set component for paths in '
                                      'destdir, "%s" is not.' % path)
             path = re.escape(util.normpath(path[len(destdir):]))
             if component:
@@ -1816,7 +1815,7 @@ class SetModes(_FileAction):
         self.paths = args[:split]
         self.mode = args[split]
         # raise error while we can still tell what is wrong...
-        if not isinstance(self.mode, (int, long)):
+        if not isinstance(self.mode, int):
             self.init_error(TypeError, 'mode %s is not integer' % str(self.mode))
 
     def do(self, macros):
@@ -1843,7 +1842,7 @@ class _PutFiles(_FileAction):
 
         fromFiles = action._expandPaths(self.fromFiles, macros)
         if not os.path.isdir(dest) and len(fromFiles) > 1:
-            raise TypeError, 'multiple files specified, but destination "%s" is not a directory' %dest
+            raise TypeError('multiple files specified, but destination "%s" is not a directory' %dest)
         elif len(fromFiles) == 0:
             self.missingFiles(self.fromFiles, warn = self.allowNoMatch)
         for source in fromFiles:
@@ -1867,10 +1866,10 @@ class _PutFiles(_FileAction):
         if mode == -2:
             # any executable bit on in source means 0755 on target, else 0644
             sourcemode = os.lstat(source).st_mode
-            if sourcemode & 0111:
-                mode = 0755
+            if sourcemode & 0o111:
+                mode = 0o755
             else:
-                mode = 0644
+                mode = 0o644
 
         if self.move:
             log.info('renaming %s to %s', source, dest)
@@ -1903,7 +1902,7 @@ class _PutFiles(_FileAction):
             raise TypeError('too few arguments')
         if len(self.fromFiles) > 1:
             if not self.toFile.endswith('/') or os.path.isdir(self.toFile):
-                raise TypeError, 'too many targets for non-directory %s' %self.toFile
+                raise TypeError('too many targets for non-directory %s' %self.toFile)
 
 class Install(_PutFiles):
     """
@@ -2141,7 +2140,7 @@ class Symlink(_FileAction):
         sources = expandedSources
 
         if len(sources) > 1 and not targetIsDir:
-            raise TypeError, 'creating multiple symlinks, but destination is not a directory'
+            raise TypeError('creating multiple symlinks, but destination is not a directory')
         elif len(sources) == 0:
             self.missingFiles(self.fromFiles, warn = self.allowNoMatch)
 
@@ -2231,7 +2230,7 @@ class Link(_FileAction):
                 'hardlink %s must be located in destdir' %self.existingpath)
         e = util.joinPaths(d, self.existingpath)
         if not os.path.exists(e):
-            raise TypeError, 'hardlink target %s does not exist' %self.existingpath
+            raise TypeError('hardlink target %s does not exist' %self.existingpath)
         for name in self.newnames:
             name = name % macros
             newpath = util.joinPaths(self.basedir, name)
@@ -2465,8 +2464,7 @@ class Replace(BuildAction):
                 log.warning("Did not find any matching files for file globs")
                 return
             else:
-                raise RuntimeError, \
-                        "Did not find any matching files for file globs"
+                raise RuntimeError("Did not find any matching files for file globs")
 
         regexps = []
         for pattern, sub in self.regexps:
@@ -2476,8 +2474,8 @@ class Replace(BuildAction):
         for path in paths:
             try:
                 os.lstat(path)
-            except OSError, e:
-                raise RuntimeError, "No such file(s) '%s'" %path
+            except OSError as e:
+                raise RuntimeError("No such file(s) '%s'" %path)
             if not util.isregular(path):
                 if path.startswith(macros.destdir):
                     path = path[len(macros.destdir):]
@@ -2522,7 +2520,7 @@ class Replace(BuildAction):
             if self.allowNoChange:
                 log.warning(msg)
             else:
-                raise RuntimeError, msg
+                raise RuntimeError(msg)
 
 class Doc(_FileAction):
     """
@@ -2579,8 +2577,8 @@ class Doc(_FileAction):
     """
     keywords = {'subdir':  '',
                 'dir': '',
-                'mode': 0644,
-                'dirmode': 0755}
+                'mode': 0o644,
+                'dirmode': 0o755}
     useExplicitManifest = False
 
     def do(self, macros):
@@ -2714,7 +2712,7 @@ class Create(_FileAction):
     """
     keywords = {'contents': '',
                 'macros': True,
-                'mode': 0644}
+                'mode': 0o644}
     def do(self, macros):
         if self.macros:
             contents = self.contents %macros
@@ -2791,7 +2789,7 @@ class MakeDirs(_FileAction):
     Demonstrates C{r.MakeDirs()} creating the C{/afs} directory and setting
     access permissions to C{0700}.
     """
-    keywords = { 'mode': 0755 }
+    keywords = { 'mode': 0o755 }
 
     def do(self, macros):
         for path in action._expandPaths(self.paths, macros, braceGlob=False):
@@ -2905,9 +2903,9 @@ exit $failed
         """
         _FileAction.__init__(self, recipe, *args, **keywords)
         if len(args) > 2:
-            raise TypeError, ("TestSuite must be passed a dir to run in and"
+            raise TypeError("TestSuite must be passed a dir to run in and"
                     "the command will execute this package's test suite")
-        self.mode=0755
+        self.mode=0o755
         self.component = ':test'
         if len(args) == 0:
             self.dir == '.'
@@ -3127,7 +3125,7 @@ class ConsoleHelper(BuildAction):
             f = file(destpath, 'w')
             f.writelines([ x+'\n' for x in contents])
             f.close()
-            os.chmod(destpath, 0644)
+            os.chmod(destpath, 0o644)
 
 
         destpath = '%(destdir)s%(sysconfdir)s/security/console.apps/' %macros
@@ -3150,7 +3148,7 @@ class ConsoleHelper(BuildAction):
         f = file(destpath, 'w')
         f.writelines([ x+'\n' for x in contents])
         f.close()
-        os.chmod(destpath, 0644)
+        os.chmod(destpath, 0o644)
 
     def __init__(self, recipe, *args, **keywords):
         BuildAction.__init__(self, recipe, **keywords)
@@ -3290,7 +3288,7 @@ class XInetdService(_FileAction):
         'log_on_success': None,
         'log_on_failure': None,
         'filename':       None,
-        'mode':           0644,
+        'mode':           0o644,
         'otherlines':     None,
     }
 
@@ -3682,7 +3680,7 @@ class IncludeLicense(BuildAction):
             # specified license and file
             if isinstance(arg,tuple):
                 if not os.path.isfile(arg[0]):
-                    raise RuntimeError, arg[0]+' is not a normal file'
+                    raise RuntimeError(arg[0]+' is not a normal file')
                 text = open(arg[0]).read()
                 self.writeLicenses(text,arg[1])
 
@@ -3692,7 +3690,7 @@ class IncludeLicense(BuildAction):
 
             # invalid input
             else:
-                raise RuntimeError, arg+' is unknown input'
+                raise RuntimeError(arg+' is unknown input')
 
 class MakeFIFO(_FileAction):
     """
@@ -3722,7 +3720,7 @@ class MakeFIFO(_FileAction):
     Demonstrates calling C{r.MakeFIFO()} specifying the creation of
     C{/path/to/fifo} with mode C{0640}.
     """
-    keywords = {'mode': 0644}
+    keywords = {'mode': 0o644}
     def do(self, macros):
         bracepath = action._expandOnePath(self.path, macros, braceGlob=False)
         for fullpath in util.braceExpand(bracepath):
@@ -3748,7 +3746,7 @@ class _UserGroupBuildAction(BuildAction):
 
     def __init__(self, recipe, *args, **kwargs):
         self.kwargs = {}
-        for key, val in self.keywords.iteritems():
+        for key, val in self.keywords.items():
             self.kwargs[key] = kwargs.pop(key, val)
         for kwarg in kwargs:
             raise UserGroupError('%s is not a valid keyword argument' % kwarg)
@@ -3864,10 +3862,9 @@ class User(_UserGroupBuildAction):
 
         if self.recipe.name.startswith('info-'):
             if os.path.exists(self.realfilename):
-                raise UserGroupError, 'Only one instance of User per recipe'
+                raise UserGroupError('Only one instance of User per recipe')
             if self.recipe.name[5:] != self.infoname:
-                raise UserGroupError, \
-                    'User name must be the same as package name'
+                raise UserGroupError('User name must be the same as package name')
 
         f = file(self.realfilename, 'w')
         f.write('PREFERRED_UID=%d\n' % self.preferred_uid)
@@ -3965,13 +3962,12 @@ class Group(_UserGroupBuildAction):
         self.realfilename = '%s%s' % (macros.destdir, self.infofilename)
         if self.recipe.name.startswith('info-'):
             if os.path.exists(self.realfilename):
-                raise UserGroupError, 'Only one instance of Group per recipe'
+                raise UserGroupError('Only one instance of Group per recipe')
             # If this group wasn't created as a side effect of the User action
             # and the package name doesn't match the user name, raise an error.
             if (self.recipe.name[5:] not in self.recipe._provideGroup and
                 self.recipe.name[5:] != self.infoname):
-                raise UserGroupError, \
-                    'Group name must be the same as package name'
+                raise UserGroupError('Group name must be the same as package name')
 
         f = file(self.realfilename, 'w')
         f.write('PREFERRED_GID=%d\n' % self.preferred_gid)
@@ -4124,7 +4120,7 @@ class BuildMSI(BuildAction):
         self.archiveName = args[0]
 
         if self.applicationType not in self.APPLICATION_TYPES:
-            raise TypeError, ('%s not a supported applicationType (suported '
+            raise TypeError('%s not a supported applicationType (suported '
                 'types: %s)' % (self.applicationType, self.APPLICATION_TYPES))
 
         if self.manufacturer is None:
@@ -4141,7 +4137,7 @@ class BuildMSI(BuildAction):
     def _checkVersion(self):
         parts = self.version.split('.')
         if len(parts) != 4 or not [ x.isdigit() for x in parts ]:
-            raise TypeError, ('MSI package versions must be four integers '
+            raise TypeError('MSI package versions must be four integers '
                 'separated by "." (e.g. "1.2.3.4")')
 
     def _checkArgs(self):
@@ -4151,13 +4147,13 @@ class BuildMSI(BuildAction):
             self._requireArgs('defaultDocument', 'webSite', 'alias',
                 'applicationName')
             if not (bool(self.dest is None) ^ bool(self.webSiteDir is None)):
-                raise TypeError, 'Either "dest" or "webSiteDir" must be set'
+                raise TypeError('Either "dest" or "webSiteDir" must be set')
         self._requireArgs('manufacturer', )
 
     def _requireArgs(self, *args):
         for arg in args:
             if getattr(self, arg) is None:
-                raise TypeError, ('"%s" is required for applications of type %s'
+                raise TypeError('"%s" is required for applications of type %s'
                     % (arg, self.applicationType))
 
     def do(self, macros):
@@ -4318,7 +4314,7 @@ class BuildMSI(BuildAction):
 
         wbs = self.recipe.cfg.windowsBuildService
         if not wbs:
-            raise RuntimeError, ('Building MSIs requires a Windows Build '
+            raise RuntimeError('Building MSIs requires a Windows Build '
                 'Service be specified in the conary configuration.')
 
         if not wbs.startswith('http'):
@@ -4411,7 +4407,7 @@ class BuildMSI(BuildAction):
         log.info('Windows Build Service job log:\n%s' % jobLog)
 
         if job.status == 'Failed':
-            raise RuntimeError, ('The Windows Build Service failed to build '
+            raise RuntimeError('The Windows Build Service failed to build '
                 'the msi with the following error: %s\n%s'
                 % (job.message, jobLog))
 

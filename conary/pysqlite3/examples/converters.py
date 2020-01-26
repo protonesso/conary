@@ -34,6 +34,6 @@ cu.execute("-- types point, int")
 cu.execute("select p, n from test")
 row = cu.fetchone()
 
-print "p:", row.p       # .columnname instead of [0] is a PySQLite
-print "n:", row.n       # extension to the DB-API!
+print("p:", row.p)       # .columnname instead of [0] is a PySQLite
+print("n:", row.n)       # extension to the DB-API!
 cx.close()

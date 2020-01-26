@@ -48,7 +48,7 @@ class ControlFileParser(object):
         Yields tuples (key, valueLines)
         """
         m = rfc822.Message(fileObj)
-        for k, v in m.items():
+        for k, v in list(m.items()):
             arr = v.split('\n')
             rarr = [ arr[0] ]
             for l in arr[1:]:
@@ -104,7 +104,7 @@ class DebianPackageHeader(object):
         try:
             gf = gzip.GzipFile(fileobj=arFile.data)
             tf = tarfile.TarFile(fileobj=gf)
-        except (IOError, tarfile.ReadError), e:
+        except (IOError, tarfile.ReadError) as e:
             raise Error("control.tar.gz is not readable: %s" %str(e))
         # Look for a 'control' file
         arr = [ x for x in tf if os.path.basename(x.name) == 'control' ]

@@ -40,7 +40,7 @@ def strFields(**params):
     """
     def deco(func):
         def wrapper(self, **kw):
-            for name, default in params.iteritems():
+            for name, default in params.items():
                 if name in kw:
                     value = str(kw[name])
                 elif default is None:
@@ -60,11 +60,11 @@ def intFields(**params):
 
     def deco(func):
         def wrapper(self, **kw):
-            for name, default in params.iteritems():
+            for name, default in params.items():
                 if name in kw:
                     try:
                         value = int(kw[name])
-                    except ValueError, ve:
+                    except ValueError as ve:
                         raise BadParameterError(param=name, badvalue=kw[name])
                 elif default is None:
                     raise MissingParameterError(str(name))
@@ -78,7 +78,7 @@ def intFields(**params):
 def listFields(memberType, **params):
     def deco(func):
         def wrapper(self, **kw):
-            for name, default in params.iteritems():
+            for name, default in params.items():
                 if name in kw:
                     if not isinstance(kw[name], list):
                         value = [memberType(kw[name])]
@@ -96,11 +96,11 @@ def listFields(memberType, **params):
 def boolFields(**params):
     def deco(func):
         def wrapper(self, **kw):
-            for name, default in params.iteritems():
+            for name, default in params.items():
                 if name in kw:
                     try:
                         value = bool(int(kw[name]))
-                    except ValueError, ve:
+                    except ValueError as ve:
                         raise BadParameterError(param=name, badvalue=kw[name])
                 elif default is None:
                     raise MissingParameterError(name)
@@ -114,7 +114,7 @@ def boolFields(**params):
 def dictFields(**params):
     def deco(func):
         def wrapper(self, **kw):
-            for key in kw.keys():
+            for key in list(kw.keys()):
                 parts = key.split('.')
                 if len(parts) > 1 and parts[0] in params:
                     d = kw

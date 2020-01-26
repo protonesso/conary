@@ -82,7 +82,7 @@ class Action:
             if type(arg) is str and '%' in arg:
                 try:
                     arg % d
-                except ValueError, msg:
+                except ValueError as msg:
                     log.error('invalid macro substitution in "%s", missing "s"?' %arg)
                     raise
 
@@ -135,12 +135,12 @@ class Action:
 
     def addArgs(self, *args, **keywords):
         # check to make sure that we don't get a keyword we don't expect
-        for key in keywords.keys():
+        for key in list(keywords.keys()):
             # XXX this is not the best test, but otherwise we have to
             # keep a dictionary of all of the keywords (including the parent
             # keywords)
-            if key not in self.__dict__.keys():
-                raise TypeError, ("%s.__init__() got an unexpected keyword argument "
+            if key not in list(self.__dict__.keys()):
+                raise TypeError("%s.__init__() got an unexpected keyword argument "
                                   "'%s'" % (self.__class__.__name__, key))
         # copy the keywords into our dict, overwriting the defaults
         self.__dict__.update(keywords)
@@ -151,14 +151,14 @@ def genExcepthook(self):
         sys.excepthook = sys.__excepthook__
         if cfg.debugRecipeExceptions:
             lines = traceback.format_exception(type, exc_msg, tb)
-            print string.joinfields(lines, "")
+            print(string.joinfields(lines, ""))
         if self.linenum is not None:
             prefix = "%s:%s:" % (self.file, self.linenum)
             prefix_len = len(prefix)
             if str(exc_msg)[:prefix_len] != prefix:
                 exc_message = "%s:%s: %s: %s" % (self.file, self.linenum,
                                               type.__name__, exc_msg)
-            print exc_message
+            print(exc_message)
 
         if self.recipe.buildinfo:
             try:
@@ -282,7 +282,7 @@ class RecipeAction(Action):
                 for label in self.recipe.cfg.installLabelPath:
                     trvDict = repos.getTroveVersionsByPath(candidatePaths,
                                                            label)
-                    trvs = [x for x in trvDict.values() if x]
+                    trvs = [x for x in list(trvDict.values()) if x]
                     if trvs:
                         foundProvider = True
                         self._addActionTroveBuildRequires([trvs[0][0][0]])
@@ -298,7 +298,7 @@ class RecipeAction(Action):
             pathCache = self.recipe._pathLookupCache
         suggestsMap = pathCache.getTrovesByPaths(self._getDb(), paths)
         suggests = set()
-        for k, v in suggestsMap.items():
+        for k, v in list(suggestsMap.items()):
             suggests.update(v)
         # Add the trove requirements
         suggests.update(self._actionTroveBuildRequires)
@@ -357,8 +357,8 @@ class RecipeAction(Action):
             recipe helper, but until that is done use this funciton
         """
 
-        raise type, "%s:%s: %s: %s" % (self.file, self.linenum,
-                                           type.__name__, msg)
+        raise type("%s:%s: %s: %s" % (self.file, self.linenum,
+                                           type.__name__, msg))
 
     def _getDb(self):
         if not hasattr(self.recipe, '_db') or self.recipe._db is None:
@@ -439,7 +439,7 @@ def _expandOnePath(path, macros, defaultDir=None, braceGlob=False, error=False):
 
     if error:
         if not os.path.exists(path):
-            raise RuntimeError, "No such file '%s'" % path
+            raise RuntimeError("No such file '%s'" % path)
     return path
 
 def matchRegexp(baseDir, pattern, regexpFlags):
@@ -504,7 +504,7 @@ class Glob(object):
         # escaped
         try:
             pat = self.pattern % self.macros
-        except ValueError, msg:
+        except ValueError as msg:
             log.error('invalid macro substitution in "%s", missing "s"?' % \
                     self.pattern)
             raise
@@ -557,7 +557,7 @@ def _expandPaths(paths, macros, defaultDir=None, braceGlob=True, error=False):
             if not os.path.exists(path):
                 notfound.append(path)
         if notfound:
-            raise RuntimeError, "No such file(s) '%s'" % "', '".join(notfound)
+            raise RuntimeError("No such file(s) '%s'" % "', '".join(notfound))
     return expPaths
 
 class _pathLookupCache(object):

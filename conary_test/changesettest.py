@@ -20,7 +20,7 @@ import tempfile
 
 from conary_test import rephelp
 import conary_test
-import StringIO
+import io
 
 from conary import errors
 from conary.repository import changeset, filecontainer, filecontents
@@ -40,7 +40,7 @@ class ChangeSetTest(rephelp.RepositoryHelper):
         self.changeset(repos, ['group-test'], csPath)
 
         # make sure x bit isn't set
-        assert(os.stat(csPath).st_mode & 0111 == 0)
+        assert(os.stat(csPath).st_mode & 0o111 == 0)
 
         cs = changeset.ChangeSetFromFile(csPath)
 
@@ -174,7 +174,7 @@ class ChangeSetTest(rephelp.RepositoryHelper):
                                 changeset.ChangedFileTypes.diff,
                                 filecontents.FromString('second'),
                                 cfgFile = True)
-        except changeset.ChangeSetKeyConflictError, e:
+        except changeset.ChangeSetKeyConflictError as e:
             assert str(e) == 'ChangeSetKeyConflictError: 30303030303030303030303030303030,3030303030303030303030303030303030303030'
         else:
             assert(0)
@@ -188,7 +188,7 @@ class ChangeSetTest(rephelp.RepositoryHelper):
                                 changeset.ChangedFileTypes.diff,
                                 filecontents.FromString('second'),
                                 cfgFile = False)
-        except changeset.ChangeSetKeyConflictError, e:
+        except changeset.ChangeSetKeyConflictError as e:
             assert str(e) == 'ChangeSetKeyConflictError: 30303030303030303030303030303030,3030303030303030303030303030303030303030'
         else:
             assert(0)
@@ -224,7 +224,7 @@ class ChangeSetTest(rephelp.RepositoryHelper):
         open(csPath, "w").write("some junk")
         try:
             changeset.ChangeSetFromFile(csPath)
-        except errors.ConaryError, e:
+        except errors.ConaryError as e:
             assert(str(e) == 'File %s is not a valid conary changeset.' %
                         csPath)
 
@@ -247,7 +247,7 @@ class ChangeSetTest(rephelp.RepositoryHelper):
         # Create read-only file
         (fd, rofile) = tempfile.mkstemp()
         os.close(fd)
-        os.chmod(rofile, 0400)
+        os.chmod(rofile, 0o400)
         bad_paths = [rofile, '/tmp']
 
         repos = self.openRepository()
@@ -259,7 +259,7 @@ class ChangeSetTest(rephelp.RepositoryHelper):
         # Test the exception arguments while we're at it
         try:
             repos.createChangeSetFile(jobList, rofile)
-        except errors.FilesystemError, e:
+        except errors.FilesystemError as e:
             self.assertEqual(e.errorCode, 13)
             self.assertEqual(e.path, rofile)
             self.assertEqual(e.errorString, 'Permission denied')
@@ -269,12 +269,12 @@ class ChangeSetTest(rephelp.RepositoryHelper):
             self.fail()
 
         # Cleanup
-        os.chmod(rofile, 0600)
+        os.chmod(rofile, 0o600)
         os.unlink(rofile)
 
     def testReset(self):
 
-        class UncloseableFile(StringIO.StringIO):
+        class UncloseableFile(io.StringIO):
 
             def close(self):
                 assert(0)
@@ -352,7 +352,7 @@ class ChangeSetTest(rephelp.RepositoryHelper):
                 ('/text', 'text contents\n'),
                 ('/etc/config', 'changed config\n'),
                 ('/binary', rephelp.RegularFile(contents = '\x80',
-                                                perms = 0755)),
+                                                perms = 0o755)),
             ])
         t5 = self.addComponent('foo:run=5',
             fileContents = [
@@ -364,7 +364,7 @@ class ChangeSetTest(rephelp.RepositoryHelper):
         cs = repos.createChangeSet([ ('foo:run',  t1.getNameVersionFlavor()[1:],
                                       t2.getNameVersionFlavor()[1:], False) ])
         diff = "".join(x for x in cs.gitDiff(repos))
-        self.assertEquals(diff,
+        self.assertEqual(diff,
                 "diff --git a/etc/config b/etc/config\n"
                 "new user root\n"
                 "new group root\n"
@@ -393,7 +393,7 @@ class ChangeSetTest(rephelp.RepositoryHelper):
         cs = repos.createChangeSet([ ('foo:run',  t2.getNameVersionFlavor()[1:],
                                       t3.getNameVersionFlavor()[1:], False) ])
         diff = "".join(x for x in cs.gitDiff(repos))
-        self.assertEquals(diff,
+        self.assertEqual(diff,
             "diff --git a/etc/config b/etc/config\n"
             "--- a/etc/config\n"
             "+++ b/etc/config\n"
@@ -410,7 +410,7 @@ class ChangeSetTest(rephelp.RepositoryHelper):
         cs = repos.createChangeSet([ ('foo:run',  t3.getNameVersionFlavor()[1:],
                                       t4.getNameVersionFlavor()[1:], False) ])
         diff = "".join(x for x in cs.gitDiff(repos))
-        self.assertEquals(diff,
+        self.assertEqual(diff,
             "diff --git a/binary b/binary\n"
             "old mode 100644\n"
             "new mode 100755\n")
@@ -418,7 +418,7 @@ class ChangeSetTest(rephelp.RepositoryHelper):
         cs = repos.createChangeSet([ ('foo:run',  t4.getNameVersionFlavor()[1:],
                                       t5.getNameVersionFlavor()[1:], False) ])
         diff = "".join(x for x in cs.gitDiff(repos))
-        self.assertEquals(diff,
+        self.assertEqual(diff,
             "diff --git a/text b/text\n"
             "deleted file mode 100644\n"
             "Binary files /text and /dev/null differ\n"
@@ -433,7 +433,7 @@ class ChangeSetTest(rephelp.RepositoryHelper):
         cs = repos.createChangeSet([ ('foo:run',  (None, None),
                                       t5.getNameVersionFlavor()[1:], False) ])
         diff = "".join(x for x in cs.gitDiff(repos))
-        self.assertEquals(diff,
+        self.assertEqual(diff,
             "diff --git a/etc/config b/etc/config\n"
             "new user root\n"
             "new group root\n"
@@ -450,7 +450,7 @@ class ChangeSetTest(rephelp.RepositoryHelper):
         cs = repos.createChangeSet([ ('foo:run', t2.getNameVersionFlavor()[1:],
                                       t21.getNameVersionFlavor()[1:], False) ])
         diff = "".join(x for x in cs.gitDiff(repos))
-        self.assertEquals(diff,
+        self.assertEqual(diff,
             "diff --git a/binary b/binary\n"
             "GIT binary patch\n"
             "literal 5\n"
@@ -460,7 +460,7 @@ class ChangeSetTest(rephelp.RepositoryHelper):
         cs = repos.createChangeSet([ ('foo:run', t21.getNameVersionFlavor()[1:],
                                       t2.getNameVersionFlavor()[1:], False) ])
         diff = "".join(x for x in cs.gitDiff(repos))
-        self.assertEquals(diff,
+        self.assertEqual(diff,
             "diff --git a/binary b/binary\n"
             "GIT binary patch\n"
             "literal 1\n"

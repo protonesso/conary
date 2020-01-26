@@ -23,7 +23,7 @@ version_info = (0, 0, 0)
 # Data type support
 #------------------------------------------------------------------------------
 
-from main import DBAPITypeObject, Cursor, Connection
+from .main import DBAPITypeObject, Cursor, Connection
 
 STRING    = DBAPITypeObject(_sqlite.STRING)
 

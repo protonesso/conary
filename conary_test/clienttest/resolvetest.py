@@ -246,7 +246,7 @@ class ClientResolveTest(rephelp.RepositoryHelper):
         self.updatePkg(['foo=1', 'bar=1', 'bam=1'])
         try:
             self.checkUpdate('foo', [])
-        except update.EraseDepFailure, err:
+        except update.EraseDepFailure as err:
             # this will give some lame message
             # about erasing bar:runtime=1 
             # cause bam:runtime=1 to fail.
@@ -266,7 +266,7 @@ class ClientResolveTest(rephelp.RepositoryHelper):
             self.checkUpdate('foo', ['foo=1--2', 'foo:run=1--2', 
                                      'bar=--2', 'bar:run=--2'],
                              keepRequired = True)
-        except update.EraseDepFailure, err:
+        except update.EraseDepFailure as err:
             # this gives a message about bar:runtime=1 requiring
             # foo:runtime=1, since at some time we attempt to resolve
             # a situation by leaving old bar in place and updating 
@@ -349,7 +349,7 @@ class ClientResolveTest(rephelp.RepositoryHelper):
         self.updatePkg(['foo=1', 'gcc=1'])
         try:
             self.updatePkg(['foo=2', 'gcc'], raiseError=True)
-        except update.EraseDepFailure, err:
+        except update.EraseDepFailure as err:
             expectedStr = """\
 The following dependencies would not be met after this update:
 
@@ -439,8 +439,8 @@ The following dependencies would not be met after this update:
         self.addCollection('group-foo=2', ['foo:lib'])
         try:
             self.updatePkg(['group-foo'], raiseError=True)
-        except Exception, e:
-            self.assertEquals(str(e), '''\
+        except Exception as e:
+            self.assertEqual(str(e), '''\
 The following dependencies would not be met after this update:
 
   bar:lib=1.0-1-1 (Already installed) requires:
@@ -466,7 +466,7 @@ The following dependencies would not be met after this update:
         try:
             self.updatePkg(['foo=2', 'gcc'], raiseError=True)
             assert(0)
-        except update.EraseDepFailure, err:
+        except update.EraseDepFailure as err:
             assert(str(err) == '''\
 The following dependencies would not be met after this update:
 
@@ -479,7 +479,7 @@ The following dependencies would not be met after this update:
             self.cfg.fullFlavors = True
             self.updatePkg(['foo=2', 'gcc'], raiseError=True)
             assert(0)
-        except update.EraseDepFailure, err:
+        except update.EraseDepFailure as err:
             expectedStr = '''\
 The following dependencies would not be met after this update:
 
@@ -512,7 +512,7 @@ The following dependencies would not be met after this update:
         err = self.assertRaises(update.EraseDepFailure,
             self.checkUpdate,
             ['-foo:lib', '-foo:devellib', 'bar:devellib'],  [], resolve=True)
-        self.assertEquals(str(err),  '''\
+        self.assertEqual(str(err),  '''\
 The following dependencies would not be met after this update:
 
   bar:devellib=1.0-1-1 (Would be newly installed) requires:
@@ -525,7 +525,7 @@ The following dependencies would not be met after this update:
         err = self.assertRaises(update.EraseDepFailure,
             self.checkUpdate,
             ['-foo:lib', '-foo:devellib', 'baz:devellib'],  [], resolve=True)
-        self.assertEquals(str(err), '''\
+        self.assertEqual(str(err), '''\
 The following dependencies would not be met after this update:
 
   bar:devellib=1.0-1-1 (Would be added due to resolution) requires:

@@ -6,7 +6,7 @@ They try to execute as much of the low-level _sqlite module as possible to
 facilitate coverage testing with the help of gcov.
 """
 
-from __future__ import nested_scopes
+
 import testsupport
 import os, unittest, re
 import _sqlite3 as _sqlite
@@ -76,7 +76,7 @@ class lowlevelTestCases(unittest.TestCase, testsupport.TestSupport):
         self.cnx.execute("insert into test(id, name) values (NULL, 'foo')")
         self.cnx.execute("insert into test(id, name) values (NULL, 'bar')")
         rowid = self.cnx.sqlite_last_insert_rowid()
-        self.failUnlessEqual(rowid, 2,
+        self.assertEqual(rowid, 2,
                             "last inserted rowid should have been %i, was %i"
                             % (2, rowid))
 
@@ -87,12 +87,12 @@ class lowlevelTestCases(unittest.TestCase, testsupport.TestSupport):
         self.cnx.execute("insert into test(id, name) values (NULL, 'baz')")
         self.cnx.execute("delete from test where name='baz'")
         changed = self.cnx.sqlite_changes()
-        self.failUnlessEqual(changed, 1,
+        self.assertEqual(changed, 1,
                             "changed rows should have been %i, was %i"
                             % (1, changed))
         self.cnx.execute("update test set name='foobar' where id < 10")
         changed = self.cnx.sqlite_changes()
-        self.failUnlessEqual(changed, 2,
+        self.assertEqual(changed, 2,
                             "changed rows should have been %i, was %i"
                             % (2, changed))
 
@@ -100,17 +100,17 @@ class lowlevelTestCases(unittest.TestCase, testsupport.TestSupport):
         self.cnx.close()
         self.removefile()
 
-        self.failUnlessRaises(ProgrammingError, self.cnx.close)
+        self.assertRaises(ProgrammingError, self.cnx.close)
         # execute method is gone
         #self.failUnlessRaises(ProgrammingError, self.cnx.execute, "")
 
     def CheckConnectionForNumberOfArguments(self):
-        self.failUnlessRaises(TypeError, self.cnx.close, None)
-        self.failUnlessRaises(TypeError, self.cnx.execute, None, None)
-        self.failUnlessRaises(TypeError, self.cnx.sqlite_changes, None)
+        self.assertRaises(TypeError, self.cnx.close, None)
+        self.assertRaises(TypeError, self.cnx.execute, None, None)
+        self.assertRaises(TypeError, self.cnx.sqlite_changes, None)
         # sqlite_exec is gone
         # self.failUnlessRaises(TypeError, self.cnx.sqlite_exec, None)
-        self.failUnlessRaises(TypeError, self.cnx.sqlite_last_insert_rowid, None)
+        self.assertRaises(TypeError, self.cnx.sqlite_last_insert_rowid, None)
 
     def CheckConnectionDestructor(self):
         del self.cnx
@@ -122,14 +122,14 @@ class lowlevelTestCases(unittest.TestCase, testsupport.TestSupport):
         create_statement = "create table test(id INTEGER, name TEXT)"
         self.cnx.execute(create_statement)
 
-        self.failUnlessEqual(create_statement, self.cnx.sql,
+        self.assertEqual(create_statement, self.cnx.sql,
             ".sql should have been %s, was %s" % (create_statement, self.cnx.sql))
 
         self.cnx.execute("insert into test(id, name) values (4, 'foo')")
         self.cnx.execute("insert into test(id, name) values (5, 'bar')")
 
         res = self.cnx.execute("select id, name from test")
-        self.failUnless(res.rowcount == 2, "Should have returned 2 rows, but was %i" % res.rowcount)
+        self.assertTrue(res.rowcount == 2, "Should have returned 2 rows, but was %i" % res.rowcount)
 
         correct_col_defs = (('id', _sqlite.INTEGER, None, None, None, None, None), \
                             ('name', _sqlite.STRING, None, None, None, None, None))

@@ -110,7 +110,7 @@ class TestSuiteLinks(policy.Policy):
 
         # expand macros in fileMap
         newFileMap = {}
-        for (buildfile, destfile) in self.fileMap.iteritems():
+        for (buildfile, destfile) in self.fileMap.items():
             newFileMap[util.normpath(buildfile % self.macros)] = destfile % self.macros
         self.fileMap = newFileMap
 
@@ -143,7 +143,7 @@ class TestSuiteLinks(policy.Policy):
 
 
         if self.buildTestSuite:
-            for (buildfile, destfile) in self.fileMap.iteritems():
+            for (buildfile, destfile) in self.fileMap.items():
                 target = destfile
                 link = util.normpath('%(destdir)s%(thistestdir)s/' % self.macros + buildfile)
                 util.mkdirChain(os.path.dirname(link))
@@ -403,7 +403,7 @@ class FixDirModes(policy.Policy):
     # call doFile for all directories that are not readable, writeable,
     # and executable for the user
     invariantinclusions = [ ('.*', stat.S_IFDIR) ]
-    invariantexceptions = [ ('.*', 0700) ]
+    invariantexceptions = [ ('.*', 0o700) ]
 
     def test(self):
         # Capsule packages handle this separately
@@ -413,5 +413,5 @@ class FixDirModes(policy.Policy):
         fullpath = self.macros.destdir + path
         mode = os.lstat(fullpath)[stat.ST_MODE]
         if not self.recipe._getCapsulePathsForFile(path):
-            self.recipe.setModes(path, userbits=(mode & 0700))
-        os.chmod(fullpath, mode | 0700)
+            self.recipe.setModes(path, userbits=(mode & 0o700))
+        os.chmod(fullpath, mode | 0o700)

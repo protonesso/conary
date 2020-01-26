@@ -50,7 +50,7 @@ class HostPort(namedtuple('HostPort', 'host port'), Endpoint):
     __slots__ = ()
 
     def __new__(cls, host, port=None):
-        if isinstance(host, basestring) and port is None:
+        if isinstance(host, str) and port is None:
             host, port = splitHostPort(host, rawPort=True)
 
         if port == '*':
@@ -183,7 +183,7 @@ class BaseIPAddress(namedtuple('BaseIPAddress', 'address mask'), BaseAddress):
     family = None
 
     def __new__(cls, address, mask=None):
-        if isinstance(address, basestring):
+        if isinstance(address, str):
             ret = cls.parse(address)
             if mask is None:
                 return ret
@@ -228,7 +228,7 @@ class BaseIPAddress(namedtuple('BaseIPAddress', 'address mask'), BaseAddress):
     def _parse_value(cls, address, mask):
         try:
             addr_bin = socket.inet_pton(cls.family, address)
-        except socket.error, err:
+        except socket.error as err:
             raise ValueError("Invalid IP address %r: %s" % (address,
                 err.args[0]))
 

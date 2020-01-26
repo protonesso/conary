@@ -26,18 +26,18 @@ class ArTest(rephelp.RepositoryHelper):
     def testDeb(self):
         a = ar.Archive(self.getArchiveFile('testempty.deb'))
         b = [x.name for x in a]
-        self.assertEquals(b, ['debian-binary', 'ignore1', 'control.tar.gz', 'ignore2'])
+        self.assertEqual(b, ['debian-binary', 'ignore1', 'control.tar.gz', 'ignore2'])
 
         a = ar.Archive(self.getArchiveFile('test.deb'))
         b = [x.name for x in a]
-        self.assertEquals(b, ['debian-binary', 'control.tar.bz2', 'data.tar.bz2', 'ignore1'])
+        self.assertEqual(b, ['debian-binary', 'control.tar.bz2', 'data.tar.bz2', 'ignore1'])
 
         a = ar.Archive(self.getArchiveFile('bash.deb'))
         c = [x for x in a]
         b = [x.name for x in c]
-        self.assertEquals(b, ['debian-binary', 'control.tar.gz', 'data.tar.gz'])
+        self.assertEqual(b, ['debian-binary', 'control.tar.gz', 'data.tar.gz'])
         magic = [x.data.read() for x in c if x.name == 'debian-binary'][0]
-        self.assertEquals(magic, '2.0\n')
+        self.assertEqual(magic, '2.0\n')
 
     def testArchiveRepr(self):
         timestamp = 1145659903
@@ -45,7 +45,7 @@ class ArTest(rephelp.RepositoryHelper):
         timestr = time.ctime(timestamp)
         a = ar.Archive(self.getArchiveFile('bash.deb'))
         b = [repr(x) for x in a]
-        self.assertEquals(b, [
+        self.assertEqual(b, [
          '<ArFile 0744 0:0          4 %s debian-binary>' % timestr,
          '<ArFile 0744 0:0       5555 %s control.tar.gz>' % timestr,
          '<ArFile 0744 0:0     757749 %s data.tar.gz>' % timestr])
@@ -53,16 +53,16 @@ class ArTest(rephelp.RepositoryHelper):
     def testGNUArchiveLongNames(self):
         a = ar.Archive(self.getArchiveFile('sortedlen.a'))
         b = [x.name for x in a]
-        self.assertEquals(b, ['short', 'notlong', 'thisisareallylongfilename', 'ANOTHERREALLYLONGFILENAME'])
+        self.assertEqual(b, ['short', 'notlong', 'thisisareallylongfilename', 'ANOTHERREALLYLONGFILENAME'])
 
         a = ar.Archive(self.getArchiveFile('mixedlen.a'))
         b = [x.name for x in a]
-        self.assertEquals(b, ['short', 'thisisareallylongfilename', 'notlong', 'ANOTHERREALLYLONGFILENAME'])
+        self.assertEqual(b, ['short', 'thisisareallylongfilename', 'notlong', 'ANOTHERREALLYLONGFILENAME'])
 
     def testGNUArchiveSymbolTable(self):
         a = ar.Archive(self.getArchiveFile('unstripped_archive.a'))
         b = [x.name for x in a]
-        self.assertEquals(b, ['/', 'unstripped_archive.o'])
+        self.assertEqual(b, ['/', 'unstripped_archive.o'])
 
     def testNotAnArArchive(self):
         a = ar.Archive(self.getArchiveFile('unstripped_archive.o'))

@@ -35,4 +35,4 @@ class Ccs2TarTest(unittest.TestCase):
         f = os.popen("%s %s/tartest.ccs | tar tf -"
                      % (self.ccs2tar, resources.get_archive()))
         fileLines = [x.strip() for x in f.readlines()]
-        self.assertEquals(fileLines, [ 'dummy/', ])
+        self.assertEqual(fileLines, [ 'dummy/', ])

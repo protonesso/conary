@@ -71,7 +71,7 @@ class TestCookWithWIMCapsule(CapsuleRecipe):
         self.assertEqual(ti.capsule.wim.infoXml(),
                              'some XML doc')
 
-        self.assertEquals(pkgNames, [pkgName, pkgName +':wim'])
+        self.assertEqual(pkgNames, [pkgName, pkgName +':wim'])
 
     def _cookAndInstall(self, recipestr, filename, pkgname,
                         builtpkgnames=None, output = ''):
@@ -103,7 +103,7 @@ class TestCookWithWIMCapsule(CapsuleRecipe):
             if not updatePackage:
                 self.addfile(recipename)
 
-            if isinstance(filename, types.StringType):
+            if isinstance(filename, bytes):
                 filenames = [filename]
             else:
                 filenames = filename

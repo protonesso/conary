@@ -188,7 +188,7 @@ class ConaryClient(ClientClone, ClientBranch, ClientUpdate, ClientNewTrove,
                     cacheFp = open(cacheFile, "rw")
                     cache = pickle.load(cacheFp)
                     cacheFp.close()
-                except IOError, EOFError:
+                except IOError as EOFError:
                     cache = {}
 
                 cacheFp = open(cacheFile, "w")
@@ -356,8 +356,7 @@ class ConaryClient(ClientClone, ClientBranch, ClientUpdate, ClientNewTrove,
         if not os.path.exists(self.cfg.root):
             util.mkdirChain(self.cfg.root)
         if not self.db.writeAccess():
-            raise UpdateError, \
-                "Write permission denied on conary database %s" % self.db.dbpath
+            raise UpdateError("Write permission denied on conary database %s" % self.db.dbpath)
 
     @api.publicApi
     def pinTroves(self, troveList, pin = True):
@@ -528,7 +527,7 @@ class ConaryClient(ClientClone, ClientBranch, ClientUpdate, ClientNewTrove,
         )
         # If any of these arguments are None, don't even pass them, the
         # defaults are going to apply
-        d = dict((x, y) for (x, y) in d.items() if y is not None)
+        d = dict((x, y) for (x, y) in list(d.items()) if y is not None)
 
         return rollbacks.applyRollback(self, rollbackSpec, **d)
 

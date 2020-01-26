@@ -43,9 +43,9 @@ class InstanceTable:
         cu.execute(" SELECT itemId, versionId, flavorId, isPresent "
                    " FROM Instances WHERE instanceId=? ", theId)
         try:
-            return cu.next()
+            return next(cu)
         except StopIteration:
-            raise KeyError, theId
+            raise KeyError(theId)
 
     def isPresent(self, item):
         cu = self.db.cursor()
@@ -90,7 +90,7 @@ class InstanceTable:
         try:
             return cu.next()[0]
         except StopIteration:
-            raise KeyError, item
+            raise KeyError(item)
 
     def get(self, item, defValue):
         cu = self.db.cursor()
@@ -123,6 +123,6 @@ class InstanceTable:
         try:
             return cu.next()[0]
         except StopIteration:
-            raise KeyError, (troveName, troveVersion, troveFlavor)
+            raise KeyError(troveName, troveVersion, troveFlavor)
         # not reached
         assert(0)

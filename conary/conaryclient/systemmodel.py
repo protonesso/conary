@@ -103,7 +103,7 @@ class SystemModelFile(object):
         if util.exists(fileFullName):
             fileMode = stat.S_IMODE(os.stat(fileFullName)[stat.ST_MODE])
         else:
-            fileMode = 0644
+            fileMode = 0o644
 
         dirName = os.path.dirname(fileFullName)
         fd, tmpName = tempfile.mkstemp(prefix='system-model', dir=dirName)

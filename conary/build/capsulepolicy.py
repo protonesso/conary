@@ -277,8 +277,8 @@ class RPMProvides(policy.Policy):
 
             depClass = reMatch.group(1).strip().lower()
             if depClass != 'rpm' and depClass != 'rpmlib':
-                raise policy.PolicyError, "RPMProvides cannot be used to " \
-                    "provide the non-rpm dependency: '%s'" % args[0]
+                raise policy.PolicyError("RPMProvides cannot be used to " \
+                    "provide the non-rpm dependency: '%s'" % args[0])
             dep = reMatch.group(2).strip()
             flags = reMatch.group(3).strip().split()
             flags = [(x, deps.FLAG_SENSE_REQUIRED) for x in flags if x]
@@ -312,13 +312,13 @@ class RPMProvides(policy.Policy):
             try:
                 exceptDeps.append((filter.Filter(fE, self.macros),
                                    re.compile(rE % self.macros)))
-            except sre_constants.error, e:
+            except sre_constants.error as e:
                 self.error('Bad regular expression %s for file spec %s: %s',
                     rE, fE, e)
         self.exceptDeps = exceptDeps
 
     def do(self):
-        for comp in self.recipe.autopkg.components.items():
+        for comp in list(self.recipe.autopkg.components.items()):
             capsule = self.recipe._getCapsule(comp[0])
 
             if capsule and capsule[0] == 'rpm':
@@ -421,8 +421,8 @@ class RPMRequires(policy.Policy):
 
             depClass = reMatch.group(1).strip().lower()
             if depClass != 'rpm' and depClass != 'rpmlib':
-                raise policy.PolicyError, "RPMRequires cannot be used to " \
-                    "provide the non-rpm dependency: '%s'" % args[0]
+                raise policy.PolicyError("RPMRequires cannot be used to " \
+                    "provide the non-rpm dependency: '%s'" % args[0])
             dep = reMatch.group(2).strip()
             flags = reMatch.group(3).strip().split()
             flags = [(x, deps.FLAG_SENSE_REQUIRED) for x in flags if x]
@@ -470,13 +470,13 @@ class RPMRequires(policy.Policy):
             try:
                 exceptDeps.append((filter.Filter(fE, self.macros),
                                    re.compile(rE % self.macros)))
-            except sre_constants.error, e:
+            except sre_constants.error as e:
                 self.error('Bad regular expression %s for file spec %s: %s',
                            rE, fE, e)
         self.exceptDeps=exceptDeps
 
     def do(self):
-        for comp in self.recipe.autopkg.components.items():
+        for comp in list(self.recipe.autopkg.components.items()):
             capsule =  self.recipe._getCapsule(comp[0])
 
             if capsule and capsule[0] == 'rpm':
@@ -680,7 +680,7 @@ class RemoveCapsuleFiles(packagepolicy._filterSpec):
         components = dict((x.name, x) for x in
             self.recipe.autopkg.getComponents())
 
-        for name, fltrs in filters.iteritems():
+        for name, fltrs in filters.items():
             if name not in components:
                 self.error("Component %s does not exist" % name);
                 continue
@@ -688,7 +688,7 @@ class RemoveCapsuleFiles(packagepolicy._filterSpec):
             provides = components[name].provides
 
             # make a copy of the files list since it will be modified in place.
-            files = components[name].keys()
+            files = list(components[name].keys())
             for fn in files:
                 for fltr in fltrs:
                     if fltr.match(fn):

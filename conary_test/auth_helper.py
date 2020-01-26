@@ -76,7 +76,7 @@ class AuthHelper(rephelp.RepositoryHelper):
 
     def cmpTroveVersionList(self, d, targ):
         newD = {}
-        for (troveName, versionList) in d.iteritems():
+        for (troveName, versionList) in d.items():
             newD[troveName] = [ x.asString() for x in versionList ]
             # canoncialize it
             newD[troveName].sort()
@@ -85,8 +85,8 @@ class AuthHelper(rephelp.RepositoryHelper):
 
     def asSet(self, d):
         s = set()
-        for name, vDict in d.iteritems():
-            for version, fList in vDict.iteritems():
+        for name, vDict in d.items():
+            for version, fList in vDict.items():
                 s.update((name, version, f) for f in fList)
 
         return s

@@ -463,8 +463,8 @@ class DependencySolver(object):
         toCheck = list(packages)
         hasTroves = troveSource.hasTroves(toCheck)
         if isinstance(hasTroves, list):
-            hasTroves = dict(itertools.izip(toCheck, hasTroves))
-        packageJobs = [x[1] for x in packages.iteritems() if hasTroves[x[0]]]
+            hasTroves = dict(zip(toCheck, hasTroves))
+        packageJobs = [x[1] for x in packages.items() if hasTroves[x[0]]]
         return packageJobs
 
 class PythonDependencyChecker(object):
@@ -485,7 +485,7 @@ class PythonDependencyChecker(object):
         assert(not [ x[0] for x in jobSet if x[1][0] is not None ])
         depList = self.troveSource.getDepsForTroveList(
                     [ (x[0], x[2][0], x[2][1]) for x in jobSet ] )
-        for job, (provides, requires) in itertools.izip(jobSet, depList):
+        for job, (provides, requires) in zip(jobSet, depList):
             self.masterProvides.union(provides)
             self.jobs.append( (job, requires) )
 

@@ -16,7 +16,7 @@
 
 
 from testrunner import testhelp
-import StringIO
+import io
 
 #conary
 from conary.lib import options
@@ -91,9 +91,9 @@ class OptionTest(testhelp.TestCase):
                     )}, {}, conarycfg.ConaryConfiguration(False),
                 '', argv=['foo'])[0:3]
         assert(flags['option'] == 'abc')
-        sio = StringIO.StringIO()
+        sio = io.StringIO()
         parser.print_help(sio)
-        self.assertEquals(sio.getvalue(), '''\
+        self.assertEqual(sio.getvalue(), '''\
 Options:
   Command Options:
     --option=aaa       Help text

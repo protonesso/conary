@@ -48,13 +48,13 @@ def _save():
 def _install():
     coverageLoc = os.environ.get('COVERAGE_PATH', None)
     if not coverageLoc:
-        raise RuntimeError, 'cannot find coverage.py!'
+        raise RuntimeError('cannot find coverage.py!')
     else:
         coverageLoc = coverageLoc + '/coverage.py'
 
     coverageDir = os.environ.get('COVERAGE_DIR', None)
     if not coverageDir:
-        raise RuntimeError, 'COVERAGE_DIR must be set to a path for cache file'
+        raise RuntimeError('COVERAGE_DIR must be set to a path for cache file')
     util.mkdirChain(coverageDir)
 
     if ('coverage' in sys.modules
@@ -111,7 +111,7 @@ def _installOsWrapper():
         try:
             sys.modules['coverage'].the_coverage.save()
         except:
-            print 'Uncaught exception while saving coverage in exit_wrapper:'
+            print('Uncaught exception while saving coverage in exit_wrapper:')
             traceback.print_exc()
         origOsExit(*args)
 
@@ -127,7 +127,7 @@ def _installOsWrapper():
     if os._exit is origOsExit:
         os._exit = exit_wrapper
 
-    for fnName, origFn in origExecArray.iteritems():
+    for fnName, origFn in origExecArray.items():
         curFn = getattr(os, fnName)
         if curFn is origFn:
             setattr(os, fnName, exec_wrapper(origFn))

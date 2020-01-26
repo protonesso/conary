@@ -16,12 +16,12 @@
 
 
 import os
-import SimpleHTTPServer
+import http.server
 import socket
 import time
-import httplib
-from SimpleHTTPServer import SimpleHTTPRequestHandler
-from SimpleXMLRPCServer import SimpleXMLRPCServer
+import http.client
+from http.server import SimpleHTTPRequestHandler
+from xmlrpc.server import SimpleXMLRPCServer
 
 from conary_test import rephelp
 from conary import conaryclient
@@ -71,14 +71,14 @@ class TransportTest(rephelp.RepositoryHelper):
             self.mockMax = 2
             try:
                 client.repos.c['localhost'].checkVersion()
-            except errors.OpenError, e:
+            except errors.OpenError as e:
                 if 'successException' not in e.args[0]:
                     raise
 
             self.mockMax = 6
             try:
                 client.repos.c['localhost'].checkVersion()
-            except errors.OpenError, e:
+            except errors.OpenError as e:
                 if 'A particular ssl error' not in e.args[0]:
                     raise
 
@@ -88,14 +88,14 @@ class TransportTest(rephelp.RepositoryHelper):
             self.mockMax = 2
             try:
                 client.repos.c['localhost'].checkVersion()
-            except errors.OpenError, e:
+            except errors.OpenError as e:
                 if 'successException' not in e.args[0]:
                     raise
 
             self.mockMax = 6
             try:
                 client.repos.c['localhost'].checkVersion()
-            except errors.OpenError, e:
+            except errors.OpenError as e:
                 if 'A particular gai error' not in e.args[0]:
                     raise
 
@@ -105,23 +105,23 @@ class TransportTest(rephelp.RepositoryHelper):
             self.mockMax = 100
             try:
                 client.repos.c['localhost'].checkVersion()
-            except errors.OpenError, e:
-                self.assertEquals(self.mockMax, 99)
+            except errors.OpenError as e:
+                self.assertEqual(self.mockMax, 99)
 
             # test bad status errors
-            self.theException = httplib.BadStatusLine(
+            self.theException = http.client.BadStatusLine(
                 'A particular bad status line error')
             self.mockMax = 2
             try:
                 client.repos.c['localhost'].checkVersion()
-            except errors.OpenError, e:
+            except errors.OpenError as e:
                 if 'successException' not in e.args[0]:
                     raise
 
             self.mockMax = 6
             try:
                 client.repos.c['localhost'].checkVersion()
-            except errors.OpenError, e:
+            except errors.OpenError as e:
                 if 'A particular bad status line error' not in e.args[0]:
                     raise
 
@@ -400,7 +400,7 @@ class TransportTest(rephelp.RepositoryHelper):
 
             # Test that setting the proxy environment variable(s) works
             environ = os.environ.copy()
-            for k, v in proxies.items():
+            for k, v in list(proxies.items()):
                 k = k + '_proxy'
                 environ[k.upper()] = v
 
@@ -454,7 +454,7 @@ class TransportTest(rephelp.RepositoryHelper):
             repos = client.getRepos()
             try:
                 versions = repos.c['localhost'].checkVersion()
-            except errors.OpenError, e:
+            except errors.OpenError as e:
                 self.assertTrue('407 Proxy Authentication Required' in str(e),
                                 str(e))
             else:
@@ -482,7 +482,7 @@ class TransportTest(rephelp.RepositoryHelper):
                 repos = client.getRepos()
                 try:
                     versions = repos.c['localhost2'].checkVersion()
-                except errors.OpenError, e:
+                except errors.OpenError as e:
                     self.assertTrue('407 Proxy Authentication Required' in
                             str(e), str(e))
                 else:
@@ -785,7 +785,7 @@ class ServerController:
         self.kill()
 
 
-class RequestHandler404(SimpleHTTPServer.SimpleHTTPRequestHandler):
+class RequestHandler404(http.server.SimpleHTTPRequestHandler):
     code = 404
 
     def log_message(self, *args, **kw):

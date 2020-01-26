@@ -32,7 +32,7 @@ class ChangeLogtest(dbstoretest.DBStoreTestBase):
         db = self.getDB()
 
         if db.driver != "sqlite":
-            raise SkipTestException, "this test requires sqlite"
+            raise SkipTestException("this test requires sqlite")
 
         schema.createChangeLog(db)
         db.commit()

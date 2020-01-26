@@ -19,9 +19,9 @@ import psycopg2
 import sys
 from psycopg2 import extensions as psy_ext
 try:
-    from cStringIO import StringIO
+    from io import StringIO
 except ImportError:
-    from StringIO import StringIO
+    from io import StringIO
 
 from conary.dbstore.base_drv import BaseDatabase, BaseCursor, BaseKeywordDict
 from conary.dbstore import _mangle
@@ -54,7 +54,7 @@ class Cursor(BaseCursor):
         except:
             e_type, e_value, e_tb = sys.exc_info()
             e_value = self._convertError(e_value)
-            raise type(e_value), e_value, e_tb
+            raise type(e_value)(e_value).with_traceback(e_tb)
 
     @staticmethod
     def _fixStatement(statement):
@@ -153,7 +153,7 @@ class Database(BaseDatabase):
     def connect(self, **kwargs):
         assert self.database
         cdb = self._connectData()
-        cdb = dict((x, y) for (x, y) in cdb.iteritems() if y is not None)
+        cdb = dict((x, y) for (x, y) in cdb.items() if y is not None)
         try:
             self.dbh = psycopg2.connect(**cdb)
         except psycopg2.DatabaseError:
@@ -327,7 +327,7 @@ class Database(BaseDatabase):
 
     def analyze(self, table=""):
         cu = self.cursor()
-        assert isinstance(table, basestring)
+        assert isinstance(table, str)
         cu.execute("ANALYZE " + table)
 
     def truncate(self, *tables):
@@ -387,8 +387,8 @@ def _formatBulk(row):
             out.append(r'\N')
         elif isinstance(col, buffer):
             out.append(r'\\x' + str(col).encode('hex'))
-        elif isinstance(col, basestring):
-            if isinstance(col, unicode):
+        elif isinstance(col, str):
+            if isinstance(col, str):
                 col = col.encode('utf8')
             col = col.replace('\\', r'\\'
                     ).replace('\r', r'\r'
@@ -396,7 +396,7 @@ def _formatBulk(row):
                     ).replace('\n', r'\n'
                     )
             out.append(col)
-        elif isinstance(col, (int, long)):
+        elif isinstance(col, int):
             out.append(str(col))
         else:
             raise TypeError("bulkload can't serialize value of type %r",

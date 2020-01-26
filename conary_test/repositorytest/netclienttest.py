@@ -23,7 +23,7 @@ import os
 import shutil
 import tempfile
 import time
-import SimpleHTTPServer
+import http.server
 
 from conary_test import recipes
 from conary_test import rephelp
@@ -65,8 +65,8 @@ class NetclientTest(rephelp.RepositoryHelper):
         self.commit()
         repos = self.openRepository()
         # find the version of the testcase:source component
-        troveVer = repos.getAllTroveLeaves('localhost',
-                  { 'testcase:source' : None })['testcase:source'].keys()[0]
+        troveVer = list(repos.getAllTroveLeaves('localhost',
+                  { 'testcase:source' : None })['testcase:source'].keys())[0]
         # find the version of the file
         barId = None
         for f in repos.iterFilesInTrove('testcase:source', troveVer,
@@ -110,7 +110,7 @@ class NetclientTest(rephelp.RepositoryHelper):
         repos = self.openRepository()
         try:
             repos.getFileContents([(fileId, shadowVersion)])
-        except errors.FileStreamNotFound, e:
+        except errors.FileStreamNotFound as e:
             assert((e.fileId, e.fileVer) == (fileId, shadowVersion))
         else:
             assert(0)
@@ -121,14 +121,14 @@ class NetclientTest(rephelp.RepositoryHelper):
         bogusPathId = '2' * 16
         try:
             repos.getFileContents([(bogusFileId, bogusV)])
-        except errors.FileStreamNotFound, e:
+        except errors.FileStreamNotFound as e:
             assert((e.fileId, e.fileVer) == (bogusFileId, bogusV))
         else:
             assert(0)
 
         try:
             repos.getFileVersions([(bogusPathId, bogusFileId, bogusV)])
-        except errors.FileStreamMissing, e:
+        except errors.FileStreamMissing as e:
             assert(e.fileId == bogusFileId)
         else:
             assert(0)
@@ -142,7 +142,7 @@ class NetclientTest(rephelp.RepositoryHelper):
         linkFileId, linkVersion = fileList[0][2:4]
         try:
             repos.getFileContents([ (linkFileId, linkVersion) ])
-        except errors.FileHasNoContents, e:
+        except errors.FileHasNoContents as e:
             assert((e.fileId, e.fileVer) == (linkFileId, linkVersion))
         else:
             assert(0)
@@ -154,7 +154,7 @@ class NetclientTest(rephelp.RepositoryHelper):
         shutil.rmtree(server.contents.getPath())
         try:
             f = repos.getFileContents([ (fileId, version) ])
-        except errors.FileContentsNotFound, e:
+        except errors.FileContentsNotFound as e:
             assert((e.fileId, e.fileVer) == (fileId, version))
         else:
             assert(0)
@@ -375,7 +375,7 @@ class NetclientTest(rephelp.RepositoryHelper):
                  True),
                 (t2.getName(), (None, None), (t2.getVersion(), t2.getFlavor()),
                  True) ])
-        except changeset.PathIdsConflictError, e:
+        except changeset.PathIdsConflictError as e:
             assert str(e) == ('PathIdsConflictError:\n'
                               '  /etc/foo (bar:runtime 1-1-1)\n'
                               '     conflicts with\n'
@@ -391,7 +391,7 @@ class NetclientTest(rephelp.RepositoryHelper):
         trv = self.addComponent('foo:run', '1-1-2', 'is:x86')
 
         def _getFlavors(d, name):
-            return [ str(x) for x in itertools.chain(*d[name].itervalues()) ]
+            return [ str(x) for x in itertools.chain(*iter(d[name].values())) ]
 
         repos = self.openRepository()
         n = 'foo:run'
@@ -497,7 +497,7 @@ class NetclientTest(rephelp.RepositoryHelper):
         self.addComponent('bar:runtime', '/localhost1@rpl:linux/1-1-1')
 
         q = repos.getAllTroveLeaves('localhost', {})
-        assert(q.keys() == [ 'foo:runtime' ] )
+        assert(list(q.keys()) == [ 'foo:runtime' ] )
         assert(len(q['foo:runtime']) == 1)
         self.stopRepository(0)
 
@@ -518,7 +518,7 @@ class NetclientTest(rephelp.RepositoryHelper):
         client.setUpdateCallback(Callback(self.cfg))
         try:
             (updJob, suggMap) = client.updateChangeSet(applyList)
-        except Exception, e:
+        except Exception as e:
             self.assertEqual(str(e), "Except me")
         else:
             self.fail("Exception not raised")
@@ -721,7 +721,7 @@ class NetclientTest(rephelp.RepositoryHelper):
             self.addCollection('group-foo', '1.0', [ 'foo:runtime' ],
                                postUpdateScript = 'foo', repos = repos)
             assert(not 'Commit should fail due to old protocol')
-        except errors.CommitError, e:
+        except errors.CommitError as e:
             assert(str(e) == 'The changeset being committed needs a newer '
                              'repository server.')
         except:
@@ -748,7 +748,7 @@ class NetclientTest(rephelp.RepositoryHelper):
         # CNY-1313
 
         # Lame HTTP server to act as a bogus HTTP proxy/Conary proxy
-        class RequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
+        class RequestHandler(http.server.SimpleHTTPRequestHandler):
             def log_message(self, *args, **kw):
                 pass
 
@@ -768,7 +768,7 @@ class NetclientTest(rephelp.RepositoryHelper):
         repos = conaryclient.ConaryClient(self.cfg).getRepos()
         try:
             repos.c['localhost'].getProtocolVersion()
-        except errors.OpenError, e:
+        except errors.OpenError as e:
             self.assertEqual(str(e),
                     "Error opening http://test:<PASSWD>@localhost/conary/ via "
                     "conary proxy localhost:%d: 501 Unsupported method ('POST')"
@@ -835,7 +835,7 @@ class ServerProxyTest(rephelp.RepositoryHelper):
         repos = conaryclient.ConaryClient(self.cfg).getRepos()
         try:
             repos.troveNamesOnServer('localhost')
-        except errors.OpenError, e:
+        except errors.OpenError as e:
             self.assertEqual(str(e),
                                  'Error occurred opening repository '
                                  'httsp://test:<PASSWD>@localhost/: '
@@ -851,7 +851,7 @@ class ServerProxyTest(rephelp.RepositoryHelper):
         repos.c['localhost'].setProtocolVersion(override)
         try:
             repos.c['localhost'].checkVersion()
-        except errors.InvalidClientVersion, e:
+        except errors.InvalidClientVersion as e:
             assert e.args[0].startswith('Invalid client version %d' % override)
         else:
             self.fail("InvalidClientVersion not raised")
@@ -1057,7 +1057,7 @@ class ServerProxyTest(rephelp.RepositoryHelper):
             # (as these methods take a server name for the first argument)
             # then filling in the rest with empty lists.  Knock 2 off the
             # argument count for self and the server name.
-            args = ('localhost',) + ([],) * (f.func_code.co_argcount - 2)
+            args = ('localhost',) + ([],) * (f.__code__.co_argcount - 2)
             f(*args)
             # make sure that the old method would have been called
             self.assertEqual(server.methodCalled, serverMethod)
@@ -1087,7 +1087,7 @@ class ServerProxyTest(rephelp.RepositoryHelper):
             ipcache.clear()
             self.assertEqual(set(hosts), set(['localhost', 'localhost1']))
             rv = oldCacheHostLookups(hosts)
-            self.assertEqual(ipcache._cache._map.keys(), [] )
+            self.assertEqual(list(ipcache._cache._map.keys()), [] )
             return rv
         self.mock(netclient.NetworkRepositoryClient,
                   '_cacheHostLookups', checkCacheHostLookups)
@@ -1106,13 +1106,13 @@ class ServerProxyTest(rephelp.RepositoryHelper):
             repos = self.openRepository(1)
             self.addComponent('foo:run')
             self.addComponent('bar:run=localhost1@rpl:1', filePrimer=1)
-            self.assertEqual(ipcache._cache._map.keys(), [ 'localhost' ] )
+            self.assertEqual(list(ipcache._cache._map.keys()), [ 'localhost' ] )
             oldCacheHostLookups = repos._cacheHostLookups
             def checkCacheHostLookups(self, hosts):
                 ipcache.clear()
                 self.assertEqual(set(hosts), set(['localhost', 'localhost1']))
                 rv = oldCacheHostLookups(hosts)
-                self.assertEqual(ipcache._cache._map.keys(), [ 'localhost' ] )
+                self.assertEqual(list(ipcache._cache._map.keys()), [ 'localhost' ] )
                 return rv
             self.mock(netclient.NetworkRepositoryClient,
                       '_cacheHostLookups', checkCacheHostLookups)
@@ -1198,10 +1198,10 @@ class ServerProxyTest(rephelp.RepositoryHelper):
                                                  **kwargs)
             if csf != expected:
                 if not failed:
-                    print
-                print "Job", i
-                print "  got:", csf
-                print "  expected: ", expected
+                    print()
+                print("Job", i)
+                print("  got:", csf)
+                print("  expected: ", expected)
                 failed = True
             #self.assertEqual(csf, expected)
         if failed:

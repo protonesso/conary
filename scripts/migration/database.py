@@ -55,7 +55,7 @@ class Loader:
         return lambda a: a
     # fix up the values in a row to match the transforms
     def rowvals(self, row):
-        return tuple(map(lambda (f, x): f(x), zip(self.funcs, row)))
+        return tuple([f_x[0](f_x[1]) for f_x in zip(self.funcs, row)])
     def insertRows(self, rows, callback=None):
         self.cu.executemany(self.sql, [self.rowvals(row) for row in rows])
         if callback:
@@ -69,7 +69,7 @@ class PgSQLLoader(Loader):
         if hasattr(self.db.dbh, "bulkload"):
             self.__usebulk = True
         if not self.__usebulk:
-            print "WARNING: not using bulk load, update your python-pgsql bindings!"
+            print("WARNING: not using bulk load, update your python-pgsql bindings!")
     def bulkInsert(self, rows, callback):
         self.db.dbh.bulkload(self.table, (self.rowvals(row) for row in rows), self.fields)
         if callback:
@@ -93,14 +93,14 @@ class Database:
         cu = self.db.cursor()
         for stmt in getTables(self.driver):
             if self.verbose:
-                print stmt
+                print(stmt)
             cu.execute(stmt)
         self.db.loadSchema()
     def createIndexes(self):
         cu = self.db.cursor()
         for stmt in getIndexes(self.driver):
             if self.verbose:
-                print stmt
+                print(stmt)
             cu.execute(stmt)
         self.db.loadSchema()
     # check self.db.tables against the TableList
@@ -194,7 +194,7 @@ class PgSQLDatabase(Database):
             ret = cu.fetchone()[0]
             assert (ret == seqval)
             if self.verbose:
-                print "SETVAL %s = %d (%s.%s)" % (seqname, ret, table, col)
+                print("SETVAL %s = %d (%s.%s)" % (seqname, ret, table, col))
     # functions for when the instance is a target
     def prepareInsert(self, table, fields):
         return PgSQLLoader(self.db, table, fields)
@@ -202,7 +202,7 @@ class PgSQLDatabase(Database):
         Database.finalize(self, version)
         cu = self.db.cursor()
         if self.verbose:
-            print "VACUUM ANALYZE"
+            print("VACUUM ANALYZE")
         cu.execute("VACUUM ANALYZE")
 
 class MySQLDatabase(Database):
@@ -214,7 +214,7 @@ class MySQLDatabase(Database):
         Database.finalize(self, version)
         cu = self.db.cursor()
         if self.verbose:
-            print "ANALYZE"
+            print("ANALYZE")
         for t in TableList:
             cu.execute("ANALYZE LOCAL TABLE %s" %(t,))
 

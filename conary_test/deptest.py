@@ -37,7 +37,7 @@ class DepTest(rephelp.RepositoryHelper):
         elif use.Arch.x86_64:
             return {'flavor': 'is: x86_64'}
         else:
-            raise NotImplementedError, 'edit test for this arch'
+            raise NotImplementedError('edit test for this arch')
 
     def testDependencies(self):
         self.resetRepository()
@@ -99,7 +99,7 @@ class DepTest(rephelp.RepositoryHelper):
         (rc, str) = self.captureOutput(self.updatePkg, self.rootDir,
                                        "libhello", version,
                                        tagScript = '/dev/null')
-        self.assertEquals(str, '')
+        self.assertEqual(str, '')
 
         self.resetRoot()
         (rc, str) = self.captureOutput(self.updatePkg, self.rootDir,
@@ -144,7 +144,7 @@ class DepTest(rephelp.RepositoryHelper):
         (rc, str) = self.captureOutput(self.erasePkg, 
                                        self.rootDir,
                                        "libhello:user")
-        self.assertEquals(str, """\
+        self.assertEqual(str, """\
 The following dependencies would not be met after this update:
 
   libhello:script=0-1-1 (Already installed) requires:
@@ -207,7 +207,7 @@ The following dependencies would not be met after this update:
     libhello:runtime=0-1-1 (Would be erased)
 """)
         else:
-            raise NotImplementedError, 'modify test for this arch'
+            raise NotImplementedError('modify test for this arch')
 
     def testUpdateTwoProvideSameDependencies(self):
         # CNY-2459 - moving from one trove providing foo:lib(1) to two
@@ -346,7 +346,7 @@ The following dependencies would not be met after this update:
   which is provided by:
     bash:runtime=0-1-1 (Would be updated to 1-1-1)
 """
-        self.assertEquals(s, expectedStr)
+        self.assertEqual(s, expectedStr)
 
         # since /bin/bash is still installed, this should work fine
         self.updatePkg(self.rootDir, 'bashuser', version = bashVersion)
@@ -639,7 +639,7 @@ The following dependencies would not be met after this update:
                                              'test=2.0',
                                              'foo:runtime=1.0'], resolve=True,
                              resolveGroupList=[('group-dist', None, None)])
-        except Exception, err:
+        except Exception as err:
             pass
         else:
             assert 0, 'This test should fail because test 2.0 is not in the group'
@@ -697,9 +697,9 @@ The following dependencies would not be met after this update:
             sol, = results[depSet][idx]
             solName = sol[0]
             if dep.name == 'conary-policy:lib':
-                self.assertEquals(solName, 'conary-policy:lib')
+                self.assertEqual(solName, 'conary-policy:lib')
             else:
-                self.assertEquals(solName, 'foo:python')
+                self.assertEqual(solName, 'foo:python')
 
     def testGroupResolutionAcrossRepos(self):
         self.openRepository()
@@ -722,7 +722,7 @@ The following dependencies would not be met after this update:
         # this doesn't match anything.  Make sure there's a spot in the suggestion list.
         sugg = repos.resolveDependenciesByGroups([trv],
                                       [deps.parseDep('trove:foo:runtime trove:bar:runtime')])
-        resultList,  = sugg.values()
+        resultList,  = list(sugg.values())
         self.assertEqual(resultList, [[], []])
 
     def testResolveAgainstTipFirst(self):

@@ -204,9 +204,9 @@ def getTrovesToDisplay(repos, troveSpecs, pathList, whatProvidesList,
         @rtype: troveTupleList (list of (name, version, flavor) tuples)
     """
     def _merge(resultD, response):
-        for troveName, troveVersions in response.iteritems():
+        for troveName, troveVersions in response.items():
             d = resultD.setdefault(troveName, {})
-            for version, flavors in troveVersions.iteritems():
+            for version, flavors in troveVersions.items():
                 d.setdefault(version, []).extend(flavors)
         return resultD
 
@@ -216,7 +216,7 @@ def getTrovesToDisplay(repos, troveSpecs, pathList, whatProvidesList,
             tupList = []
             for label in labelPath:
                 sols = repos.resolveDependencies(label, whatProvidesList)
-                for solListList in sols.itervalues():
+                for solListList in sols.values():
                     # list of list of solutions to the depSet
                     tupList.extend(itertools.chain(*solListList))
 
@@ -317,7 +317,7 @@ def getTrovesToDisplay(repos, troveSpecs, pathList, whatProvidesList,
         # do post processing on the result if necessary
         if (flavorFilter == FLAVOR_FILTER_ALL
             or versionFilter == VERSION_FILTER_LATEST):
-            for (n,vS,fS), tups in results.iteritems():
+            for (n,vS,fS), tups in results.items():
                 if not tups:
                     continue
                 if versionFilter == VERSION_FILTER_LATEST:
@@ -326,7 +326,7 @@ def getTrovesToDisplay(repos, troveSpecs, pathList, whatProvidesList,
                     for tup in tups:
                         versionsByBranch.setdefault(tup[1].branch(),
                                                     []).append(tup[1])
-                    maxVersions = set(max(x) for x in versionsByBranch.values())
+                    maxVersions = set(max(x) for x in list(versionsByBranch.values()))
                     tups = [ x for x in tups if x[1] in maxVersions ]
                 for (_, v, f) in tups:
                     if flavorFilter == FLAVOR_FILTER_ALL:
@@ -343,7 +343,7 @@ def getTrovesToDisplay(repos, troveSpecs, pathList, whatProvidesList,
                             continue
                     troveTups.append((n, v, f))
         else:
-            troveTups.extend(itertools.chain(*results.itervalues()))
+            troveTups.extend(itertools.chain(*iter(results.values())))
     else:
         if not labelPath:
             raise LabelPathNeeded("No search label path given and no label "
@@ -389,19 +389,19 @@ def getTrovesToDisplay(repos, troveSpecs, pathList, whatProvidesList,
         # do post processing for VERSION_FILTER_LATEST, FLAVOR_FILTER_BEST,
         # and FLAVOR_FILTER_AVAIL
         troveTups = []
-        for name, versionDict in resultsDict.iteritems():
+        for name, versionDict in resultsDict.items():
             if affinityDb:
                 localFlavors = [x[2] for x in affinityDb.trovesByName(name)]
             else:
                 localFlavors = []
 
             versionsByLabel = {}
-            for version, flavorList in versionDict.iteritems():
+            for version, flavorList in versionDict.items():
                 versionsByLabel.setdefault(version.trailingLabel(),
                                             []).append((version, flavorList))
 
 
-            for versionDict in versionsByLabel.itervalues():
+            for versionDict in versionsByLabel.values():
                 for version, flavorList in sorted(versionDict, reverse=True):
                     if flavorFilter == FLAVOR_FILTER_BEST:
                         best = None
@@ -470,7 +470,7 @@ def getTrovesByPath(repos, pathList, versionFilter, flavorFilter, labelPath,
             log.debug('repository server for the %s label does not support '
                       'queries by path' %label)
             continue
-        for path, tups in results.iteritems():
+        for path, tups in results.items():
             allResults.setdefault(path, []).extend(tups)
 
     allResults = [ allResults.get(x) for x in pathList ]
@@ -506,7 +506,7 @@ def rdiffCommand(cfg, client, db, diffSpec, **kw):
     primaryCsList = cscmd.computeTroveList(client, [ troveSpec ])
     if (primaryCsList[0][1] == primaryCsList[0][2]):
         # Diffing against ourselves
-        print "Identical troves"
+        print("Identical troves")
         return 1
 
     cs = client.createChangeSet(primaryCsList, withFiles=True,

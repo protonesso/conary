@@ -29,7 +29,7 @@ import shlex
 import sys
 import tempfile
 import stat
-import httplib
+import http.client
 
 from conary.lib import debugger, digestlib, log, magic, sha1helper
 from conary import rpmhelper
@@ -103,7 +103,7 @@ class WindowsHelper(object):
         # clean up
         try:
             self.resource.delete()
-        except httplib.ResponseNotReady:
+        except http.client.ResponseNotReady:
             pass
 
     def extractWIMInfo(self, path, wbs, volumeIndex=1):
@@ -164,7 +164,7 @@ class WindowsHelper(object):
                 self.volumes[int(i.INDEX)] = info
 
             if self.volumeIndex not in self.volumes:
-                self.volumeIndex = self.volumes.keys()[0]
+                self.volumeIndex = list(self.volumes.keys())[0]
 
             self.volume = self.volumes[self.volumeIndex]
             self.name = '-'.join(self.volume['name'].split())
@@ -173,7 +173,7 @@ class WindowsHelper(object):
             # clean up
             try:
                 image.delete()
-            except httplib.ResponseNotReady:
+            except http.client.ResponseNotReady:
                 pass
 
 class _AnySource(action.RecipeAction):
@@ -334,15 +334,15 @@ class _Source(_AnySource):
                 keyData = self._doDownloadPublicKey(ks)
                 if keyData:
                     break
-            except transport.TransportError, e:
+            except transport.TransportError as e:
                 log.info('Error retrieving PGP key %s from key server %s: %s' %
                     (self.keyid, ks, e))
                 continue
-            except Exception, e:
+            except Exception as e:
                 log.info('Unknown error encountered while retrieving PGP key %s from key server %s: %s' % (self.keyid, ks, e))
 
         if keyData is None:
-            raise SourceError, "Failed to retrieve PGP key %s" % self.keyid
+            raise SourceError("Failed to retrieve PGP key %s" % self.keyid)
 
         return keyData
 
@@ -360,7 +360,7 @@ class _Source(_AnySource):
         try:
             sig = openpgpfile.readSignature(file(self.localgpgfile))
         except openpgpfile.PGPError:
-            raise SourceError, "Failed to read signature from %s" % self.localgpgfile
+            raise SourceError("Failed to read signature from %s" % self.localgpgfile)
 
         # Does the signature belong to this key?
         if sig.getSignerKeyId() != key.getKeyId():
@@ -371,7 +371,7 @@ class _Source(_AnySource):
         try:
             sig.verifyDocument(key.getCryptoKey(), doc)
         except openpgpfile.SignatureError:
-            raise SourceError, "GPG signature %s failed" %(self.localgpgfile)
+            raise SourceError("GPG signature %s failed" %(self.localgpgfile))
         log.info('GPG signature %s is OK', os.path.basename(self.localgpgfile))
 
     def _extractFromRPM(self):
@@ -694,7 +694,7 @@ class addArchive(_Source):
             or self.preserveSetid
             or self.preserveDirectories) and not(
                 destDir.startswith(self.recipe.macros.destdir)):
-            raise SourceError, (
+            raise SourceError(
                 "preserveOwnership, preserveSetid, and preserveDirectories"
                 " not allowed when unpacking into build directory")
 
@@ -837,7 +837,7 @@ class addArchive(_Source):
                 ownerParser = self._tarOwners
                 actionPathBuildRequires.append('tar')
             else:
-                raise SourceError, "unknown archive format: " + f
+                raise SourceError("unknown archive format: " + f)
 
             self._addActionPathBuildRequires(actionPathBuildRequires)
             if f.endswith('.deb'):
@@ -886,7 +886,7 @@ class addArchive(_Source):
                             path = util.normpath(os.path.join(dirpath,
                                                               filename))
                             mode = os.lstat(path).st_mode
-                            sidbits = mode & 06000
+                            sidbits = mode & 0o6000
                             if sidbits:
                                 destPath = path[destlen:]
                                 self.recipe.setModes(destPath, sidbits=sidbits)
@@ -895,10 +895,10 @@ class addArchive(_Source):
                                                               dirname))
                             mode = os.lstat(path).st_mode
                             destPath = path[destlen:]
-                            if mode & 07777 != 0755:
+                            if mode & 0o7777 != 0o755:
                                 ExcludeDirectories.append( destPath )
                             if self.preserveSetid:
-                                sidbits = mode & 06000
+                                sidbits = mode & 0o6000
                                 self.recipe.setModes(destPath, sidbits=sidbits)
                     if self.preserveDirectories:
                         if not filenames and not dirnames:
@@ -944,7 +944,7 @@ class addArchive(_Source):
         if self.package:
             self.manifest.create()
 
-        for key, pathList in Ownership.items():
+        for key, pathList in list(Ownership.items()):
             user, group = key
             self.recipe.Ownership(user, group, filter.PathSet(pathList))
 
@@ -1147,7 +1147,7 @@ class addPatch(_Source):
                                   stdin=subprocess.PIPE,
                                   stderr=logFile, shell=False, stdout=logFile,
                                   close_fds=True)
-        except OSError, e:
+        except OSError as e:
             raise SourceError('Could not run %s: %s' % (patchProgram, e))
 
         p2.stdin.write(patch)
@@ -1234,7 +1234,7 @@ class addPatch(_Source):
             log.info(s)
         log.error('could not apply patch %s in directory %s', patchPath,
                   destDir)
-        raise SourceError, 'could not apply patch %s' % patchPath
+        raise SourceError('could not apply patch %s' % patchPath)
 
     def doDownload(self):
         f = self._findSource(braceGlob = self.sourceDir is not None)
@@ -1769,7 +1769,7 @@ class addCapsule(_Source):
             totalPathList.append(path)
             # CNY-3304: some RPM versions allow impossible modes on symlinks
             if stat.S_ISLNK(mode):
-                mode = stat.S_IFLNK | 0777
+                mode = stat.S_IFLNK | 0o777
             totalPathData.append((path, user, group, mode, digest, mtime))
 
             devtype = None
@@ -1799,8 +1799,7 @@ class addCapsule(_Source):
                         file(fullpath, 'w')
                     elif stat.S_ISLNK(mode):
                         if not filelinktos:
-                            raise SourceError, \
-                                'Ghost Symlink in RPM has no target'
+                            raise SourceError('Ghost Symlink in RPM has no target')
                         if util.exists(fullpath):
                             contents = os.readlink(fullpath)
                             if contents != filelinktos:
@@ -1813,8 +1812,7 @@ class addCapsule(_Source):
                     elif stat.S_ISFIFO(mode):
                         os.mkfifo(fullpath)
                     else:
-                        raise SourceError, \
-                            'Unknown Ghost Filetype defined in RPM'
+                        raise SourceError('Unknown Ghost Filetype defined in RPM')
                 elif flags & (rpmhelper.RPMFILE_CONFIG |
                               rpmhelper.RPMFILE_MISSINGOK |
                               rpmhelper.RPMFILE_NOREPLACE):
@@ -1893,8 +1891,8 @@ class addCapsule(_Source):
         if self.capsuleType == 'rpm':
             try:
                 rpmhelper.verifySignatures(capsuleFileObj, validKeys)
-            except rpmhelper.SignatureVerificationError, e:
-                raise SourceError, str(e)
+            except rpmhelper.SignatureVerificationError as e:
+                raise SourceError(str(e))
         elif self.capsuleType == 'msi':
             ### WRITE ME ###
             pass
@@ -2694,16 +2692,16 @@ def _extractScriptsFromRPM(rpm, directory):
         ('verify', rpmhelper.VERIFYSCRIPT, rpmhelper.VERIFYSCRIPTPROG),
     )
     for scriptName, tag, progTag in scripts:
-        if h.has_key(tag) or h.has_key(progTag):
+        if tag in h or progTag in h:
             scriptFile = file('/'.join((baseDir, scriptName)), 'w')
-            if h.has_key(progTag):
+            if progTag in h:
                 scriptFile.write('#!%s\n' %str(h[progTag]))
-            if h.has_key(tag):
+            if tag in h:
                 scriptFile.write(str(h[tag]))
                 scriptFile.write('\n')
             scriptFile.close()
 
-    if not h.has_key(rpmhelper.TRIGGERSCRIPTS):
+    if rpmhelper.TRIGGERSCRIPTS not in h:
         return
 
 
@@ -2726,7 +2724,7 @@ def _extractScriptsFromRPM(rpm, directory):
                   rpmhelper.RPMSENSE_GREATER|
                   rpmhelper.RPMSENSE_EQUAL)
 
-    triggers = itertools.izip(h[rpmhelper.TRIGGERSCRIPTS],
+    triggers = zip(h[rpmhelper.TRIGGERSCRIPTS],
                               h[rpmhelper.TRIGGERNAME],
                               h[rpmhelper.TRIGGERVERSION],
                               h[rpmhelper.TRIGGERFLAGS],
@@ -2779,7 +2777,7 @@ def _extractFilesFromRPM(rpm, targetfile=None, directory=None, action=None):
     # in an RPM.  Some RPMs intentionally contain no files, and
     # therefore have no files and no file-related data, but are
     # still meaningful.
-    if not h.has_key(rpmhelper.FILEUSERNAME):
+    if rpmhelper.FILEUSERNAME not in h:
         return []
 
     cpioArgs = ['/bin/cpio', 'cpio', '-iumd', '--quiet']
@@ -2790,7 +2788,7 @@ def _extractFilesFromRPM(rpm, targetfile=None, directory=None, action=None):
     # because RPM is inconsistent with how it names things in the cpio ball
 
     cpioSkipArgs = ['-f']
-    for (path, mode) in itertools.izip(h[rpmhelper.OLDFILENAMES],
+    for (path, mode) in zip(h[rpmhelper.OLDFILENAMES],
                                        h[rpmhelper.FILEMODES]):
         if (stat.S_ISDIR(mode) or stat.S_ISBLK(mode) or
                 stat.S_ISCHR(mode)):
@@ -2813,7 +2811,7 @@ def _extractFilesFromRPM(rpm, targetfile=None, directory=None, action=None):
         errorMessage = 'extracting RPM %s' %os.path.basename(rpm)
 
     # assemble the path/owner/group/etc list
-    ownerList = list(itertools.izip(h[rpmhelper.OLDFILENAMES],
+    ownerList = list(zip(h[rpmhelper.OLDFILENAMES],
                                     h[rpmhelper.FILEUSERNAME],
                                     h[rpmhelper.FILEGROUPNAME],
                                     h[rpmhelper.FILEMODES],
@@ -2840,8 +2838,8 @@ def _extractFilesFromRPM(rpm, targetfile=None, directory=None, action=None):
                 os.chdir(directory)
                 util.massCloseFileDescriptors(3, 252)
                 os.execl(*cpioArgs)
-            except Exception, e:
-                print 'Could not execute %s: %s' % (cpioArgs[0], e)
+            except Exception as e:
+                print('Could not execute %s: %s' % (cpioArgs[0], e))
                 os.close(rpipe)
         finally:
             os._exit(1)
@@ -2857,14 +2855,13 @@ def _extractFilesFromRPM(rpm, targetfile=None, directory=None, action=None):
     os.close(wpipe)
     (pid, status) = os.waitpid(pid, 0)
     if not os.WIFEXITED(status):
-        raise IOError, 'cpio died %s' %errorMessage
+        raise IOError('cpio died %s' %errorMessage)
     if os.WEXITSTATUS(status):
-        raise IOError, \
-            'cpio returned failure %d %s' %(
-                os.WEXITSTATUS(status), errorMessage)
+        raise IOError('cpio returned failure %d %s' %(
+                os.WEXITSTATUS(status), errorMessage))
     if targetfile and not os.path.exists(targetfile):
-        raise IOError, 'failed to extract source %s from RPM %s' \
-                       %(filename, os.path.basename(rpm))
+        raise IOError('failed to extract source %s from RPM %s' \
+                       %(filename, os.path.basename(rpm)))
 
     return ownerList
 

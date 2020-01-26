@@ -60,13 +60,13 @@ class TestUse(rephelp.RepositoryHelper):
         m1.b = 'b'
         m2 = m1.copy()
         m2.c = 'c'
-        iterkeys = [ x for x in m2.iterkeys() ]
+        iterkeys = [ x for x in m2.keys() ]
         iterkeys.sort()
         assert(iterkeys == ['a', 'b', 'c'])
-        keys = m2.keys()
+        keys = list(m2.keys())
         keys.sort()
         assert(keys == ['a', 'b', 'c'])
-        iteritems = [ x for x in m2.iteritems() ]
+        iteritems = [ x for x in m2.items() ]
         iteritems.sort()
         assert(iteritems == [('a', 'a'), ('b', 'b'), ('c', 'c')])
 
@@ -82,7 +82,7 @@ class TestUse(rephelp.RepositoryHelper):
         m4 = m3.copy()
         m4.f = 'f'
         m2.update(m4)
-        keys = m2.keys()
+        keys = list(m2.keys())
         keys.sort()
         assert(keys == ['a', 'b', 'c', 'd', 'e', 'f'])
 

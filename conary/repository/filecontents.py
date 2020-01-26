@@ -16,9 +16,9 @@
 
 
 try:
-    from cStringIO import StringIO
+    from io import StringIO
 except ImportError:
-    from StringIO import StringIO
+    from io import StringIO
 
 import errno, os
 
@@ -92,12 +92,12 @@ class FromFilesystem(FileContents):
     def get(self):
         try:
             return open(self.path, "r")
-        except IOError, e:
+        except IOError as e:
             if e.errno != errno.EACCES:
                 raise
 
-        mode = os.stat(self.path).st_mode & 0777
-        os.chmod(self.path, mode | 0400)
+        mode = os.stat(self.path).st_mode & 0o777
+        os.chmod(self.path, mode | 0o400)
         try:
             f = open(self.path, "r")
         finally:

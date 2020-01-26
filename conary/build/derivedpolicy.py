@@ -87,11 +87,11 @@ class PackageSpec(packagepolicy.PackageSpec):
         packagepolicy.PackageSpec.postProcess(self)
         fileProvides = deps.DependencySet()
         fileRequires = deps.DependencySet()
-        for fileObj in self.pathObjs.values():
+        for fileObj in list(self.pathObjs.values()):
             fileProvides.union(fileObj.provides())
             fileRequires.union(fileObj.requires())
 
-        for comp in self.recipe.autopkg.components.values():
+        for comp in list(self.recipe.autopkg.components.values()):
             if comp.name in self.recipe._componentReqs:
                 # copy component dependencies for components which came
                 # from derived packages, only for dependencies that are
@@ -114,7 +114,7 @@ class Flavor(packagepolicy.Flavor):
     def preProcess(self):
         packagepolicy.Flavor.preProcess(self)
 
-        for comp in self.recipe.autopkg.components.values():
+        for comp in list(self.recipe.autopkg.components.values()):
             comp.flavor.union(self.recipe.useFlags)
 
     def doFile(self, path):
@@ -193,7 +193,7 @@ class ComponentRequires(packagepolicy.ComponentRequires):
         components = self.recipe.autopkg.components
         packageMap = self.recipe.autopkg.packageMap
         mainSet = set([main.name for main in packageMap])
-        for comp in components.values():
+        for comp in list(components.values()):
             removeDeps = deps.DependencySet()
             for dep in comp.requires.iterDepsByClass(deps.TroveDependencies):
                 name = dep.getName()[0]
@@ -209,9 +209,9 @@ class ComponentProvides(packagepolicy.ComponentProvides):
     processUnmodified = True
     def do(self):
         # pick up parent component flags
-        for depSet in self.recipe._componentProvs.values():
+        for depSet in list(self.recipe._componentProvs.values()):
             for dep in depSet.iterDepsByClass(deps.TroveDependencies):
-                self.flags.update(dep.flags.keys())
+                self.flags.update(list(dep.flags.keys()))
         packagepolicy.ComponentProvides.do(self)
 
 

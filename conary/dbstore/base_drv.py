@@ -18,7 +18,7 @@
 import sys
 import re
 
-import sqlerrors, sqllib
+from . import sqlerrors, sqllib
 
 
 DEFAULT_ENCODING = 'UTF-8'
@@ -110,7 +110,7 @@ class BaseCursor:
         @returns: the encoded string
         @rtype: C{str}
         """
-        if isinstance(string, unicode):
+        if isinstance(string, str):
             string = string.encode(self.encoding)
         return string
 
@@ -140,7 +140,7 @@ class BaseCursor:
 
         if self._encodeRequired:
             args = tuple(self.encode(x) for x in args)
-            kw = dict((key, self.encode(value)) for (key, value) in kw.items())
+            kw = dict((key, self.encode(value)) for (key, value) in list(kw.items()))
         return args, kw
 
     # basic sanity checks for executes
@@ -188,7 +188,7 @@ class BaseCursor:
         if len(row) != len(self._cursor.description):
             raise sqlerrors.CursorError("Cursor description doew not match row data",
                                      row = row, desc = self._cursor.description)
-        return dict(zip(self.fields(), row))
+        return dict(list(zip(self.fields(), row)))
 
     def _row(self, data):
         "Convert a data tuple to a C{Row} object."
@@ -218,7 +218,7 @@ class BaseCursor:
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         item = self.fetchone()
         if item is None:
             raise StopIteration
@@ -470,7 +470,7 @@ class BaseDatabase:
         self._dropIndexSql(table, name)
         try:
             self.tables[table].remove(name)
-        except ValueError, e:
+        except ValueError as e:
             pass
         return True
 
@@ -547,7 +547,7 @@ class BaseDatabase:
         ret = c.fetchone_dict()
         if ret is None: # no version record found...
             self.version = sqllib.DBversion(0,0)
-        elif ret.has_key("minor"): # assume new style
+        elif "minor" in ret: # assume new style
             self.version = sqllib.DBversion(ret["version"], ret["minor"])
         else: # assume mint/old style
             c.execute("select max(version) from DatabaseVersion")
@@ -587,7 +587,7 @@ class BaseDatabase:
         return version
 
     def shell(self):
-        import shell
+        from . import shell
         shell.shell(self)
 
     def use(self, dbName, **kwargs):

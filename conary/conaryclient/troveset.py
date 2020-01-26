@@ -124,7 +124,7 @@ class ResolveTroveTupleSetTroveSource(SimpleFilteredTroveSource):
         if self.providesIndex is None:
             index = {}
             self.providesIndex = index
-            for i, (troveTup, (p, r)) in enumerate(itertools.izip(
+            for i, (troveTup, (p, r)) in enumerate(zip(
                     self.troveTupList, troveDeps)):
                 classAndNameSet = _depClassAndName(p)
                 for classAndName in classAndNameSet:
@@ -161,11 +161,11 @@ class ResolveTroveTupleSetTroveSource(SimpleFilteredTroveSource):
             return cachedSuggMap
 
         suggMap = self.depDb.resolve(label, finalDepList, leavesOnly=leavesOnly,
-                                     troveIdList = self.depTroveIdMap.keys())
+                                     troveIdList = list(self.depTroveIdMap.keys()))
 
         # Convert resolver results back to trove tuples and insert into the
         # suggestion map
-        for depSet, solListList in suggMap.iteritems():
+        for depSet, solListList in suggMap.items():
             newSolListList = []
             for solList in solListList:
                 newSolListList.append([
@@ -227,7 +227,7 @@ class TroveSet(object):
 
         for inputSet in inputSets:
             if edgeList:
-                edgeValue = edgeList.next()
+                edgeValue = next(edgeList)
             else:
                 edgeValue = None
 
@@ -380,7 +380,7 @@ class TroveTupleSet(TroveSet):
         # for each pair of troves determine the longest path between them; we
         # do this through a simple tree walk
         maxPathLength = {}
-        searchList = [ (x, x, 0) for x, y in containsItems.iteritems()
+        searchList = [ (x, x, 0) for x, y in containsItems.items()
                             if not y ]
         while searchList:
             start, next, depth = searchList.pop(0)
@@ -392,7 +392,7 @@ class TroveTupleSet(TroveSet):
             for container in containedBy[next]:
                 searchList.append( (start, container, depth + 2) )
 
-        searchList = sorted([ (x, x, 0) for x, y in containsItems.iteritems()
+        searchList = sorted([ (x, x, 0) for x, y in containsItems.items()
                               if not y ])
 
         def handle(tt, dp, ii):
@@ -444,7 +444,7 @@ class TroveTupleSet(TroveSet):
                     handle((componentName, troveTup[1], troveTup[2]),
                            depth + 1, False)
 
-        for (troveTup), (depth, isInstall) in results.iteritems():
+        for (troveTup), (depth, isInstall) in results.items():
             if (newGroups
                     or not isinstance(troveTup[1], versions.NewVersion)):
                 walkResult.append(
@@ -683,7 +683,7 @@ class FindAction(ParallelAction):
                     l.append((action.outSet, troveSpec))
 
         notFound = set()
-        for inSet, searchList in troveSpecsByInSet.iteritems():
+        for inSet, searchList in troveSpecsByInSet.items():
             cacheable = set()
             cached = set()
             for i, (outSet, troveSpec) in enumerate(searchList):
@@ -861,7 +861,7 @@ class PatchAction(AbstractModifyAction):
         troveMapping = after.diff(before)[2]
 
         # populate the cache with timestamped versions as a bulk operation
-        data.troveCache.getTimestamps( beforeInfo.keys() + afterInfo.keys() )
+        data.troveCache.getTimestamps( list(beforeInfo.keys()) + list(afterInfo.keys()) )
 
         for (trvName, (oldVersion, oldFlavor),
                       (newVersion, newFlavor), isAbsolute) in troveMapping:
@@ -1210,7 +1210,7 @@ class OperationGraph(graph.DirectedGraph):
                     else:
                         node.realize(data)
 
-            for action, nodeList in byAction.iteritems():
+            for action, nodeList in byAction.items():
                 if issubclass(action, ParallelAction):
                     nodeList[0].action([ node.action for node in nodeList ],
                                        data)
@@ -1230,16 +1230,16 @@ class OperationGraph(graph.DirectedGraph):
                     continue
 
                 matches = node._findTroves(troveSpecList, allowMissing = True)
-                for troveSpec, matchList in matches.iteritems():
+                for troveSpec, matchList in matches.items():
                     installMatches = set(matchList) & node._getInstallSet()
                     optionalMatches = set(matchList) & node._getOptionalSet()
                     if installMatches:
-                        print 'trace line %s matched install set "%s": %s' % (
+                        print('trace line %s matched install set "%s": %s' % (
                              str(node), str(troveSpec),
                              " ".join([ "%s=%s[%s]" % x
-                             for x in installMatches ]) )
+                             for x in installMatches ]) ))
                     if optionalMatches:
-                        print 'trace line %s matched optional set "%s": %s' % (
+                        print('trace line %s matched optional set "%s": %s' % (
                              str(node), str(troveSpec),
                              " ".join([ "%s=%s[%s]" % x
-                             for x in optionalMatches ]) )
+                             for x in optionalMatches ]) ))

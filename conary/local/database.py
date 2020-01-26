@@ -86,8 +86,8 @@ class Rollback:
 
             rbs.save(self.dir)
 
-        repos.writeToFile(reposName, mode = 0600)
-        local.writeToFile(localName, mode = 0600)
+        repos.writeToFile(reposName, mode = 0o600)
+        local.writeToFile(localName, mode = 0o600)
 
         if self.count:
             self.count += 1
@@ -208,7 +208,7 @@ class RollbackStack:
             self.first = int(first)
             self.last = int(last)
             f.close()
-        except IOError, e:
+        except IOError as e:
             if e.errno == errno.EACCES:
                 self.first = None
                 self.last = None
@@ -222,7 +222,7 @@ class RollbackStack:
     def writeStatus(self, opJournal = None):
         newStatus = self.statusPath + ".new"
 
-        fd = os.open(newStatus, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0600)
+        fd = os.open(newStatus, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
         os.write(fd, "%s %d\n" % (self.first, self.last))
         os.close(fd)
 
@@ -240,7 +240,7 @@ class RollbackStack:
             shutil.rmtree(rbDir)
 
         opJournal.mkdir(rbDir)
-        os.mkdir(rbDir, 0700)
+        os.mkdir(rbDir, 0o700)
         self.last += 1
         self.writeStatus(opJournal = opJournal)
 
@@ -322,7 +322,7 @@ class RollbackStack:
 
         try:
             shutil.rmtree(self.dir + "/%d" % rollback)
-        except OSError, e:
+        except OSError as e:
             if e.errno == 2:
                 pass
         if rollback == self.last:
@@ -362,8 +362,8 @@ class RollbackStack:
         if not os.path.exists(self.dir):
             try:
                 util.mkdirChain(os.path.dirname(self.dir))
-                os.mkdir(self.dir, 0700)
-            except OSError, e:
+                os.mkdir(self.dir, 0o700)
+            except OSError as e:
                 if e.errno == errno.ENOTDIR:
                     # when making a directory, the parent
                     # was not a directory
@@ -808,7 +808,7 @@ class UpdateJob:
         ccsdir = os.path.join(frzdir, 'changesets')
         util.mkdirChain(ccsdir)
         csList = []
-        itersrc = itertools.izip(troveSource.csList, troveSource.csFileNameList)
+        itersrc = zip(troveSource.csList, troveSource.csFileNameList)
         for i, (cs, (csFileName, includesFileContents)) in enumerate(itersrc):
             if withChangesetReferences and csFileName:
                 fname = csFileName
@@ -831,7 +831,7 @@ class UpdateJob:
             for (csFileName, includesFileContents) in csList:
                 cs = changeset.ChangeSetFromFile(self.lzCache.open(csFileName))
                 troveSource.addChangeSet(cs, bool(includesFileContents))
-        except IOError, e:
+        except IOError as e:
             raise errors.InternalConaryError("Missing changeset file %s" %
                                              e.filename)
 
@@ -906,7 +906,7 @@ class UpdateJob:
     def _thawCommitChangesetFlags(self, frzrep):
         frzdict = dict()
         if frzrep is not None:
-            for k, v in frzrep.items():
+            for k, v in list(frzrep.items()):
                 if k in CommitChangeSetFlags.__slots__:
                     frzdict[k] = bool(v)
         flags = CommitChangeSetFlags(**frzdict)
@@ -933,7 +933,7 @@ class UpdateJob:
             fileName = util.joinPaths(destdir, f)
             cs = changeset.ChangeSetFromFile(
                 util.ExtendedFile(fileName, buffering = False))
-            trvCs = cs.iterNewTroveList().next()
+            trvCs = next(cs.iterNewTroveList())
             # We're only going to use the troves in troveMap for finding
             # references, so it's acceptable to skip integrity checks
             trv = trove.Trove(trvCs, skipIntegrityChecks = True)
@@ -1147,13 +1147,13 @@ class UpdateJob:
         ret = self._jobPreScriptsByJob = []
         for action in actionsInOrder:
             s_ = scriptIdxMap[action]
-            scripts = s_.values()
+            scripts = list(s_.values())
             # group by index value in self.jobs
-            groupBy = sorted(set(x[2] for x in s_.values()))
+            groupBy = sorted(set(x[2] for x in list(s_.values())))
             # Order the scripts, drop the job and minIdx
             ordered = self._orderScriptListByBucket(scripts, groupBy)
             ordered = [ [y[1] for y in x] for x in ordered ]
-            ret.append(zip(groupBy, ordered))
+            ret.append(list(zip(groupBy, ordered)))
 
     def setPreviousVersion(self, version):
         self._previousVersion = version
@@ -1645,7 +1645,7 @@ class SqlDbRepository(trovesource.SearchableTroveSource,
         if not self._db:
             try:
                 self._initDb()
-            except sqldb.sqlerrors.DatabaseError, e:
+            except sqldb.sqlerrors.DatabaseError as e:
                 raise errors.ConaryError("Database error: %s" % (e, ))
         return self._db
 
@@ -1703,7 +1703,7 @@ class Database(SqlDbRepository):
             newGroup.addTrove(name, version, flavor)
 
         instList = []
-        for name in names.iterkeys():
+        for name in names.keys():
             # get the current troves installed
             try:
                 instList += self.trovesByName(name)
@@ -1819,7 +1819,7 @@ class Database(SqlDbRepository):
                     userReplaced = fsJob.userRemovals,
                     replaceFileCheck = flags.replaceManagedFiles,
                     sharedFiles = fsJob.sharedFilesByTrove)
-            except DatabasePathConflicts, e:
+            except DatabasePathConflicts as e:
                 for (path, (pathId, (troveName, version, flavor)),
                            newTroveInfo) in e.getConflicts():
                     dbConflicts.append(DatabasePathConflictError(
@@ -1891,7 +1891,7 @@ class Database(SqlDbRepository):
         if errList:
             # make sure we release the lock on the database
             self.db.rollback()
-            raise CommitError, ('applying update would cause errors:\n' +
+            raise CommitError('applying update would cause errors:\n' +
                                 '\n\n'.join(str(x) for x in errList))
         if commitFlags.test:
             self.db.rollback()
@@ -1903,11 +1903,11 @@ class Database(SqlDbRepository):
         # because the directories could have backup files in them that the
         # journal will clear out.
         if not commitFlags.justDatabase:
-            lst = directoryCandidates.keys()
+            lst = list(directoryCandidates.keys())
             lst.sort()
             keep = {}
             for relativePath in lst:
-                if keep.has_key(relativePath):
+                if relativePath in keep:
                     keep[os.path.dirname(relativePath)] = True
                     continue
 
@@ -2186,7 +2186,7 @@ class Database(SqlDbRepository):
         # look through the directories which have had files removed and
         # see if we can remove the directories as well
         dirSet = fsJob.getDirectoryCountSet()
-        lst = dirSet.keys()
+        lst = list(dirSet.keys())
         lst.sort()
         lst.reverse()
         directoryCandidates = {}
@@ -2195,7 +2195,7 @@ class Database(SqlDbRepository):
             del lst[0]
             try:
                 entries = len(os.listdir(self.root + '/' + path))
-            except OSError, e:
+            except OSError as e:
                 if e.errno != errno.ENOENT:
                     raise
                 continue
@@ -2208,7 +2208,7 @@ class Database(SqlDbRepository):
             directoryCandidates[path] = True
 
             parent = os.path.dirname(path)
-            if dirSet.has_key(parent):
+            if parent in dirSet:
                 dirSet[parent] += 1
             else:
                 dirSet[parent] = 1
@@ -2238,7 +2238,7 @@ class Database(SqlDbRepository):
                             tagScript, dbCache, autoPinList, flags, journal,
                             directoryCandidates, storeRollback=storeRollback,
                             capsuleChangeSet = capsuleChangeSet)
-            except Exception, e:
+            except Exception as e:
                 if not issubclass(e.__class__, ConaryError):
                     callback.error("a critical error occured -- reverting "
                                    "filesystem changes")
@@ -2324,9 +2324,9 @@ class Database(SqlDbRepository):
         for path in pathList:
             trvs = [ x for x in self.db.iterFindByPath(path) ]
             if len(trvs) > 1:
-                raise DatabaseError, "multiple troves own %s" % path
+                raise DatabaseError("multiple troves own %s" % path)
             elif not trvs:
-                raise DatabaseError, "no trove owns %s" % path
+                raise DatabaseError("no trove owns %s" % path)
 
             trv = trvs[0]
             trvInfo = trv.getNameVersionFlavor()
@@ -2336,7 +2336,7 @@ class Database(SqlDbRepository):
 
         removeCs = changeset.ChangeSet()
 
-        for trvInfo, pathList in pathsByTrove.iteritems():
+        for trvInfo, pathList in pathsByTrove.items():
             trv = troves[trvInfo]
 
             newTrv = trv.copy()
@@ -2382,7 +2382,7 @@ class Database(SqlDbRepository):
         fileObjs = repos.getFileVersions(filesNeeded)
         contentsNeeded = []
         for (pathId, newFileId, newVersion), fileObj in \
-                                    itertools.izip(filesNeeded, fileObjs):
+                                    zip(filesNeeded, fileObjs):
             cs.addFile(None, newFileId, fileObj.freeze())
             if fileObj.hasContents:
                 contentsNeeded.append((pathId, fileObj, newFileId,
@@ -2392,7 +2392,7 @@ class Database(SqlDbRepository):
                                          compressed = True)
 
         for (pathId, fileObj, newFileId, newVersion, sha1), contentObj in \
-                        itertools.izip(contentsNeeded, contents):
+                        zip(contentsNeeded, contents):
             cs.addFileContents(pathId, newFileId,
                                changeset.ChangedFileTypes.file,
                                contentObj, fileObj.flags.isConfig(),
@@ -2405,7 +2405,7 @@ class Database(SqlDbRepository):
 
         restoreCs = changeset.ChangeSet()
         filesChanged = []
-        for pristineTrv, localTrv in itertools.izip(pristineTroves,
+        for pristineTrv, localTrv in zip(pristineTroves,
                                                     localTroves):
             if pristineTrv is None:
                 # this version isn't installed. that's okay.
@@ -2433,7 +2433,7 @@ class Database(SqlDbRepository):
 
         troveList = []
         flags = update.UpdateFlags(ignoreMissingFiles = True)
-        for (localTrv, pristineTrv) in itertools.izip(localTroves,
+        for (localTrv, pristineTrv) in zip(localTroves,
                                                       pristineTroves):
             if localTrv is None:
                 # it's okay to have some bits not installed
@@ -2471,7 +2471,7 @@ class Database(SqlDbRepository):
                     pathDict[newTrove] = lookup
 
         s = set()
-        for x in pathDict.values():
+        for x in list(pathDict.values()):
             s.update(x)
 
         return s
@@ -2490,7 +2490,7 @@ class Database(SqlDbRepository):
             try:
                 lockFd = os.open(self.lockFile, os.O_RDWR | os.O_CREAT |
                                                     os.O_EXCL)
-            except OSError, e:
+            except OSError as e:
                 if e.errno != errno.EEXIST:
                     raise
 
@@ -2501,7 +2501,7 @@ class Database(SqlDbRepository):
             util.setCloseOnExec(lockFd)
             try:
                 fcntl.lockf(lockFd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            except IOError, e:
+            except IOError as e:
                 # Close the lock object file descriptor, we don't want leaks,
                 # even on the error code path
                 os.close(lockFd)
@@ -2519,7 +2519,7 @@ class Database(SqlDbRepository):
         rollback = int(name[2:])
         try:
             shutil.rmtree(self.rollbackCache + "/%d" % rollback)
-        except OSError, e:
+        except OSError as e:
             if e.errno == 2:
                 pass
         if rollback == self.lastRollback:
@@ -2556,7 +2556,7 @@ class Database(SqlDbRepository):
             self.firstRollback = int(first)
             self.lastRollback = int(last)
             f.close()
-        except IOError, e:
+        except IOError as e:
             if e.errno == errno.EACCES:
                 self.firstRollback = None
                 self.lastRollback = None
@@ -2648,7 +2648,7 @@ class Database(SqlDbRepository):
             rb = self.rollbackStack.getRollback(name)
             totalCount += 0
 
-            for i in xrange(rb.getCount()):
+            for i in range(rb.getCount()):
                 (reposCs, localCs) = rb.getLast()
                 if not reposCs.isEmpty():
                     totalCount += 1
@@ -2756,7 +2756,7 @@ class Database(SqlDbRepository):
                     fsUpdateJob.close()
 
                     rb.removeLast()
-                except CommitError, err:
+                except CommitError as err:
                     updJob.close()
                     raise RollbackError(name, err)
 
@@ -2887,7 +2887,7 @@ class Database(SqlDbRepository):
         if splitByDep:
             return rc
         return dict((x[0], list(set(itertools.chain(*x[1]))))
-                     for x in rc.items())
+                     for x in list(rc.items()))
 
 
     def getTransitiveProvidesClosure(self, depSetList):
@@ -2936,7 +2936,7 @@ class Database(SqlDbRepository):
         opJournalPath = top + '/journal'
         try:
             j = JobJournal(opJournalPath, root)
-        except OSError, e:
+        except OSError as e:
             raise OpenError(top, 'journal error: ' + e.strerror)
 
         j.revert()
@@ -3030,7 +3030,7 @@ class Database(SqlDbRepository):
                 self.rollbackStack = RollbackStack(self.rollbackCache, root,
                                                    self.modelPath,
                                                    self.modelFile)
-            except OpenError, e:
+            except OpenError as e:
                 raise OpenError(top, e.msg)
 
 class DatabaseCacheWrapper:
@@ -3057,7 +3057,7 @@ class DatabaseCacheWrapper:
             retList.append(self.cache.get((info, pristine), None))
 
         missing = [ (x[0], x[1][1]) for x in
-                        enumerate(itertools.izip(retList, l)) if
+                        enumerate(zip(retList, l)) if
                         x[1][0] is None ]
 
         if not missing:
@@ -3065,7 +3065,7 @@ class DatabaseCacheWrapper:
 
         trvs = self.db.getTroves([ x[1] for x in missing ],
                                  pristine = pristine)
-        for (idx, info), trv in itertools.izip(missing, trvs):
+        for (idx, info), trv in zip(missing, trvs):
             retList[idx] = trv
             self.cache[(info, pristine)] = trv
 

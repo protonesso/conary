@@ -194,7 +194,7 @@ class StreamsTest(testhelp.TestCase):
         # ensure that invalid types are handled properly
         try:
             StringStream(1)
-        except TypeError, e:
+        except TypeError as e:
             assert (str(e) == 'frozen value must be None or a string')
         else:
             raise
@@ -416,7 +416,7 @@ class StreamsTest(testhelp.TestCase):
                            2 : ( SMALL, IntStream, "number" ) }
         try:
             broken = Broken()
-        except ValueError, e:
+        except ValueError as e:
             assert(str(e) == 'Broken class is missing the streamDict class variable')
         else:
             raise
@@ -439,7 +439,7 @@ class StreamsTest(testhelp.TestCase):
         overflow.bigname.set(bigdata)
         try:
             frz = overflow.freeze()
-        except TypeError, e:
+        except TypeError as e:
             assert(str(e) == 'short int overflow')
         else:
             raise
@@ -485,7 +485,7 @@ class StreamsTest(testhelp.TestCase):
         f.x.set('hello')
         try:
             f2 = Foo3(f.freeze())
-        except TypeError, e:
+        except TypeError as e:
             self.assertEqual(str(e), 'tag number overflow. max value is uchar')
 
     def testStreamCollection(self):
@@ -708,7 +708,7 @@ class StreamsTest(testhelp.TestCase):
     def testUnicodeStringStreamSet(self):
         ss = StringStream()
         ns = 'Foo bar baz quux'
-        us = u'Iñtërnâtiônàlizætiøn'
+        us = 'Iñtërnâtiônàlizætiøn'
 
         # sanity check on regular non-unicode string
         ss.set(ns)

@@ -37,7 +37,7 @@ def createSchema():
             """)
             getCon().commit()
         else:
-            print "We have an unknown schema here. Please fix manually."
+            print("We have an unknown schema here. Please fix manually.")
             sys.exit(1)
 
 def createCustomer(firstname, lastname, customerNo):

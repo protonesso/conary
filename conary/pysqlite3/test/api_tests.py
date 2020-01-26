@@ -18,43 +18,43 @@ class DBAPICompliance(unittest.TestCase):
                          sqlite.paramstyle)
 
     def CheckWarning(self):
-        self.assert_(issubclass(sqlite.Warning, StandardError),
+        self.assertTrue(issubclass(sqlite.Warning, Exception),
                      'Warning is not a subclass of StandardError')
 
     def CheckError(self):
-        self.failUnless(issubclass(sqlite.Error, StandardError),
+        self.assertTrue(issubclass(sqlite.Error, Exception),
                         'Error is not a subclass of StandardError')
 
     def CheckInterfaceError(self):
-        self.failUnless(issubclass(sqlite.InterfaceError, sqlite.Error),
+        self.assertTrue(issubclass(sqlite.InterfaceError, sqlite.Error),
                         'InterfaceError is not a subclass of Error')
 
     def CheckDatabaseError(self):
-        self.failUnless(issubclass(sqlite.DatabaseError, sqlite.Error),
+        self.assertTrue(issubclass(sqlite.DatabaseError, sqlite.Error),
                         'DatabaseError is not a subclass of Error')
 
     def CheckDataError(self):
-        self.failUnless(issubclass(sqlite.DataError, sqlite.DatabaseError),
+        self.assertTrue(issubclass(sqlite.DataError, sqlite.DatabaseError),
                         'DataError is not a subclass of DatabaseError')
 
     def CheckOperationalError(self):
-        self.failUnless(issubclass(sqlite.OperationalError, sqlite.DatabaseError),
+        self.assertTrue(issubclass(sqlite.OperationalError, sqlite.DatabaseError),
                         'OperationalError is not a subclass of DatabaseError')
 
     def CheckIntegrityError(self):
-        self.failUnless(issubclass(sqlite.IntegrityError, sqlite.DatabaseError),
+        self.assertTrue(issubclass(sqlite.IntegrityError, sqlite.DatabaseError),
                         'IntegrityError is not a subclass of DatabaseError')
 
     def CheckInternalError(self):
-        self.failUnless(issubclass(sqlite.InternalError, sqlite.DatabaseError),
+        self.assertTrue(issubclass(sqlite.InternalError, sqlite.DatabaseError),
                         'InternalError is not a subclass of DatabaseError')
 
     def CheckProgrammingError(self):
-        self.failUnless(issubclass(sqlite.ProgrammingError, sqlite.DatabaseError),
+        self.assertTrue(issubclass(sqlite.ProgrammingError, sqlite.DatabaseError),
                         'ProgrammingError is not a subclass of DatabaseError')
 
     def CheckNotSupportedError(self):
-        self.failUnless(issubclass(sqlite.NotSupportedError,
+        self.assertTrue(issubclass(sqlite.NotSupportedError,
                                    sqlite.DatabaseError),
                         'NotSupportedError is not a subclass of DatabaseError')
 
@@ -74,149 +74,149 @@ class moduleTestCases(unittest.TestCase, testsupport.TestSupport):
             pass
 
     def CheckConnectionObject(self):
-        self.assert_(isinstance(self.cnx, sqlite.Connection),
+        self.assertTrue(isinstance(self.cnx, sqlite.Connection),
                      'sqlite.connect did not return a Connection object')
 
     def CheckConnectionClose(self):
-        self.assert_(hasattr(self.cnx, 'close') and
+        self.assertTrue(hasattr(self.cnx, 'close') and
                      type(self.cnx.close) == types.MethodType,
                      'close is not a method of Connection')
         self.cnx.close()
         self.removefile()
-        self.failUnlessRaises(sqlite.ProgrammingError, self.cnx.close)
+        self.assertRaises(sqlite.ProgrammingError, self.cnx.close)
 
     def CheckConnectionCommit(self):
-        self.assert_(hasattr(self.cnx, "commit") and
+        self.assertTrue(hasattr(self.cnx, "commit") and
                      type(self.cnx.commit) == types.MethodType,
                      'commit is not a method of Connection')
         self.cnx.close()
         self.removefile()
-        self.failUnlessRaises(sqlite.ProgrammingError, self.cnx.commit)
+        self.assertRaises(sqlite.ProgrammingError, self.cnx.commit)
 
     def CheckConnectionRollback(self):
-        self.assert_(hasattr(self.cnx, "rollback") and
+        self.assertTrue(hasattr(self.cnx, "rollback") and
                      type(self.cnx.rollback) == types.MethodType,
                      'rollback is not a method of Connection')
         self.cnx.close()
         self.removefile()
-        self.failUnlessRaises(sqlite.ProgrammingError, self.cnx.rollback)
+        self.assertRaises(sqlite.ProgrammingError, self.cnx.rollback)
 
     def CheckConnectionCursor(self):
-        self.assert_(hasattr(self.cnx, "cursor") and
+        self.assertTrue(hasattr(self.cnx, "cursor") and
                      type(self.cnx.cursor) == types.MethodType,
                      'cursor is not a method of Connection')
         self.cnx.close()
         self.removefile()
-        self.failUnlessRaises(sqlite.ProgrammingError, self.cnx.cursor)
+        self.assertRaises(sqlite.ProgrammingError, self.cnx.cursor)
 
     def CheckCloseConnection(self):
         self.cnx.close()
         self.removefile()
 
     def CheckCursorObject(self):
-        self.assert_(isinstance(self.cur, sqlite.Cursor),
+        self.assertTrue(isinstance(self.cur, sqlite.Cursor),
                      'cnx.cursor() did not return a Cursor instance')
 
     def CheckCursorArraysize(self):
-        self.assert_(self.cur.arraysize == 1,
+        self.assertTrue(self.cur.arraysize == 1,
                      'cur.arraysize is %d, it should be 1' %
                      self.cur.arraysize)
 
     def CheckCursorDescription(self):
-        self.assert_(self.cur.description == None,
+        self.assertTrue(self.cur.description == None,
                      "cur.description should be None at this point, it isn't.")
 
     def CheckCursorRowcount(self):
-        self.assert_(self.cur.rowcount == -1,
+        self.assertTrue(self.cur.rowcount == -1,
                      'cur.rowcount is %d, should be -1' % self.cur.rowcount)
 
     def CheckCursorClose(self):
-        self.assert_(hasattr(self.cur, "close") and
+        self.assertTrue(hasattr(self.cur, "close") and
                      type(self.cur.close) == types.MethodType,
                      'close is not a method of the Cursor object')
         self.cur.close()
-        self.failUnlessRaises(sqlite.ProgrammingError, self.cur.close)
+        self.assertRaises(sqlite.ProgrammingError, self.cur.close)
 
     def CheckCursorExecute(self):
-        self.assert_(hasattr(self.cur, "execute") and
+        self.assertTrue(hasattr(self.cur, "execute") and
                      type(self.cur.execute) == types.MethodType,
                      'execute is not a method of the Cursor object')
         self.cur.close()
-        self.failUnlessRaises(sqlite.ProgrammingError,
+        self.assertRaises(sqlite.ProgrammingError,
                               self.cur.execute, 'SELECT max(3,4)')
 
     def CheckCursorExecutemany(self):
-        self.assert_(hasattr(self.cur, "executemany") and
+        self.assertTrue(hasattr(self.cur, "executemany") and
                      type(self.cur.executemany) == types.MethodType,
                      'executemany is not a method of the Cursor object')
 
         self.cur.close()
-        self.failUnlessRaises(sqlite.ProgrammingError,
+        self.assertRaises(sqlite.ProgrammingError,
                               self.cur.executemany, 'SELECT max(3,4)', [1,2])
 
     def CheckCursorFetchone(self):
-        self.assert_(hasattr(self.cur, "fetchone") and
+        self.assertTrue(hasattr(self.cur, "fetchone") and
                      type(self.cur.fetchone) == types.MethodType,
                      'fetchone is not a method of the Cursor object')
         self.cur.close()
-        self.failUnlessRaises(sqlite.ProgrammingError, self.cur.fetchone)
+        self.assertRaises(sqlite.ProgrammingError, self.cur.fetchone)
 
     def CheckCursorFetchMany(self):
-        self.failUnless(hasattr(self.cur, "fetchmany") and
+        self.assertTrue(hasattr(self.cur, "fetchmany") and
                         type(self.cur.fetchmany) == types.MethodType,
                         'fetchmany is not a method of the Cursor object')
 
         cursor = self.cnx.cursor()
         cursor.execute("create table test(id int)")
-        cursor.executemany("insert into test(id) values ( ? )", range(10))
+        cursor.executemany("insert into test(id) values ( ? )", list(range(10)))
         cursor.execute("select id from test")
         res = cursor.fetchmany()
-        self.failUnlessEqual(len(res), 1, """fetchmany should have returned a
+        self.assertEqual(len(res), 1, """fetchmany should have returned a
             list of length 1, but the list was %i elements long""" % len(res))
         res = cursor.fetchmany(2)
-        self.failUnlessEqual(len(res), 2, """fetchmany should have returned a
+        self.assertEqual(len(res), 2, """fetchmany should have returned a
             list of length 2, but the list was %i elements long""" % len(res))
         cursor.arraysize = 5
         res = cursor.fetchmany()
-        self.failUnlessEqual(len(res), 5, """fetchmany should have returned a
+        self.assertEqual(len(res), 5, """fetchmany should have returned a
             list of length 5, but the list was %i elements long""" % len(res))
 
         self.cur.close()
-        self.failUnlessRaises(sqlite.ProgrammingError,
+        self.assertRaises(sqlite.ProgrammingError,
                               self.cur.fetchmany, 10)
 
     def CheckCursorFetchall(self):
-        self.failUnless(hasattr(self.cur, "fetchall") and
+        self.assertTrue(hasattr(self.cur, "fetchall") and
                         type(self.cur.fetchall) == types.MethodType,
                         'fetchall is not a method of the Cursor object')
         self.cur.close()
-        self.failUnlessRaises(sqlite.ProgrammingError,
+        self.assertRaises(sqlite.ProgrammingError,
                               self.cur.fetchall)
 
     def CheckCursorSetoutputsize(self):
-        self.failUnless(hasattr(self.cur, "setoutputsize") and
+        self.assertTrue(hasattr(self.cur, "setoutputsize") and
                         type(self.cur.setoutputsize) == types.MethodType,
                         'setoutputsize is not a method of the Cursor object')
         self.cur.close()
-        self.failUnlessRaises(sqlite.ProgrammingError,
+        self.assertRaises(sqlite.ProgrammingError,
                               self.cur.setoutputsize, 1024)
 
     def CheckCursorSetinputsizes(self):
-        self.failUnless(hasattr(self.cur, "setinputsizes") and
+        self.assertTrue(hasattr(self.cur, "setinputsizes") and
                         type(self.cur.setinputsizes) == types.MethodType,
                         'setinputsizes is not a method of the Cursor object')
         self.cur.close()
-        self.failUnlessRaises(sqlite.ProgrammingError,
+        self.assertRaises(sqlite.ProgrammingError,
                               self.cur.setinputsizes, [1, 2, 3])
 
     def CheckExecuteWithSingleton(self):
         """Test execute() with a singleton string as the parameter."""
         try:
             self.cur.execute("select max(3,4)")
-        except StandardError, msg:
+        except Exception as msg:
             self.fail(msg)
 
-        self.assertEqual(type(self.cur.description), types.TupleType,
+        self.assertEqual(type(self.cur.description), tuple,
                          "cur.description should be a tuple, but isn't.")
 
         clen = len(self.cur.description)
@@ -229,7 +229,7 @@ class moduleTestCases(unittest.TestCase, testsupport.TestSupport):
                          "Length of cur.description[0] is %d, it should be 7." %
                          len(self.cur.description[0]))
 
-        self.failUnless(self.cur.description[0][0] == "max(3,4)"    and
+        self.assertTrue(self.cur.description[0][0] == "max(3,4)"    and
                         self.cur.description[0][1] == sqlite.NUMBER and
                         self.cur.description[0][2] == None          and
                         self.cur.description[0][3] == None          and
@@ -243,7 +243,7 @@ class moduleTestCases(unittest.TestCase, testsupport.TestSupport):
         """Test execute() with a tuple as the parameter."""
         try:
             self.cur.execute("select max(?, ?)", (4, 5))
-        except StandardError, msg:
+        except Exception as msg:
             self.fail(msg)
         self.cur.close()
 
@@ -253,20 +253,20 @@ class moduleTestCases(unittest.TestCase, testsupport.TestSupport):
         return
         try:
             self.cur.execute("select max(%(n1)s, %(n2)s)", {"n1": 5, "n2": 6})
-        except StandardError, msg:
+        except Exception as msg:
             self.fail(msg)
         self.cur.close()
 
     def CheckQuotingOfLong(self):
         """Test whether longs are quoted properly for SQL."""
         try:
-            self.cur.execute("select ? + ? as x", (5L, 6L))
-        except StandardError, msg:
+            self.cur.execute("select ? + ? as x", (5, 6))
+        except Exception as msg:
             self.fail(msg)
         res = self.cur.fetchone()
-        self.failUnlessEqual(res.x, 11L,
+        self.assertEqual(res.x, 11,
             "The addition of long should have returned %i, returned %i"
-                % (11L, res.x))
+                % (11, res.x))
 
     def CheckCursorIterator(self):
         self.cur.execute("create table test (id, name)")
@@ -278,13 +278,13 @@ class moduleTestCases(unittest.TestCase, testsupport.TestSupport):
             counter = 0
             for row in self.cur:
                 if counter == 0:
-                    self.failUnlessEqual(row.id, 1,
+                    self.assertEqual(row.id, 1,
                         "row.id should have been 1, was %i" % row.id)
                 elif counter == 1:
-                    self.failUnlessEqual(row.id, 2,
+                    self.assertEqual(row.id, 2,
                         "row.id should have been 2, was %i" % row.id)
                 elif counter == 2:
-                    self.failUnlessEqual(row.id, 3,
+                    self.assertEqual(row.id, 3,
                         "row.id should have been 3, was %i" % row.id)
                 else:
                     self.fail("Iterated over too many rows.")
@@ -294,22 +294,22 @@ class moduleTestCases(unittest.TestCase, testsupport.TestSupport):
             counter = 0
             try:
                 while 1:
-                    row = self.cur.next()
+                    row = next(self.cur)
                     if counter == 0:
-                        self.failUnlessEqual(row.id, 1,
+                        self.assertEqual(row.id, 1,
                             "row.id should have been 1, was %i" % row.id)
                     elif counter == 1:
-                        self.failUnlessEqual(row.id, 2,
+                        self.assertEqual(row.id, 2,
                             "row.id should have been 2, was %i" % row.id)
                     elif counter == 2:
-                        self.failUnlessEqual(row.id, 3,
+                        self.assertEqual(row.id, 3,
                             "row.id should have been 3, was %i" % row.id)
                     else:
                         self.fail("Iterated over too many rows.")
                     counter += 1
             except IndexError:
                 pass
-            self.failUnlessEqual(counter, 3,
+            self.assertEqual(counter, 3,
                 "Should have iterated over 3 items, was: %i" % counter)
 
     def CheckCursorScrollAndRownumber(self):
@@ -317,27 +317,27 @@ class moduleTestCases(unittest.TestCase, testsupport.TestSupport):
         values = [("foo",)] * 20
         self.cur.executemany("insert into test (name) values (?)", values)
         self.cur.execute("select name from test")
-        self.failUnlessEqual(self.cur.rownumber, 0,
+        self.assertEqual(self.cur.rownumber, 0,
             "Directly after execute, rownumber must be 0, is: %i"
                 % self.cur.rownumber)
 
         self.cur.scroll(1, "absolute")
         self.cur.scroll(5, "absolute")
-        self.failUnlessEqual(self.cur.rownumber, 5,
+        self.assertEqual(self.cur.rownumber, 5,
             "rownumber should be 5, is: %i"
                 % self.cur.rownumber)
 
         self.cur.scroll(1, "relative")
-        self.failUnlessEqual(self.cur.rownumber, 6,
+        self.assertEqual(self.cur.rownumber, 6,
             "rownumber should be 6, is: %i"
                 % self.cur.rownumber)
 
-        self.failUnlessRaises(sqlite.NotSupportedError, self.cur.scroll,
+        self.assertRaises(sqlite.NotSupportedError, self.cur.scroll,
                               -2, "relative")
-        self.failUnlessRaises(sqlite.NotSupportedError, self.cur.scroll,
+        self.assertRaises(sqlite.NotSupportedError, self.cur.scroll,
                               5, "absolute")
 
-        self.failUnlessRaises(IndexError, self.cur.scroll, 1000, "absolute")
+        self.assertRaises(IndexError, self.cur.scroll, 1000, "absolute")
 
     def CheckCursorConnection(self):
         if not isinstance(self.cur.connection, weakref.ProxyType) and \
@@ -348,11 +348,11 @@ class moduleTestCases(unittest.TestCase, testsupport.TestSupport):
         self.cur.execute("create table test (id integer primary key, name)")
 
         self.cur.execute("insert into test(name) values ('foo')")
-        self.failUnlessEqual(self.cur.lastrowid, 1,
+        self.assertEqual(self.cur.lastrowid, 1,
             "lastrowid should be 1, is %i" % self.cur.lastrowid)
 
         self.cur.execute("insert into test(name) values ('foo')")
-        self.failUnlessEqual(self.cur.lastrowid, 2,
+        self.assertEqual(self.cur.lastrowid, 2,
             "lastrowid should be 2, is %i" % self.cur.lastrowid)
 
     def CheckResultObject(self):
@@ -362,17 +362,17 @@ class moduleTestCases(unittest.TestCase, testsupport.TestSupport):
 ##                              "cur.rowcount is %d, it should be 1." %
 ##                              self.cur.rowcount)
             self.res = self.cur.fetchall()
-        except StandardError, msg:
+        except Exception as msg:
             self.fail(msg)
 
-        self.assertEqual(type(self.res), types.ListType,
+        self.assertEqual(type(self.res), list,
                          'cur.fetchall() did not return a sequence.')
 
         self.assertEqual(len(self.res), 1,
                          'Length of the list of results is %d, it should be 1' %
                          len(self.res))
 
-        self.failUnless(isinstance(self.res[0], sqlite.main.Row),
+        self.assertTrue(isinstance(self.res[0], sqlite.main.Row),
                         'cur.fetchall() did not return a list of Rows.')
 
     def CheckResultFetchone(self):
@@ -382,17 +382,17 @@ class moduleTestCases(unittest.TestCase, testsupport.TestSupport):
 ##             self.assertEqual(self.cur.rowcount, 1,
 ##                              'cur.rowcount is %d, it should be 1.' %
 ##                              self.cur.rowcount)
-        except StandardError, msg:
+        except Exception as msg:
             self.fail(msg)
 
-        self.failUnless(isinstance(self.res, sqlite.main.Row),
+        self.assertTrue(isinstance(self.res, sqlite.main.Row),
                         "cur.fetchone() does not return a Row.")
 
         try:
             self.res = self.cur.fetchone()
             self.assertEqual(self.res, None,
                              "res should be None at this point, but it isn't.")
-        except StandardError, msg:
+        except Exception as msg:
             self.fail(msg)
 
     def CheckRowCountAfterInsert(self):
@@ -403,7 +403,7 @@ class moduleTestCases(unittest.TestCase, testsupport.TestSupport):
             self.assertEqual(self.cur.rowcount, 1,
                             'cur.rowcount is %d, it should be 1.' %
                             self.cur.rowcount)
-        except StandardError, msg:
+        except Exception as msg:
             self.fail(msg)
 
     def CheckRowCountAfterUpdate(self):
@@ -417,7 +417,7 @@ class moduleTestCases(unittest.TestCase, testsupport.TestSupport):
             self.assertEqual(self.cur.rowcount, 3,
                             'cur.rowcount is %d, it should be 3.' %
                             self.cur.rowcount)
-        except StandardError, msg:
+        except Exception as msg:
             self.fail(msg)
 
     def CheckRowCountAfterDelete(self):
@@ -431,7 +431,7 @@ class moduleTestCases(unittest.TestCase, testsupport.TestSupport):
             self.assertEqual(self.cur.rowcount, 2,
                             'cur.rowcount is %d, it should be 2.' %
                             self.cur.rowcount)
-        except StandardError, msg:
+        except Exception as msg:
             self.fail(msg)
 
     def CheckSelectOfNonPrintableString(self):
@@ -442,51 +442,51 @@ class moduleTestCases(unittest.TestCase, testsupport.TestSupport):
             self.assertEqual(len(r.a), len(a),
                              "Length of result is %d, it should be %d."  %
                              (len(r.a), len(a)))
-            self.failUnless(r.a == a,
+            self.assertTrue(r.a == a,
                              "Result is '%s', it should be '%s'" % (r.a, a))
-        except StandardError, msg:
+        except Exception as msg:
             self.fail(msg)
 
     def CheckQuotingIntWithPercentS(self):
         try:
             self.cur.execute("create table test(a number)")
             self.cur.execute("insert into test(a) values (?)", (5,))
-        except StandardError, msg:
+        except Exception as msg:
             self.fail(msg)
 
     def CheckQuotingLongWithPercentS(self):
         try:
             self.cur.execute("create table test(a number)")
-            self.cur.execute("insert into test(a) values (?)", (50000000L,))
-        except StandardError, msg:
+            self.cur.execute("insert into test(a) values (?)", (50000000,))
+        except Exception as msg:
             self.fail(msg)
 
     def CheckQuotingFloatWithPercentS(self):
         try:
             self.cur.execute("create table test(a number)")
             self.cur.execute("insert into test(a) values (?)", (-3.24,))
-        except StandardError, msg:
+        except Exception as msg:
             self.fail(msg)
 
     def CheckQuotingIntWithPyQuoting(self):
         try:
             self.cur.execute("create table test(a number)")
             self.cur.execute("insert into test(a) values (?)", (5,))
-        except StandardError, msg:
+        except Exception as msg:
             self.fail(msg)
 
     def CheckQuotingLongWithPyQuoting(self):
         try:
             self.cur.execute("create table test(a number)")
-            self.cur.execute("insert into test(a) values (?)", (50000000L,))
-        except StandardError, msg:
+            self.cur.execute("insert into test(a) values (?)", (50000000,))
+        except Exception as msg:
             self.fail(msg)
 
     def CheckQuotingFloatWithPyQuoting(self):
         try:
             self.cur.execute("create table test(a number)")
             self.cur.execute("insert into test(a) values (?)", (-3.24,))
-        except StandardError, msg:
+        except Exception as msg:
             self.fail(msg)
 
     def CheckBlob(self):
@@ -499,7 +499,7 @@ class moduleTestCases(unittest.TestCase, testsupport.TestSupport):
         self.assertEqual(len(r[0]), len(a),
                          "Length of result is %d, it should be %d."  %
                          (len(r[0]), len(a)))
-        self.failUnless(r.a == a,
+        self.assertTrue(r.a == a,
                         "Result is '%s', it should be '%s'" % (r.a, a))
 
     def CheckNone(self):
@@ -554,12 +554,12 @@ class moduleTestCases(unittest.TestCase, testsupport.TestSupport):
         import tempfile, os
         fd, fn = tempfile.mkstemp()
         os.close(fd)
-        os.chmod(fn, 0444)
+        os.chmod(fn, 0o444)
         cx = sqlite.connect(fn)
         cu = cx.cursor()
         try:
             cu.execute('CREATE TABLE foo (bar)')
-        except sqlite.ProgrammingError, e:
+        except sqlite.ProgrammingError as e:
             assert (str(e) == "attempt to write a readonly database")
 
     def CheckNoColumnNameResult(self):

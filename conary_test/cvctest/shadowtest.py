@@ -30,7 +30,7 @@ from conary import errors, conarycfg
 from conary.versions import Label, VersionFromString as VFS
 from conary.checkin import ConaryStateFromFile, CheckinCallback
 from conary import repository
-from sourcetest import StatWrapper
+from .sourcetest import StatWrapper
 from conary.build import use
 from conary.conaryclient import branch
 from conary.lib import log
@@ -46,7 +46,7 @@ class ShadowTest(rephelp.RepositoryHelper):
             verDict = repos.getTroveLeavesByLabel(
                                 { trove : { Label(verType) : None } } )
         assert(len(verDict) == 1)
-        assert(verDict[trove].keys()[0].asString() == ver)
+        assert(list(verDict[trove].keys())[0].asString() == ver)
 
     def _shadowPrefix(self, shadow):
         shadowHost, label = shadow.split('@')
@@ -145,7 +145,7 @@ class ShadowTest(rephelp.RepositoryHelper):
 
         def checkMetadata(ver, shortDesc):
             md = self.findAndGetTrove('testcase:source=%s' % ver).getMetadata()
-            self.assertEquals(md['shortDesc'], shortDesc)
+            self.assertEqual(md['shortDesc'], shortDesc)
 
         def updateMetadata(ver, shortDesc):
             repos = self.openRepository()
@@ -706,7 +706,7 @@ class TestGroup(GroupRecipe):
         self.cookFromRepository('test')
         try:
             self.mkbranch(['test:runtime'], 'localhost@rpl:shadow', shadow=True)
-        except errors.ParseError, err:
+        except errors.ParseError as err:
             assert(str(err) == 'Cannot branch or shadow individual components:'
                                ' test:runtime')
 
@@ -739,7 +739,7 @@ class TestGroup(GroupRecipe):
         try:
             self.mkbranch(['test:source=1.0'], 'localhost@rpl:shadow', 
                           shadow=True)
-        except branch.BranchError, err:
+        except branch.BranchError as err:
             assert(str(err) == '''\
 Cannot shadow backwards - already shadowed
     test:source=/localhost@rpl:linux/2.0-1[]
@@ -762,7 +762,7 @@ cannot shadow earlier trove
         self.openRepository(0)
         try:
             self.checkout("test", 'localhost1@rpl:shadow')
-        except repository.errors.FileStreamMissing, e:
+        except repository.errors.FileStreamMissing as e:
             j = """File Stream Missing
     The following file stream was not found on the server:
     fileId: 1602c79ea7aeb2cc64c6f11b45bc1be141f610d2

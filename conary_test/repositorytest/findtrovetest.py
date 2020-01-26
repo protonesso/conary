@@ -95,7 +95,7 @@ class FindTroveTest(rephelp.RepositoryHelper):
            }
                 
         
-        result = repos.findTroves(self.cfg.installLabelPath, req.keys(),
+        result = repos.findTroves(self.cfg.installLabelPath, list(req.keys()),
                                   self.cfg.flavor)
         reqcopy = copy.deepcopy(req)
         for trove in req:
@@ -117,14 +117,14 @@ class FindTroveTest(rephelp.RepositoryHelper):
 
         # okay, now search with no flavor
         newFlavorPath = None
-        result = repos.findTroves(self.cfg.installLabelPath, req.keys(),
+        result = repos.findTroves(self.cfg.installLabelPath, list(req.keys()),
                                   newFlavorPath)
 
 
 
 
 
-        result = repos.findTroves(self.cfg.installLabelPath, req.keys(),
+        result = repos.findTroves(self.cfg.installLabelPath, list(req.keys()),
                                   self.cfg.flavor)
 
         req = [ 'nonesuch=/localhost@rpl:linux', 
@@ -134,7 +134,7 @@ class FindTroveTest(rephelp.RepositoryHelper):
         try:
             troves = [updatecmd.parseTroveSpec(x) for x in req]
             result = repos.findTroves(self.cfg.installLabelPath, troves, None)
-        except errors.TroveNotFound, msg:
+        except errors.TroveNotFound as msg:
             lines = ('%s' % msg).split('\n')
             for i, (n,v,f) in enumerate(troves):
                 assert(n in lines[i + 1] and v in lines[i + 1])
@@ -145,7 +145,7 @@ class FindTroveTest(rephelp.RepositoryHelper):
             repos.findTroves(self.cfg.installLabelPath, 
                              [('nonesuch', ':rpl/1.0', None)])
 
-        except errors.TroveNotFound, msg:
+        except errors.TroveNotFound as msg:
             assert(str(msg) == 'revision 1.0 of nonesuch was not found'
                                ' on label(s) localhost@rpl:rpl')
 
@@ -156,7 +156,7 @@ class FindTroveTest(rephelp.RepositoryHelper):
                                       (('nonesuch', '1.0-1-1', None),
                                        ('nonesuch', '', None)),
                                       newFlavorPath)
-        except errors.TroveNotFound, msg:
+        except errors.TroveNotFound as msg:
             assert(str(msg) == '2 troves not found:\nrevision 1.0-1-1 of nonesuch was not found on label(s) localhost@rpl:linux\nnonesuch was not found on path localhost@rpl:linux\n')
         else:
             assert(False)
@@ -167,7 +167,7 @@ class FindTroveTest(rephelp.RepositoryHelper):
             repos.findTroves(self.cfg.installLabelPath,
                              [('test1:runtime', 'localhost@rpl:li:nux', None)],
                              None)
-        except errors.TroveNotFound, msg:
+        except errors.TroveNotFound as msg:
             assert(str(msg) == 'invalid version localhost@rpl:li:nux')
 
         # test querying by invalid Release
@@ -175,7 +175,7 @@ class FindTroveTest(rephelp.RepositoryHelper):
             repos.findTroves(self.cfg.installLabelPath,
                              [('test1:runtime', '1-0-1-1', None)],
                              None)
-        except errors.TroveNotFound, msg:
+        except errors.TroveNotFound as msg:
             assert(str(msg) == "too many '-' characters in release string")
 
         # can't have two slashes in a version string
@@ -183,7 +183,7 @@ class FindTroveTest(rephelp.RepositoryHelper):
             repos.findTroves(self.cfg.installLabelPath,
                              [('test1:runtime', ':rpl/devel/1.0', None)],
                              None)
-        except errors.TroveNotFound, msg:
+        except errors.TroveNotFound as msg:
             assert(str(msg) == 'incomplete version string'
                                ' :rpl/devel/1.0 not allowed')
 
@@ -191,7 +191,7 @@ class FindTroveTest(rephelp.RepositoryHelper):
             repos.findTroves(self.cfg.installLabelPath,
                              [('test1:runtime', 'rpl/1.0', None)],
                              None)
-        except errors.TroveNotFound, msg:
+        except errors.TroveNotFound as msg:
             assert(str(msg) == 'Illegal version prefix rpl/1.0'
                                ' for test1:runtime')
 
@@ -288,7 +288,7 @@ class FindTroveTest(rephelp.RepositoryHelper):
 
         newFlavorPath = [fp_x86_64, fp_nossl_rl, fp_ssl_norl, fp_nossl_norl] 
 
-        result = repos.findTroves(self.cfg.installLabelPath, req.keys(),
+        result = repos.findTroves(self.cfg.installLabelPath, list(req.keys()),
                                   newFlavorPath,
                                   affinityDatabase=db)
         reqcopy = copy.deepcopy(req)
@@ -298,7 +298,7 @@ class FindTroveTest(rephelp.RepositoryHelper):
                 reqcopy[trove].remove(foundTrove)
             assert(not reqcopy[trove])
 
-        result = repos.findTroves(self.cfg.installLabelPath, req.keys(),
+        result = repos.findTroves(self.cfg.installLabelPath, list(req.keys()),
                                   newFlavorPath, 
                                   affinityDatabase=db,
                                   acrossLabels=True)
@@ -389,7 +389,7 @@ class FindTroveTest(rephelp.RepositoryHelper):
         labelPath = [versions.Label('localhost@rpl:linux'),
                      versions.Label('localhost@rpl:branch') ]
 
-        result = repos.findTroves(labelPath, req.keys(),
+        result = repos.findTroves(labelPath, list(req.keys()),
                                   self.cfg.flavor, 
                                   acrossLabels=True)
 
@@ -409,7 +409,7 @@ class FindTroveTest(rephelp.RepositoryHelper):
                                                            nossl) ]
 
         req = {('test1:runtime', '', None): [t1, t1nossl]}
-        result = repos.findTroves(labelPath, req.keys(),
+        result = repos.findTroves(labelPath, list(req.keys()),
                                   flavorPath, 
                                   acrossFlavors=True)
 
@@ -421,7 +421,7 @@ class FindTroveTest(rephelp.RepositoryHelper):
             assert(not reqcopy[trove])
 
         req = {('test1:runtime', '', None): [t1, t1nossl, t1b, t1bnossl]}
-        result = repos.findTroves(labelPath, req.keys(),
+        result = repos.findTroves(labelPath, list(req.keys()),
                                   flavorPath, acrossLabels=True,
                                   acrossFlavors=True)
 
@@ -446,7 +446,7 @@ class FindTroveTest(rephelp.RepositoryHelper):
                                       affinityDatabase=db)
 
         # the result should be no troves found on that label
-        except errors.TroveNotFound, e:
+        except errors.TroveNotFound as e:
             assert(str(e) == 'test1:runtime was not found on path localhost@rpl:linux')
         else:
             raise
@@ -472,7 +472,7 @@ class FindTroveTest(rephelp.RepositoryHelper):
             repos.findTroves(installLabelPath,
                              [('foo', None, None)],
                              self.cfg.flavor)
-        except errors.TroveNotFound, msg:
+        except errors.TroveNotFound as msg:
             assert(str(msg) == 'foo was not found on path localhost@rpl:0,'
                                ' localhost@rpl:1, localhost@rpl:2,'
                                ' localhost@rpl:3, localhost@rpl:4')
@@ -481,7 +481,7 @@ class FindTroveTest(rephelp.RepositoryHelper):
             repos.findTroves(installLabelPath,
                              [('foo', '1', None)],
                              self.cfg.flavor)
-        except errors.TroveNotFound, msg:
+        except errors.TroveNotFound as msg:
             assert(str(msg) == 'revision 1 of foo was not found on label(s)'
                                ' localhost@rpl:0, localhost@rpl:1,'
                                ' localhost@rpl:2, localhost@rpl:3,'
@@ -581,7 +581,7 @@ class FindTroveTest(rephelp.RepositoryHelper):
             try:
                 results = repos.findTroves(None, [('foo:run', v, None)],
                                            affinityDatabase=db)
-            except conaryerrors.LabelPathNeeded, err:
+            except conaryerrors.LabelPathNeeded as err:
                 if not failStr:
                     raise
                 assert(str(err) == failStr)
@@ -965,8 +965,8 @@ class FindTroveTest(rephelp.RepositoryHelper):
             results = _find('foo:run', getLeaves=False)
             assert(results == expectedResults)
         except AssertionError:
-           print "\nexpected: ['%s']" % "', '".join(expectedResults) 
-           print "got ['%s']" % "', '".join(results)
+           print("\nexpected: ['%s']" % "', '".join(expectedResults)) 
+           print("got ['%s']" % "', '".join(results))
            raise
 
     def testExactFlavors(self):
@@ -1018,8 +1018,8 @@ class FindTroveTest(rephelp.RepositoryHelper):
             try:
                 repos.findTrove(self.cfg.installLabelPath, query, self.cfg.flavor, affinityDatabase=db)
                 assert(0)
-            except errors.TroveNotFound, err:
-                self.assertEquals(str(err), message)
+            except errors.TroveNotFound as err:
+                self.assertEqual(str(err), message)
         def _testWorks(query):
             query = cmdline.parseTroveSpec(query)
             repos.findTrove(self.cfg.installLabelPath, query, self.cfg.flavor)
@@ -1066,8 +1066,8 @@ class FindTroveTest(rephelp.RepositoryHelper):
             try:
                 repos.findTrove(self.cfg.installLabelPath, query, self.cfg.flavor)
                 assert(0)
-            except errors.TroveNotFound, err:
-                self.assertEquals(str(err), message)
+            except errors.TroveNotFound as err:
+                self.assertEqual(str(err), message)
 
         self.addComponent('foo:run=1[is:x86 x86_64]')
         self.addComponent('foo:run=1[is:x86]')

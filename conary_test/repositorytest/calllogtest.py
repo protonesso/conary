@@ -15,7 +15,7 @@
 #
 
 
-import cPickle
+import pickle
 import os
 import struct
 
@@ -45,7 +45,7 @@ class CallLogTest(rephelp.RepositoryHelper):
         ]
 
         for info in infos:
-            entData = cPickle.dumps(info)
+            entData = pickle.dumps(info)
             stream.write(struct.pack("!I", len(entData)))
             stream.write(entData)
         stream.close()

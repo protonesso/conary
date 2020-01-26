@@ -49,8 +49,8 @@ def troveDictMatches(troveDict, troveTups):
     d = troveDict.copy()
 
     foundCount = 0
-    for n, versionDict in troveDict.iteritems():
-        for v, flavors in versionDict.iteritems():
+    for n, versionDict in troveDict.items():
+        for v, flavors in versionDict.items():
             for f in flavors:
                 if (n,v,f) not in troveTups:
                     return False
@@ -413,7 +413,7 @@ class ChangesetFilesTest(rephelp.RepositoryHelper):
         newCs, remainder = trvSrc.createChangeSet([relChg], recurse=False,
                                        withFiles=False, withFileContents=False)
         assert(not remainder)
-        trvCs = newCs.iterNewTroveList().next()
+        trvCs = next(newCs.iterNewTroveList())
         assert(trvCs.getNewVersion() == r2.getVersion())
         assert(trvCs.getOldVersion() == r1.getVersion())
 
@@ -498,7 +498,7 @@ class ChangesetFilesTest(rephelp.RepositoryHelper):
         # Catch an early bug with a bad index
         try:
             ts1 = stack(s1)
-        except Exception, e:
+        except Exception as e:
             # No exception expected
             self.fail("Caught exception: %s" % e)
         # The implementation of stack says so...

@@ -37,7 +37,7 @@ class NetworkConvertors(object):
         return versions.VersionFromString(v)
 
     def versionStringToFrozen(self, verStr, timeStamps):
-        if isinstance(timeStamps, basestring):
+        if isinstance(timeStamps, str):
             timeStamps = [float(x) for x in timeStamps.split(':')]
         timeStamps = ['%.3f' % x for x in timeStamps]
         return versions.strToFrozen(verStr, timeStamps)

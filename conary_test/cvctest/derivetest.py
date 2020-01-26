@@ -40,7 +40,7 @@ class DeriveTest(rephelp.RepositoryHelper):
                       extract = True)
 
         recipe = open(self.workDir  + '/foo/simple.recipe').read()
-        self.assertEquals(recipe, """
+        self.assertEqual(recipe, """
 class SimpleRecipe(DerivedPackageRecipe):
     name = 'simple'
     version = '1'
@@ -73,6 +73,6 @@ class SimpleRecipe(DerivedPackageRecipe):
 """)
         self.verifyFile(self.workDir + '/foo/_ROOT_/foo', 'contents\n')
         self.verifyFile(self.workDir + '/foo/_OLD_ROOT_/foo', 'contents\n')
-        self.assertEquals(
+        self.assertEqual(
         sorted(os.listdir(os.path.join(self.workDir, 'foo'))),
         sorted(['CONARY', '_ROOT_', 'simple.recipe', '_OLD_ROOT_']))

@@ -92,18 +92,18 @@ class MainHandler(object):
         # get the longest command to set the width of the command
         # column
         width = 0
-        commandList = set(self._supportedCommands.itervalues())
+        commandList = set(self._supportedCommands.values())
         for command in commandList:
             if command.hidden:
                 continue
             width = max(width, len('/'.join(command.commands)))
         # group the commands together
         groups = dict.fromkeys(x.commandGroup for x in commandList)
-        for group in groups.iterkeys():
+        for group in groups.keys():
             groups[group] = [ x for x in commandList if
                               x.commandGroup == group ]
         # Sort the groups
-        groupNames = groups.keys()
+        groupNames = list(groups.keys())
         groupNames.sort()
         for group in groupNames:
             if group == 'Hidden Commands':
@@ -117,12 +117,12 @@ class MainHandler(object):
             if not filtered:
                 continue
             # print the header for the command group
-            print
-            print group
+            print()
+            print(group)
             # sort the commands by the first command name
             for command in sorted(filtered, key=lambda x: x.commands[0]):
-                print '  %-*s  %s' %(width, '/'.join(command.commands),
-                                     command.help)
+                print('  %-*s  %s' %(width, '/'.join(command.commands),
+                                     command.help))
         return rc
 
     def getConfigFile(self, argv):
@@ -130,7 +130,7 @@ class MainHandler(object):
             Find the appropriate config file
         """
         if not self.configClass:
-            raise RuntimeError, ('Must define a configClass to use with this'
+            raise RuntimeError('Must define a configClass to use with this'
                                  ' main handler')
         if '--skip-default-config' in argv:
             argv.remove('--skip-default-config')
@@ -211,7 +211,7 @@ class MainHandler(object):
         supportedCommands = self._supportedCommands
 
         if '--version' in argv:
-            print self.version
+            print(self.version)
             return
 
         if cfg is None:
@@ -232,9 +232,9 @@ class MainHandler(object):
             argSet, argv = self._getPreCommandOptions(argv, cfg)
         except debuggerException:
             raise
-        except options.OptionError, e:
+        except options.OptionError as e:
             self.usage()
-            print >>sys.stderr, e
+            print(e, file=sys.stderr)
             sys.exit(e.val)
 
         thisCommand = self.getCommand(argv, cfg)
@@ -250,14 +250,14 @@ class MainHandler(object):
                                         params, {}, cfg,
                                         usage=self._getUsage(commandName),
                                         argv=argv, **kwargs)
-        except debuggerException, e:
+        except debuggerException as e:
             raise
-        except options.OptionError, e:
+        except options.OptionError as e:
             e.parser.print_help()
-            print >> sys.stderr, e
+            print(e, file=sys.stderr)
             sys.exit(e.val)
-        except versions.ParseError, e:
-            print >> sys.stderr, e
+        except versions.ParseError as e:
+            print(e, file=sys.stderr)
             sys.exit(1)
 
         argSet.update(newArgSet)

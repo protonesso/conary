@@ -52,14 +52,14 @@ class RepQueryTest(rephelp.RepositoryHelper):
                     VERSION_FILTER_ALL, FLAVOR_FILTER_ALL, 
                     self.cfg.installLabelPath, self.cfg.flavor,
                     None)
-        except errors.ParseError, msg:
+        except errors.ParseError as msg:
             assert(str(msg) == 'Error with spec "=conary.rpath.com@": Trove name is required')
         else:
             assert(0)
 
 
     def _checkTupVers(self, tups, vers):
-        for tup, item in itertools.izip(tups, vers):
+        for tup, item in zip(tups, vers):
             if isinstance(item, (list, tuple)):
                 verStr, flStr = item
             else:
@@ -452,7 +452,7 @@ class RepQueryTest(rephelp.RepositoryHelper):
 
             troveSpecs = [ cmdline.parseTroveSpec(x) for x in troveSpecs ]
             results = source.findTroves(None, troveSpecs)
-            receivedTups = itertools.chain(*results.itervalues())
+            receivedTups = itertools.chain(*iter(results.values()))
             assert(set(receivedTups) == set(tups))
 
 
@@ -575,17 +575,17 @@ class RepQueryTest(rephelp.RepositoryHelper):
         buildReqs2 = [ ('py', '1', 'is: x'), ('my', '1', 'is: y'),
             ('by', '2', 'is: z')]
         rf1 = rephelp.RegularFile(contents='1\n2\n3\n4\n5\n6\n7\n8\n',
-            perms = 0644, provides = prov1, requires = req1,
+            perms = 0o644, provides = prov1, requires = req1,
             mtime = 1136921017,)
         rf2 = rephelp.RegularFile(contents='1\n2\n4\n5\n6\n7\n8\n9\n',
-            perms = 0755, provides = prov2, requires = req2,
+            perms = 0o755, provides = prov2, requires = req2,
             mtime = 1136921317, tags=['tag2', 'tag1', 'tag3'])
         rf3 = rephelp.RegularFile(contents='1\n2\n4\n5\n6\n7\n8\n10\n',
-            perms = 0400, provides = prov3, requires = req3,
+            perms = 0o400, provides = prov3, requires = req3,
             mtime = 1136921017)
         # rf5 differs from rf1 just by tags
         rf5 = rephelp.RegularFile(contents='1\n2\n3\n4\n5\n6\n7\n8\n',
-            perms = 0644, provides = prov1, requires = req1,
+            perms = 0o644, provides = prov1, requires = req1,
             mtime = 1136921017, tags=['tag2', 'tag1', 'tag3'])
         self.addComponent('foo:run', '1', 'is:x86',
             [('/usr/bin/foo', rf1),
@@ -651,10 +651,10 @@ class RepQueryTest(rephelp.RepositoryHelper):
         prov1 = "trove:bar(1) trove:baz(1)"
         prov2 = "trove:bar(1) trove:baz(1) soname: ELF32/lib/foo2(blah)"
         rf1 = rephelp.RegularFile(contents='1\n2\n3\n4\n5\n6\n7\n8\n',
-            perms = 0644, provides = prov1, requires = req1,
+            perms = 0o644, provides = prov1, requires = req1,
             mtime = 1176921017,)
         rf2 = rephelp.RegularFile(contents='1\n2\n4\n5\n6\n7\n8\n9\n',
-            perms = 0755, provides = prov2, requires = req2,
+            perms = 0o755, provides = prov2, requires = req2,
             mtime = 1176921317, tags=['tag2', 'tag1', 'tag3'])
 
         self.addComponent('foo:run', '1', 'is:x86', [('/usr/bin/foo', rf1)])
@@ -684,7 +684,7 @@ class RepQueryTest(rephelp.RepositoryHelper):
     def testRdiff3(self):
         # Have a file change from regular file to symbolic link
         rf1 = rephelp.RegularFile(contents='1\n2\n3\n4\n5\n6\n7\n8\n',
-            perms = 0644, mtime = 1136921017)
+            perms = 0o644, mtime = 1136921017)
         lf1 = rephelp.Symlink("/etc/passwd")
 
         self.addComponent('foo:run', '1', [('/usr/bin/foo', rf1)])
@@ -707,10 +707,10 @@ class RepQueryTest(rephelp.RepositoryHelper):
         prov1 = "trove:bar(1) trove:baz(1)"
         prov2 = "trove:bar(1) trove:baz(1) soname: ELF32/lib/foo2(blah)"
         rf1 = rephelp.RegularFile(contents='1\n2\n3\n4\n5\n6\n7\n8\n',
-            perms = 0644, provides = prov1, requires = req1,
+            perms = 0o644, provides = prov1, requires = req1,
             mtime = 1176921017,)
         rf2 = rephelp.RegularFile(contents='1\n2\n4\n5\n6\n7\n8\n9\n',
-            perms = 0755, provides = prov2, requires = req2,
+            perms = 0o755, provides = prov2, requires = req2,
             mtime = 1176921317, tags=['tag2', 'tag1', 'tag3'])
 
         self.addComponent('foo:run', '1', [('/usr/bin/foo', rf1)])
@@ -793,9 +793,9 @@ class RepQueryTest(rephelp.RepositoryHelper):
         # mkinitrd=conary.rpath.com@rpl:1--usplash.rb.rpath.com@rpl:1
 
         rf1 = rephelp.RegularFile(contents='\000\001\002\003',
-            perms = 0644, mtime = 1176921017,)
+            perms = 0o644, mtime = 1176921017,)
         rf2 = rephelp.RegularFile(contents='\000\001\003\005',
-            perms = 0644, mtime = 1176921317,)
+            perms = 0o644, mtime = 1176921317,)
 
         v1 = versions.ThawVersion('/localhost@rpl:1/1:1-1-1')
         v2 = versions.ThawVersion('/localhost1@rpl:2/2:2-2-2')
@@ -817,9 +817,9 @@ class RepQueryTest(rephelp.RepositoryHelper):
     def testRdiff9(self):
         """Binary changes to config; using --diff"""
         rf1 = rephelp.RegularFile(contents='1\n2\n3\n4\n5\n6\n7\n8\n',
-            perms = 0644, mtime = 1136921017, config=False)
+            perms = 0o644, mtime = 1136921017, config=False)
         rf2 = rephelp.RegularFile(contents='1\n2\n4\n5\n6\n7\n8\n9\n',
-            perms = 0644, mtime = 1136921317, config=True)
+            perms = 0o644, mtime = 1136921317, config=True)
 
         self.addComponent('foo:config', '1', [('/etc/foo', rf1)])
         self.addComponent('foo:config', '2', [('/etc/foo', rf2)])

@@ -18,7 +18,7 @@
 import cmd
 import sys
 from conary import dbstore
-import sqlerrors
+from . import sqlerrors
 import os
 import itertools
 import time
@@ -71,7 +71,7 @@ type ".quit" to exit, ".help" for help"""
         elif db:
             self.db = db
         else:
-            raise RuntimeError, 'driver and path OR db must be given'
+            raise RuntimeError('driver and path OR db must be given')
         self.cu = self.db.cursor()
 
     def multiline(self, firstline=''):
@@ -86,7 +86,7 @@ type ".quit" to exit, ".help" for help"""
                 old_hist.append(readline.get_current_history_length())
             if self.use_rawinput:
                 try:
-                    line = raw_input(self.multiline_prompt)
+                    line = input(self.multiline_prompt)
                 except EOFError:
                     line = 'EOF'
             else:
@@ -98,7 +98,7 @@ type ".quit" to exit, ".help" for help"""
                 else:
                     line = line[:-1] # chop \n
             if line == 'EOF':
-                print
+                print()
                 break
             full_input.append(line)
             if ';' in line:
@@ -206,7 +206,7 @@ type ".quit" to exit, ".help" for help"""
             for isrow, line in lines:
                 if isrow:
                     rows += 1
-                print line
+                print(line)
             end = time.time()
         return rows, end
 
@@ -215,7 +215,7 @@ type ".quit" to exit, ".help" for help"""
 
         if cmd == 'EOF':
             # EOF means exit.  print a new line to clean up
-            print
+            print()
             return True
 
         if not cmd.endswith(';'):
@@ -241,25 +241,25 @@ type ".quit" to exit, ".help" for help"""
             if r'%(' in cmd:
                 cmd = cmd % self.db.keywords
             self.cu.execute(cmd)
-        except sqlerrors.DatabaseError, e:
+        except sqlerrors.DatabaseError as e:
             if len(e.args) > 1:
-                print 'Error:', str(e.args[0])
+                print('Error:', str(e.args[0]))
             else:
-                print 'Error:', str(e)
+                print('Error:', str(e))
             return False
-        except Exception, e:
-            print 'Error:', str(e)
+        except Exception as e:
+            print('Error:', str(e))
             return False
 
         # check for no rows
         if self.cu.fields() is None or not len(self.cu.fields()):
-            print "Query OK"
+            print("Query OK")
             # reload the schema, in case there was a change
             self.db.loadSchema()
         else: # display the results (if any)
             rows, end = self.display(self.cu)
             if self.show_stats and rows != -1:
-                print '%d rows in set (%.2f sec)' %(rows, end - start)
+                print('%d rows in set (%.2f sec)' %(rows, end - start))
         return False
 
     def cmdloop(self):
@@ -270,7 +270,7 @@ type ".quit" to exit, ".help" for help"""
             except KeyboardInterrupt:
                 # let Ctrl+C just cancel input, like in a shell
                 self.intro = None
-                print
+                print()
                 continue
             break
         self.save_history()
@@ -293,8 +293,8 @@ type ".quit" to exit, ".help" for help"""
 
     def completedefault(self, text, line, begin, end):
         line = line.strip().lower()
-        tables = self.db.tables.keys()
-        views = self.db.views.keys()
+        tables = list(self.db.tables.keys())
+        views = list(self.db.views.keys())
         if (line.endswith('from') or line.endswith('into')
             or line.endswith('update')):
             candidates = tables + views
@@ -352,14 +352,14 @@ type ".quit" to exit, ".help" for help"""
         self.db.loadSchema()
         if arg in self.schemaBits:
             d = getattr(self.db, arg)
-            print '\n'.join(sorted(d.keys()))
+            print('\n'.join(sorted(d.keys())))
         else:
-            print 'unknown argument', arg
+            print('unknown argument', arg)
         return False
 
     def help__show(self):
-        print """show %s
-display database information""" % ' '.join('[%s]' % x for x in self.schemaBits)
+        print("""show %s
+display database information""" % ' '.join('[%s]' % x for x in self.schemaBits))
 
     def complete__show(self, text, *ignored):
         return [x for x in self.schemaBits if x.startswith(text)]
@@ -371,12 +371,12 @@ display database information""" % ' '.join('[%s]' % x for x in self.schemaBits)
         elif arg in self.no_args:
             self.show_headers = False
         else:
-            print 'unknown argument', arg
+            print('unknown argument', arg)
         return False
 
     def help__headers(self):
-        print """headers [on/off]
-turn the display of headers on or off"""
+        print("""headers [on/off]
+turn the display of headers on or off""")
 
     do__head = do__headers
     help__head = help__headers
@@ -390,12 +390,12 @@ turn the display of headers on or off"""
         elif arg in self.no_args:
             self.use_pager = False
         else:
-            print 'unknown argument', arg
+            print('unknown argument', arg)
         return False
 
     def help__pager(self):
-        print """pager [on/off]
-turn the use of the pager on or off"""
+        print("""pager [on/off]
+turn the use of the pager on or off""")
 
     complete__pager = complete__yesno
 
@@ -406,12 +406,12 @@ turn the use of the pager on or off"""
         elif arg in self.no_args:
             self.show_stats = False
         else:
-            print 'unknown argument', arg
+            print('unknown argument', arg)
         return False
 
     def help__stats(self):
-        print """stats [on/off]
-turn the display of query statistics on or off"""
+        print("""stats [on/off]
+turn the display of query statistics on or off""")
 
     complete__stats = complete__yesno
 
@@ -425,14 +425,14 @@ turn the display of query statistics on or off"""
         # to be unambiguous
         choices = [x for x in self.modes if x.startswith(arg)]
         if len(choices) != 1:
-            print 'unknown argument', arg
+            print('unknown argument', arg)
             return False
         self.set_mode(choices[0])
         return False
 
     def help__mode(self):
-        print """mode %s
-change the display mode""" % ' '.join('[%s]' %x for x in self.modes)
+        print("""mode %s
+change the display mode""" % ' '.join('[%s]' %x for x in self.modes))
 
     def complete__mode(self, text, *ignored):
         return [x for x in self.modes if x.startswith(text)]
@@ -454,15 +454,15 @@ change the display mode""" % ' '.join('[%s]' %x for x in self.modes)
             try:
                 col = int(col)
             except ValueError:
-                print 'invalid argument for .width column=width: %s' %col
+                print('invalid argument for .width column=width: %s' %col)
                 return False
             try:
                 width = int(width)
             except ValueError:
-                print 'invalid argument for .width column=width: %s' %width
+                print('invalid argument for .width column=width: %s' %width)
                 return False
             if col < 0:
-                print 'invalid argument for .width column=width: %s' %col
+                print('invalid argument for .width column=width: %s' %col)
             self.manual_widths[col - 1] = width
         else:
             new_widths = {}
@@ -471,15 +471,15 @@ change the display mode""" % ' '.join('[%s]' %x for x in self.modes)
                 try:
                     width = int(width)
                 except ValueError:
-                    print 'invalid argument for .width NUM NUM ...: %s' %width
+                    print('invalid argument for .width NUM NUM ...: %s' %width)
                     return False
                 new_widths[col] = width
 
             self.manual_widths.update(new_widths)
 
     def help__width(self):
-        print """width [col=width] [width width width ...] [auto] [manual]
-set the width of a column manually"""
+        print("""width [col=width] [width width width ...] [auto] [manual]
+set the width of a column manually""")
 
     complete__width = complete__noop
 
@@ -489,8 +489,8 @@ set the width of a column manually"""
         return True
 
     def help__quit(self):
-        print """quit
-quit the shell"""
+        print("""quit
+quit the shell""")
 
     complete__quit = complete__noop
 
@@ -501,8 +501,8 @@ quit the shell"""
         sys.stdout.flush()
 
     def help__reset(self):
-        print """reset
-shift the terminal back into mode 1 (like the reset command line tool)"""
+        print("""reset
+shift the terminal back into mode 1 (like the reset command line tool)""")
 
     complete__reset = complete__noop
 
@@ -513,8 +513,8 @@ shift the terminal back into mode 1 (like the reset command line tool)"""
         return cmd.Cmd.do_help(self, arg)
 
     def help__help(self):
-        print """help
-display help"""
+        print("""help
+display help""")
 
     complete__help = cmd.Cmd.complete_help
 

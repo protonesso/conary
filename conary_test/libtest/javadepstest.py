@@ -22,8 +22,8 @@ from conary.lib import javadeps
 
 class BasicTest(testhelp.TestCase):
     def testValidTLD(self):
-        self.assertEquals(javadeps._isValidTLD('foo'), False)
-        self.assertEquals(javadeps._isValidTLD('org.foo.test'), True)
+        self.assertEqual(javadeps._isValidTLD('foo'), False)
+        self.assertEqual(javadeps._isValidTLD('org.foo.test'), True)
 
 class JavaDepsTest(rephelp.RepositoryHelper):
     def testGetDeps(self):
@@ -40,7 +40,7 @@ class JavaDepsTest(rephelp.RepositoryHelper):
                             9 : '[Lorg/good/Tld2;',
                             }
 
-                x.classRef = dict(zip(range(1, 6), range(1, 6)))
+                x.classRef = dict(list(zip(list(range(1, 6)), list(range(1, 6)))))
                 x.typeRef = dict((i, (i, i)) for i in range(6, 10))
                 x._attributes = {}
                 x.classNameIndex = 1
@@ -49,6 +49,6 @@ class JavaDepsTest(rephelp.RepositoryHelper):
         self.mock(javadeps, '_parseSymbolTable', mockParse)
 
         deps = javadeps.getDeps('fakecontents')
-        self.assertEquals(deps[1], set(['org.good.Tld2',
+        self.assertEqual(deps[1], set(['org.good.Tld2',
                                         'org.good.Tld4',
                                         'org.good.Tld6']))

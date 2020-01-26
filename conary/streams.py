@@ -28,6 +28,7 @@ from conary.deps import deps
 from conary.lib import sha1helper
 from conary.lib.ext import pack
 from conary.lib.ext import streams as cstreams
+import sys
 
 IntStream = cstreams.IntStream
 ShortStream = cstreams.ShortStream
@@ -485,7 +486,7 @@ class StreamCollection(InfoStream):
                 self._thaw()
 
         l = []
-        for typeId, itemDict in sorted(self._items.iteritems()):
+        for typeId, itemDict in sorted(self._items.items()):
             itemList = sorted(itemDict)
             if itemList and not hasattr(itemList[0], '__cmp__'):
                 raise AssertionError('Programming Error: %s type object '
@@ -502,7 +503,7 @@ class StreamCollection(InfoStream):
         return "".join(l)
 
     def thaw(self, data):
-        data = intern(data)
+        data = sys.intern(data)
         self._data = data
 
     def _thaw(self):
@@ -528,7 +529,7 @@ class StreamCollection(InfoStream):
         return self._items[typeId]
 
     def iterAll(self):
-        for typeId, itemDict in self._items.iteritems():
+        for typeId, itemDict in self._items.items():
             for item in itemDict:
                 yield (typeId, item)
 
@@ -566,7 +567,7 @@ class StreamCollection(InfoStream):
         numRemoved, numAdded = struct.unpack("!HH", diff[0:4])
         i = 4
 
-        for x in xrange(numRemoved + numAdded):
+        for x in range(numRemoved + numAdded):
             typeId, length = struct.unpack("!BH", diff[i : i + 3])
             i += 3
             item = self.streamDict[typeId](diff[i:i + length])
@@ -595,7 +596,7 @@ class OrderedStreamCollection(StreamCollection):
                 self._thaw()
 
         l = []
-        for typeId, itemList in (self._items.iteritems()):
+        for typeId, itemList in (iter(self._items.items())):
             for item in itemList:
                 s = item.freeze(skipSet = skipSet)
                 l.append(struct.pack('!B', typeId))
@@ -628,7 +629,7 @@ class OrderedStreamCollection(StreamCollection):
         return self._items[typeId]
 
     def iterAll(self):
-        for typeId, l in self._items.iteritems():
+        for typeId, l in self._items.items():
             for item in l:
                 yield (typeId, item)
 
@@ -673,7 +674,7 @@ class OrderedStreamCollection(StreamCollection):
         numRemoved, numAdded = struct.unpack("!HH", diff[0:4])
         i = 4
 
-        for x in xrange(numRemoved + numAdded):
+        for x in range(numRemoved + numAdded):
             i, (typeId, s) = pack.unpack("!BD", i, diff)
             item = self.streamDict[typeId](s)
             if x < numRemoved:

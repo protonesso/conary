@@ -25,14 +25,14 @@ import linecache
 import os
 import sys
 import types
-import xmlrpclib
-from repr import Repr
+import xmlrpc.client
+from reprlib import Repr
 
 
 # Types for which calling __safe_str__ has side effects
 UNSAFE_TYPES = (
-    xmlrpclib.ServerProxy,
-    xmlrpclib._Method,
+    xmlrpc.client.ServerProxy,
+    xmlrpc.client._Method,
   )
 
 UNSAFE_TYPE_NAMES = [
@@ -41,10 +41,10 @@ UNSAFE_TYPE_NAMES = [
 
 # Types that should not appear in the output at all
 IGNORED_TYPES = (
-    types.ClassType,
+    type,
     types.FunctionType,
     types.ModuleType,
-    types.TypeType,
+    type,
   )
 
 
@@ -179,7 +179,7 @@ def formatLocals(frame, stream):
                 vstr = obj.__safe_str__()
             else:
                 vstr = prettyRepr(obj)
-        except Exception, error:
+        except Exception as error:
             # Failed to get a representation, but at least display what
             # type it was and what exception was raised.
             if isinstance(obj, types.InstanceType):

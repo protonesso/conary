@@ -92,7 +92,7 @@ class RemoveTest(rephelp.RepositoryHelper):
         assert(not d)
         d = repos.getAllTroveLeaves('localhost', { 'test:runtime' : None },
                                     troveTypes = netclient.TROVE_QUERY_ALL)
-        assert([ str(x) for x in d['test:runtime'].keys() ] ==
+        assert([ str(x) for x in list(d['test:runtime'].keys()) ] ==
                     [ '/localhost@rpl:linux/1.0-1-2' ] )
 
         d = repos.getTroveVersionList('localhost', { 'test:runtime' : None })
@@ -107,7 +107,7 @@ class RemoveTest(rephelp.RepositoryHelper):
         assert(not d)
         d = repos.getTroveLeavesByLabel({ 'test:runtime' : { label : None } },
                         troveTypes = netclient.TROVE_QUERY_ALL)
-        assert([ str(x) for x in d['test:runtime'].keys() ] ==
+        assert([ str(x) for x in list(d['test:runtime'].keys()) ] ==
                     [ '/localhost@rpl:linux/1.0-1-2' ] )
 
         d = repos.getTroveVersionsByLabel({ 'test:runtime' : { label : None } })
@@ -132,7 +132,7 @@ class RemoveTest(rephelp.RepositoryHelper):
         d = repos.getTroveLeavesByBranch(
                     { 'test:runtime' : { t1.getVersion().branch() : None } },
                     troveTypes = netclient.TROVE_QUERY_ALL)
-        assert([ str(x) for x in d['test:runtime'].keys() ] ==
+        assert([ str(x) for x in list(d['test:runtime'].keys()) ] ==
                     [ '/localhost@rpl:linux/1.0-1-2' ] )
 
         d = repos.getTroveVersionsByBranch(

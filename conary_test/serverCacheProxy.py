@@ -64,15 +64,15 @@ class _Method(object):
 
 def dumpData(stream, data):
     import struct
-    import cPickle
-    data = cPickle.dumps(data)
+    import pickle
+    data = pickle.dumps(data)
     stream.write(struct.pack("!H", len(data)))
     stream.write(data)
     stream.flush()
 
 def loadData(stream):
     import struct
-    import cPickle
+    import pickle
     #print "%s: reading" % os.getpid()
     dlen = stream.read(2)
     if len(dlen) != 2:
@@ -80,7 +80,7 @@ def loadData(stream):
     dlen = struct.unpack("!H", dlen)[0]
     #print "%s: reading %s bytes" % (os.getpid(), dlen)
     data = stream.read(dlen)
-    data = cPickle.loads(data)
+    data = pickle.loads(data)
     #print "%s: methodname=%s params=%s" % (os.getpid(), methodname, params)
     return data
 
@@ -110,7 +110,7 @@ class BaseProxy(object):
             tb = sdict.get('tb', None)
             if tb is None:
                 raise exc
-            raise exc, tb[0], tb[1]
+            raise exc(tb[0]).with_traceback(tb[1])
         if 'result' in sdict:
             return sdict['result'], True
         return None, False
@@ -218,7 +218,7 @@ class ServerCacheProxy(BaseProxy):
                     os.sleep(.1)
                     os.kill(self._pid, 9)
                     os.waitpid(self._pid, os.WNOHANG)
-                except OSError, e:
+                except OSError as e:
                     if e.errno != 10:
                         raise
         finally:
@@ -231,11 +231,11 @@ class ServerCacheProxy(BaseProxy):
 
     def __del__(self):
         if self._pid != 0:
-            print 'warning: %r was not stopped before freeing' % self
+            print('warning: %r was not stopped before freeing' % self)
             try:
                 self._close()
             except:
-                print 'warning: failed to stop %r in __del__' % self
+                print('warning: failed to stop %r in __del__' % self)
 
     def stopServer(self, serverIdx):
         self._request('stopServer', (serverIdx, ), {})
@@ -283,7 +283,7 @@ class Child(object):
                         ret = obj(*params, **kwparams)
                     else:
                         ret = obj
-            except Exception, e:
+            except Exception as e:
                 dumpData(p, dict(exception=e))
             else:
                 if isinstance(ret, rephelp.RepositoryServer):
@@ -295,13 +295,13 @@ class Child(object):
                     dumpData(p, dict(result=ret))
 
 if __name__ == '__main__':
-    print "Parent:", os.getpid()
+    print("Parent:", os.getpid())
     xxx = ServerCacheProxy()
-    print xxx.stopServer(1)
-    print xxx.startServer('/tmp/reposdir', '/home/misa/hg/conary--1.2',
-                          serverIdx=1)
+    print(xxx.stopServer(1))
+    print(xxx.startServer('/tmp/reposdir', '/home/misa/hg/conary--1.2',
+                          serverIdx=1))
     foo = xxx.getCachedServer(1)
-    print foo.getMap()
-    print xxx.servers[1].getMap()
-    print foo.serverDir
+    print(foo.getMap())
+    print(xxx.servers[1].getMap())
+    print(foo.serverDir)
     xxx._close()

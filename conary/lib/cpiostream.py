@@ -34,7 +34,7 @@ Usage::
 
 import os
 import stat
-import StringIO
+import io
 import struct
 import sys
 import errno
@@ -89,7 +89,7 @@ class CpioHeader(object):
         self.skip += self.pad(self.filesize)
 
     def serialize(self):
-        out = StringIO.StringIO()
+        out = io.StringIO()
         out.write(self.magic)
         for slotName in self.__slots__[1:14]:
             out.write("%08x" % getattr(self, slotName))
@@ -142,7 +142,7 @@ class CpioStream(object):
         self._nextEntry = 0
         self._currentPosition = 0
 
-    def next(self):
+    def __next__(self):
         if self._nextEntry != self._currentPosition:
             self._readExact(self._nextEntry - self._currentPosition)
         buf = self._readExact(CpioHeader.HeaderLength, eofOK = True)
@@ -164,14 +164,14 @@ class CpioStream(object):
 
     def __iter__(self):
         while True:
-            entry = self.next()
+            entry = next(self)
             if entry is None or entry.filename == 'TRAILER!!!':
                 break
             yield entry
 
     def read(self, amt):
         return self._readExact(amt)
-        out = StringIO.StringIO()
+        out = io.StringIO()
         buf = self.stream.read(size)
         if not buf:
             return
@@ -266,13 +266,13 @@ class CpioExploder(CpioStream):
                         os.link(target, t)
                 # create hardlinks after the file content is written
 
-            except OSError, e:
+            except OSError as e:
                 if e.errno == errno.EEXIST:
                     pass
                 else:
                     raise
             if not stat.S_ISLNK(ent.header.mode):
-                os.chmod(target, ent.header.mode & 0777)
+                os.chmod(target, ent.header.mode & 0o777)
 
 if __name__ == '__main__':
     sys.exit(main())

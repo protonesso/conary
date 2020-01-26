@@ -21,7 +21,7 @@ import logging
 import os
 import smtplib
 import socket
-import StringIO
+import io
 import sys
 import tempfile
 import time
@@ -87,7 +87,7 @@ class ConaryRouter(object):
                     consoleStream=environ['wsgi.errors'])
         # gunicorn likes to umask(0) when daemonizing, so put back something
         # reasonable if that's the case.
-        oldUmask = os.umask(022)
+        oldUmask = os.umask(0o22)
         if oldUmask != 0:
             os.umask(oldUmask)
         environ.update(self.envOverrides)
@@ -150,29 +150,29 @@ class ConaryRouter(object):
         # Format large traceback to file
         fd, tbPath = tempfile.mkstemp('.txt', 'repos-error-')
         tb = os.fdopen(fd, 'w+')
-        print >> tb, "Unhandled exception from Conary repository", request.host
-        print >> tb, "Time of occurence:", timestamp
-        print >> tb, "System hostname:", socket.gethostname()
-        print >> tb, "See also:", tbPath
-        print >> tb
+        print("Unhandled exception from Conary repository", request.host, file=tb)
+        print("Time of occurence:", timestamp, file=tb)
+        print("System hostname:", socket.gethostname(), file=tb)
+        print("See also:", tbPath, file=tb)
+        print(file=tb)
         formatTrace(e_class, e_value, e_tb, stream=tb, withLocals=False)
-        print >> tb
-        print >> tb, "WSGI Environment:"
+        print(file=tb)
+        print("WSGI Environment:", file=tb)
         for key, value in sorted(request.environ.items()):
-            print >> tb, " %s = %r" % (key, value)
-        print >> tb
-        print >> tb, "Full trace:"
+            print(" %s = %r" % (key, value), file=tb)
+        print(file=tb)
+        print("Full trace:", file=tb)
         try:
             formatTrace(e_class, e_value, e_tb, stream=tb, withLocals=True)
         except:
-            print >> tb, "*** Traceback formatter crashed! ***"
-            print >> tb, "Formatter crash follows:"
+            print("*** Traceback formatter crashed! ***", file=tb)
+            print("Formatter crash follows:", file=tb)
             new_exc = sys.exc_info()
             formatTrace(new_exc[0], new_exc[1], new_exc[2], stream=tb,
                     withLocals=False)
-            print >> tb, "*** End formatter crash log ***"
-        print >> tb
-        print >> tb, "End of traceback report"
+            print("*** End formatter crash log ***", file=tb)
+        print(file=tb)
+        print("End of traceback report", file=tb)
         tb.seek(0)
         contents = tb.read()
         tb.close()
@@ -180,8 +180,8 @@ class ConaryRouter(object):
 
     def _formatErrorSmall(self, request, exc_info):
         e_class, e_value, e_tb = exc_info
-        tb = StringIO.StringIO()
-        print >> tb, "Unhandled exception from Conary repository", request.host
+        tb = io.StringIO()
+        print("Unhandled exception from Conary repository", request.host, file=tb)
         formatTrace(e_class, e_value, e_tb, stream=tb, withLocals=False)
         return tb.getvalue()
 
@@ -368,7 +368,7 @@ class ConaryHandler(object):
     def handleRequest(self, request):
         try:
             return self._handleRequest(request)
-        except web_exc.HTTPException, err:
+        except web_exc.HTTPException as err:
             return err
         finally:
             # This closes the repository server immediately after the initial
@@ -481,7 +481,7 @@ class ConaryHandler(object):
         if extraInfo:
             headers['Via'] = proxy.formatViaHeader(localAddr,
                     self.request.http_version, prefix=extraInfo.getVia())
-        response = self.responseFactory(headerlist=headers.items())
+        response = self.responseFactory(headerlist=list(headers.items()))
         response.content_type = 'text/xml'
 
         # Output phase -- serialize and write the response
@@ -548,7 +548,7 @@ class ConaryHandler(object):
 
         response = self.responseFactory(
                 status='200 OK',
-                headerlist=headers.items(),
+                headerlist=list(headers.items()),
                 app_iter=itertools.chain.from_iterable(iterables),
                 )
         response.content_type = 'multipart/mixed; boundary="%s"' % boundary
@@ -564,7 +564,7 @@ class ConaryHandler(object):
                 size = int(self.request.headers['content-length'])
             else:
                 size = None
-            headers = [x for x in self.request.headers.items()
+            headers = [x for x in list(self.request.headers.items())
                     if x[0].lower() in (
                         'x-conary-servername',
                         'x-conary-entitlement',
@@ -616,7 +616,7 @@ class ConaryHandler(object):
         if path:
             try:
                 st = os.stat(path)
-            except OSError, err:
+            except OSError as err:
                 if err.errno != errno.ENOENT:
                     return None
                 raise

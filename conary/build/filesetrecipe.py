@@ -40,12 +40,12 @@ class _FilesetRecipe(Recipe):
         matches = {}
         for pattern in patternList:
             if not recurse:
-                matchList = [ n for n in pathMap.keys() if
+                matchList = [ n for n in list(pathMap.keys()) if
                                     fnmatchcase(n, pattern)]
             else:
                 matchList = []
                 dirCount = pattern.count("/")
-                for n in pathMap.iterkeys():
+                for n in pathMap.keys():
                     i = n.count("/")
                     if i > dirCount:
                         dirName = os.sep.join(n.split(os.sep)[:dirCount + 1])
@@ -63,7 +63,7 @@ class _FilesetRecipe(Recipe):
         if not matches:
             return False
 
-        for path in matches.keys():
+        for path in list(matches.keys()):
             (pathId, fileId, version) = matches[path]
 
             for (old, new) in remapList:
@@ -75,7 +75,7 @@ class _FilesetRecipe(Recipe):
                     path = new + path[len(old):]
                     break
 
-            if self.paths.has_key(path):
+            if path in self.paths:
                 raise builderrors.RecipeFileError(
                         "%s has been included multiple times" % path)
 
@@ -125,11 +125,11 @@ class _FilesetRecipe(Recipe):
         try:
             troveSet = self.repos.findTroves(self.label, findList,
                                              defaultFlavor = self.flavor)
-        except errors.TroveNotFound, e:
-            raise builderrors.RecipeFileError, str(e)
+        except errors.TroveNotFound as e:
+            raise builderrors.RecipeFileError(str(e))
 
         for (component, versionStr), itemList in \
-                                        self.requestedFiles.iteritems():
+                                        self.requestedFiles.items():
             pkgList = troveSet[(component, versionStr, None)]
 
             if len(pkgList) == 0:
@@ -142,7 +142,7 @@ class _FilesetRecipe(Recipe):
             self._addFile(pkg, itemList)
 
     def iterFileList(self):
-        for (pathId, (path, fileId, version)) in self.files.iteritems():
+        for (pathId, (path, fileId, version)) in self.files.items():
             yield (pathId, path, fileId, version)
 
     def __init__(self, repos, cfg, label, flavor, extraMacros={},
@@ -157,4 +157,4 @@ class _FilesetRecipe(Recipe):
         self.requestedFiles = {}
 
 
-exec defaultrecipes.FilesetRecipe
+exec(defaultrecipes.FilesetRecipe)

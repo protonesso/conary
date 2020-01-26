@@ -52,7 +52,7 @@ def signTroves(cfg, specStrList, recurse = False, callback = None):
         try:
             trvList = repos.findTrove([ cfg.buildLabel ],
                                       (name, versionStr, flavor), cfg.flavor)
-        except errors.TroveNotFound, e:
+        except errors.TroveNotFound as e:
             log.error(str(e))
             return
 
@@ -64,8 +64,8 @@ def signTroves(cfg, specStrList, recurse = False, callback = None):
                             True))
 
     if cfg.interactive:
-        print troveStr
-        print "Total: %d troves" % len(jobList)
+        print(troveStr)
+        print("Total: %d troves" % len(jobList))
         answer = cmdline.askYn('Are you sure you want to digitally sign these troves [y/N]?', default=False)
         if not answer:
             return
@@ -87,7 +87,7 @@ def signTroves(cfg, specStrList, recurse = False, callback = None):
 
         if not signatureKey:
             if not cfg.quiet:
-                print "\nNo key is defined for label %s" % label
+                print("\nNo key is defined for label %s" % label)
                 return
 
             continue
@@ -100,10 +100,10 @@ def signTroves(cfg, specStrList, recurse = False, callback = None):
         try:
             trv.getDigitalSignature(signatureKey)
             if not cfg.quiet:
-                print "\nTrove: %s=%s[%s] is already signed by key: %s" \
+                print("\nTrove: %s=%s[%s] is already signed by key: %s" \
                     % (trv.getName(), trv.getVersion(),
                        deps.formatFlavor(trv.getFlavor()),
-                       cfg.signatureKey)
+                       cfg.signatureKey))
                 continue
         except KeyNotFound:
             pass
@@ -111,14 +111,14 @@ def signTroves(cfg, specStrList, recurse = False, callback = None):
         try:
             trv.addDigitalSignature(signatureKey)
         except KeyNotFound:
-            print "\nKey:", signatureKey, "is not in your keyring."
+            print("\nKey:", signatureKey, "is not in your keyring.")
             return
 
         try:
             repos.addDigitalSignature(trv.getName(), trv.getVersion(),
                                       trv.getFlavor(),
                                       trv.getDigitalSignature(signatureKey))
-        except (errors.AlreadySignedError, KeyNotFound), e:
+        except (errors.AlreadySignedError, KeyNotFound) as e:
             misfires.append((trv.getName(), str(e)))
 
     if misfires:

@@ -141,7 +141,7 @@ class DerivedPackageTest(rephelp.RepositoryHelper):
                            '/bin/foo',
                            ('/bin/blah', rephelp.RegularFile(
                                             contents = 'contents',
-                                            perms = 0700) ),
+                                            perms = 0o700) ),
                                             ] )
 
         trv = self.buildDerivation('foo:runtime', srcVersion, "pass")
@@ -155,7 +155,7 @@ class DerivedPackageTest(rephelp.RepositoryHelper):
                                    returnTrove = [ 'foo', ':runtime' ]
                                    )
         self.updatePkg('%s=%s' % (pkgTrv.getName(), pkgTrv.getVersion()))
-        self.verifyFile(self.rootDir+'/bin/blah', 'new', perms=0755)
+        self.verifyFile(self.rootDir+'/bin/blah', 'new', perms=0o755)
         self.verifyNoFile(self.rootDir+'/bin/foo')
         assert(sorted([ x[1] for x in runtimeTrv.iterFileList() ]) ==
                     [ '/bin/bar', '/bin/blah' ] )
@@ -175,7 +175,7 @@ class DerivedPackageTest(rephelp.RepositoryHelper):
                            '/bin/foo',
                            ('/bin/blah', rephelp.RegularFile(
                                             contents = 'contents',
-                                            perms = 0700) ),
+                                            perms = 0o700) ),
                                             ] )
         def ThisGetRecipe(*args, **kwargs):
             # for this test, we don't want to clear the buildRequires, since
@@ -326,7 +326,7 @@ class DerivedPackageTest(rephelp.RepositoryHelper):
             trv = self.buildDerivation('foo:runtime', srcVersion,
                                        "pass",
                                        parentVersion = '1.1-1-1')
-        except builderrors.RecipeFileError, e:
+        except builderrors.RecipeFileError as e:
             assert(str(e) == 'parentRevision must have the same upstream '
                              'version as the derived package recipe')
 
@@ -334,7 +334,7 @@ class DerivedPackageTest(rephelp.RepositoryHelper):
         try:
             trv = self.buildDerivation('foo:runtime', srcVersion, 'pass',
                     parentVersion = badParentVersion)
-        except builderrors.RecipeFileError, e:
+        except builderrors.RecipeFileError as e:
             assert(str(e).startswith('Cannot parse parentVersion %s' % \
                     badParentVersion))
         else:
@@ -346,7 +346,7 @@ class DerivedPackageTest(rephelp.RepositoryHelper):
         fileObjs = repos.getFileVersions([ (x[0], x[2], x[3]) for x in
                                                 fileInfoList ])
         fileInfo = dict( (x[0][1], x[1]) for x in
-                        itertools.izip(fileInfoList, fileObjs) )
+                        zip(fileInfoList, fileObjs) )
 
         return fileInfo
 
@@ -460,7 +460,7 @@ class DerivedPackageTest(rephelp.RepositoryHelper):
                "r.Config(exceptions = '/etc/bar')",
                returnTrove = ':config' )
 
-        self.assertEquals([x[1] for x in runtimeTrv.iterFileList()],
+        self.assertEqual([x[1] for x in runtimeTrv.iterFileList()],
                 ['/etc/bar'])
 
     def testMerge(self):
@@ -544,11 +544,11 @@ class DerivedPackageTest(rephelp.RepositoryHelper):
                            ('/bin/onefile', rephelp.RegularFile(
                                             linkGroup = '\1'*16,
                                             contents = 'contents',
-                                            perms = 0700) ),
+                                            perms = 0o700) ),
                            ('/bin/anotherfile', rephelp.RegularFile(
                                             linkGroup = '\1'*16,
                                             contents = 'contents',
-                                            perms = 0700) ),
+                                            perms = 0o700) ),
                                             ] )
 
         pkgTrv, runtimeTrv = self.buildDerivation('foo', srcVersion,
@@ -565,9 +565,9 @@ class DerivedPackageTest(rephelp.RepositoryHelper):
         srcVersion  = self.addCompAndPackage('foo:runtime', '1.0-1-1',
                       fileContents = [
                            ('/bin/setuid', rephelp.RegularFile(
-                                            perms = 04755) ),
+                                            perms = 0o4755) ),
                            ('/bin/setgid', rephelp.RegularFile(
-                                            perms = 02755) ),
+                                            perms = 0o2755) ),
                                             ] )
 
         runtimeTrv = self.buildDerivation('foo', srcVersion,
@@ -575,17 +575,17 @@ class DerivedPackageTest(rephelp.RepositoryHelper):
 
         fileInfo = self.getFiles(runtimeTrv)
 
-        self.assertEquals(fileInfo['/bin/setuid'].inode.perms(), 04755)
-        self.assertEquals(fileInfo['/bin/setgid'].inode.perms(), 02755)
-        self.assertEquals(fileInfo['/bin/new'].inode.perms(), 07555)
+        self.assertEqual(fileInfo['/bin/setuid'].inode.perms(), 0o4755)
+        self.assertEqual(fileInfo['/bin/setgid'].inode.perms(), 0o2755)
+        self.assertEqual(fileInfo['/bin/new'].inode.perms(), 0o7555)
 
         runtimeTrv2 = self.buildDerivation('foo', srcVersion,
                "r.SetModes('/bin/setuid', 0755)",
                "r.SetModes('/bin/setgid', 0755)",
                returnTrove = ':runtime' )
         fileInfo2 = self.getFiles(runtimeTrv2)
-        self.assertEquals(fileInfo2['/bin/setuid'].inode.perms(), 0755)
-        self.assertEquals(fileInfo2['/bin/setgid'].inode.perms(), 0755)
+        self.assertEqual(fileInfo2['/bin/setuid'].inode.perms(), 0o755)
+        self.assertEqual(fileInfo2['/bin/setgid'].inode.perms(), 0o755)
 
     @testhelp.context('initialcontents')
     def testConfig(self):
@@ -940,7 +940,7 @@ class TestMultiPackage(DerivedPackageRecipe):
                                         flavor = flv))
                       ])
         runtimeTrv = self.buildDerivation('foo:lib', srcVersion, 'pass')
-        pathId, path, fileId, fver = runtimeTrv.iterFileList().next()
+        pathId, path, fileId, fver = next(runtimeTrv.iterFileList())
         fileObj = repos.getFileVersion(pathId, fileId, fver)
         self.assertEqual(str(fileObj.flavor()), '')
 
@@ -954,8 +954,8 @@ class TestMultiPackage(DerivedPackageRecipe):
         try:
             self.buildDerivation('foo:runtime', srcVersion, 'pass', prep=True)
             assert(0)
-        except Exception, err:
-            self.assertEquals(str(err), 'Could not find package to derive from for this flavor: version /localhost@rpl:linux/1.0-1-1 of foo was not found (Closest alternate flavors found: [is: x86], [is: x86_64])')
+        except Exception as err:
+            self.assertEqual(str(err), 'Could not find package to derive from for this flavor: version /localhost@rpl:linux/1.0-1-1 of foo was not found (Closest alternate flavors found: [is: x86], [is: x86_64])')
 
     def testDeriveFromOldPackage(self):
         srcVersion = self.addCompAndPackage('foo:runtime', '1.0-1-1',
@@ -1048,9 +1048,9 @@ class TestMultiPackage(DerivedPackageRecipe):
         nvfs = repos.findTrove(self.shadowLabel, ('info-foo:user', None, None))
         nvf = nvfs[0]
         trv = repos.getTrove(*nvf)
-        self.assertEquals(trv.provides(),
+        self.assertEqual(trv.provides(),
                 deps.ThawDependencySet('4#info-foo::user|7#foo'))
-        self.assertEquals(trv.requires(), deps.ThawDependencySet('8#foo'))
+        self.assertEqual(trv.requires(), deps.ThawDependencySet('8#foo'))
 
 
     def testAdditionalRequires(self):
@@ -1061,7 +1061,7 @@ class TestMultiPackage(DerivedPackageRecipe):
                            '/bin/foo',
                            ('/splat/index.php', rephelp.RegularFile(
                                             contents = 'contents',
-                                            perms = 0700,
+                                            perms = 0o700,
                                             requires = phpReq) )] )
         def ThisGetRecipe(*args, **kwargs):
             return """
@@ -1097,7 +1097,7 @@ class fooRecipe(DerivedPackageRecipe):
         trv = self.buildDerivation('foo:runtime', srcVersion, "pass")
         newPhpReq = deps.ThawDependencySet( \
                 '4#php5-mysql::lib|4#php5::lib|4#php5::runtime')
-        self.assertEquals(trv.getRequires(), newPhpReq)
+        self.assertEqual(trv.getRequires(), newPhpReq)
 
 
     def testRequiresExceptions(self):
@@ -1112,7 +1112,7 @@ class fooRecipe(DerivedPackageRecipe):
                            '/bin/foo',
                            ('/splat/index.php', rephelp.RegularFile(
                                             contents = 'contents',
-                                            perms = 0700,
+                                            perms = 0o700,
                                             requires = phpReq) )] )
         def ThisGetRecipe(*args, **kwargs):
             return """
@@ -1128,7 +1128,7 @@ class fooRecipe(DerivedPackageRecipe):
 
         trv = self.buildDerivation('foo:runtime', srcVersion, "pass")
         noPhpReq = deps.ThawDependencySet('')
-        self.assertEquals(trv.getRequires(), noPhpReq)
+        self.assertEqual(trv.getRequires(), noPhpReq)
 
     @conary_test.rpm
     def testCapsuleDerivationFails(self):
@@ -1209,7 +1209,7 @@ class TestRecipe(DerivedPackageRecipe):
         self.addfile(pkgname + '.recipe')
         self.commit()
         built = self.cookFromRepository(pkgname)
-        self.assertEquals(built[0][2], deps.Flavor())
+        self.assertEqual(built[0][2], deps.Flavor())
         v = versions.VersionFromString(built[0][1])
 
         self.mkbranch(self.defLabel, self.shadowLabel, pkgname + ":source",
@@ -1222,4 +1222,4 @@ class TestRecipe(DerivedPackageRecipe):
                 self.getRecipe(pkgname, v, ['pass']))
         self.commit()
         built = self.cookFromRepository(pkgname, buildLabel=self.shadowLabel)
-        self.assertEquals(built[0][2], deps.Flavor())
+        self.assertEqual(built[0][2], deps.Flavor())

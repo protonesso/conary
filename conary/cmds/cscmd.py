@@ -43,7 +43,7 @@ def computeTroveList(client, applyList):
     results = repos.findTroves(client.cfg.installLabelPath, toFind,
                                client.cfg.flavor)
 
-    for troveSpec, trovesFound in results.iteritems():
+    for troveSpec, trovesFound in results.items():
         if len(trovesFound) > 1:
             log.error("trove %s has multiple matches on "
                       "installLabelPath", troveSpec[0])

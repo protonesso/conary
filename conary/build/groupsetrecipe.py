@@ -846,14 +846,14 @@ class GroupDelayedTroveTupleSet(GroupTupleSetMethods,
             foundMatch = False
 
             try:
-                matches = self._findTroves(data.groupRecipe._trackDict.keys())
+                matches = self._findTroves(list(data.groupRecipe._trackDict.keys()))
             except errors.TroveNotFound:
                 matches = {}
 
             if matches:
                 log.info("Tracking matches found in results for action %s"
                          % str(self.action) + self._lineNumStr)
-                for (parsedSpec, matchList) in matches.iteritems():
+                for (parsedSpec, matchList) in matches.items():
                     log.info("\tMatches for %s"
                                     % data.groupRecipe._trackDict[parsedSpec])
                     display(matchList)
@@ -1240,7 +1240,7 @@ class DepsNeededAction(GroupDelayedTupleSetAction):
                   for ((name, version, flavor), dep) in failedDeps ]))
 
         installSet = set()
-        for requiredBy, requiredSet in suggMap.iteritems():
+        for requiredBy, requiredSet in suggMap.items():
             installSet.update(requiredSet)
 
         self.outSet._setInstall(installSet)
@@ -1305,9 +1305,9 @@ class FindBySourceNameAction(GroupDelayedTupleSetAction):
 
     def findBySourceNameAction(self, data):
         troveTuples = (
-            list(itertools.izip(itertools.repeat(True),
+            list(zip(itertools.repeat(True),
                            self.primaryTroveSet._getInstallSet())) +
-            list(itertools.izip(itertools.repeat(False),
+            list(zip(itertools.repeat(False),
                            self.primaryTroveSet._getOptionalSet())) )
 
         sourceNames = data.troveCache.getTroveInfo(
@@ -1317,7 +1317,7 @@ class FindBySourceNameAction(GroupDelayedTupleSetAction):
         installs = []
         optional = []
         for (isInstallSet, troveTup), sourceName in \
-                itertools.izip(troveTuples, sourceNames):
+                zip(troveTuples, sourceNames):
             if sourceName() != self.sourceName:
                 continue
 
@@ -1399,11 +1399,11 @@ class LatestPackagesFromSearchSourceAction(GroupDelayedTupleSetAction):
         sourceNames = data.troveCache.getTroveInfo(
                                 trove._TROVEINFO_TAG_SOURCENAME, fullTupList)
         bySource = {}
-        for sourceName, troveTup in itertools.izip(sourceNames, fullTupList):
+        for sourceName, troveTup in zip(sourceNames, fullTupList):
             bySource.setdefault(sourceName(), []).append(troveTup)
 
         resultTupList = []
-        for sourceName, tupList in bySource.iteritems():
+        for sourceName, tupList in bySource.items():
             if len(sourceName) > 2:
                 mostRecent = sorted([ x[1] for x in tupList ])[-1]
                 resultTupList += [ x for x in tupList if x[1] == mostRecent ]
@@ -1467,9 +1467,9 @@ class MembersAction(GroupDelayedTupleSetAction):
 
     def membersAction(self, data):
         for (troveTuple, installSet) in itertools.chain(
-                itertools.izip(self.primaryTroveSet._getInstallSet(),
+                zip(self.primaryTroveSet._getInstallSet(),
                                itertools.repeat(True)),
-                itertools.izip(self.primaryTroveSet._getOptionalSet(),
+                zip(self.primaryTroveSet._getOptionalSet(),
                                itertools.repeat(False))):
             installs = []
             available = []
@@ -1770,7 +1770,7 @@ class GroupScripts(object):
 
         if kwargs:
             raise TypeError("GroupScripts() got an unexpected keyword "
-                           "argument '%s'" % kwargs.keys()[0])
+                           "argument '%s'" % list(kwargs.keys())[0])
 
     def iterScripts(self):
         for scriptName in self._scriptNames:
@@ -2113,4 +2113,4 @@ class _GroupSetRecipe(_BaseGroupRecipe):
         self._trackDict[parseTroveSpec(troveSpec)] = troveSpec
 
 from conary.build.packagerecipe import BaseRequiresRecipe
-exec defaultrecipes.GroupSetRecipe
+exec(defaultrecipes.GroupSetRecipe)

@@ -159,7 +159,7 @@ longDoc hello world2
         try:
             u = flavorcfg.UseFlagConfig('4Suite')
             u.read(self.workDir + '/4Suite')
-        except ParseError, e:
+        except ParseError as e:
             assert(str(e) == "%s/4Suite:3: unknown use value 'sixth' for configuration item 'sense'" % self.workDir)
         else:
             raise
@@ -176,7 +176,7 @@ longDoc hello world2
         try:
             u = flavorcfg.UseFlagConfig('4Suite')
             u.read(self.workDir + '/4Suite')
-        except ParseError, e:
+        except ParseError as e:
             assert(str(e) == "%s/4Suite:5: expected True or False "
                    "for configuration item 'buildRequired'" %self.workDir)
         else:

@@ -90,7 +90,7 @@ class _FindLocalChanges(object):
             for (changed, trv) in result[1]:
                 if changed:
                     changedTroves.add(trv.getNameVersionFlavor())
-        except OSError, err:
+        except OSError as err:
             if err.errno == 13:
                 log.warning("Permission denied creating local changeset for"
                             " %s " % str([ x[0].getName() for x in troveList ]))
@@ -99,7 +99,7 @@ class _FindLocalChanges(object):
         trovesChanged = []
 
         for (dbTrv, srcTrv, newVer, flags), (changed, localTrv) in \
-                itertools.izip(troveList, result[1]):
+                zip(troveList, result[1]):
             if srcTrv.getNameVersionFlavor() in newFilesByTrove:
                 for path in newFilesByTrove[srcTrv.getNameVersionFlavor()]:
                     self._addFile(cs, localTrv, path)
@@ -189,9 +189,9 @@ class _FindLocalChanges(object):
         try:
             for i in itertools.count(0):
                 if lastDbPath is None:
-                    trvInfo, lastDbPath, lastDbStream = dbPaths.next()
+                    trvInfo, lastDbPath, lastDbStream = next(dbPaths)
                 if lastFsPath is None:
-                    lastFsPath, lastFsStat = fsPaths.next()
+                    lastFsPath, lastFsStat = next(fsPaths)
 
                 if lastDbPath < lastFsPath:
                     # in the database, but not the filesystem. that means
@@ -226,7 +226,7 @@ class _FindLocalChanges(object):
         # to do this if --all is used.
         areOwned = self.db.db.pathsOwned(newFiles)
         newFiles = [ path for path, isOwned in
-                        itertools.izip(newFiles, areOwned)
+                        zip(newFiles, areOwned)
                         if not isOwned ]
 
         # now turn newFiles into a dict which maps troves being verified to the

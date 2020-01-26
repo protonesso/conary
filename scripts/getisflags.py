@@ -162,7 +162,7 @@ InstructionSets = {
     }
 
 InstructionToFlag = {}
-for flag, insset in InstructionSets.iteritems():
+for flag, insset in InstructionSets.items():
     for isn in insset:
         InstructionToFlag[isn] = flag
 strongFlags = set(('i486', 'i586', 'i686'))
@@ -205,11 +205,11 @@ def getIsFlags(path):
 
 if __name__ == '__main__':
     def usage():
-        print 'usage: %s binary' %sys.argv[0]
+        print('usage: %s binary' %sys.argv[0])
         sys.exit(1)
 
     import sys
     if len(sys.argv) != 2:
         usage()
     flavoring = getIsFlags(sys.argv[1])
-    print flavoring
+    print(flavoring)

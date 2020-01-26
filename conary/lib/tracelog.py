@@ -30,7 +30,7 @@ import sys
 import traceback
 import time
 
-import cfg, cfgtypes
+from . import cfg, cfgtypes
 
 # needed so we know not to log ourselves
 _thisFile = os.path.basename(sys.modules[__name__].__file__)
@@ -88,7 +88,7 @@ class FileLog(NullLog):
             try: # line buffered mode
                 fd = open(self.filename, "a+", 1)
                 if mustChmod:
-                    os.chmod(self.filename, 0660)
+                    os.chmod(self.filename, 0o660)
             except:
                 printErr("ERROR: Couldn't open log file %s" % (self.filename,),
                        sys.exc_info()[:2])
@@ -152,7 +152,7 @@ class FileLog(NullLog):
     def printLog(self, level, msg):
         try:
             self.fd.write("%s %d %s\n" % (logTime(), self.pid, msg))
-        except OSError, e:
+        except OSError as e:
             pass
 
     # close on exit
@@ -181,7 +181,7 @@ class TraceLog(FileLog):
             self.times[i] = t
         try:
             self.fd.write("%s\n" % (lineStr,))
-        except OSError, e:
+        except OSError as e:
             pass
 
     def reset(self, level=None):
@@ -253,7 +253,7 @@ class CfgTraceLog(cfg.CfgType):
             raise cfgtypes.ParseError("log level and path expected")
         try:
             s = (int(s[0]), cfgtypes.Path(s[1]))
-        except Exception, e:
+        except Exception as e:
             raise cfgtypes.ParseError(
                 "log level (integer) and path (string) expected\n%s" % (e,))
         return s

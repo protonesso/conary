@@ -22,7 +22,7 @@ from conary.local import schema
 class MDClass:
     (SHORT_DESC, LONG_DESC,
      URL, LICENSE, CATEGORY,
-     SOURCE) = range(6)
+     SOURCE) = list(range(6))
 
     # mapping from enum id to real name
     className = {SHORT_DESC: "shortDesc",
@@ -32,7 +32,7 @@ class MDClass:
                  CATEGORY:   "category",
                  SOURCE:     "source"}
 
-    (STRING, LIST) = range(2)
+    (STRING, LIST) = list(range(2))
 
     types = {SHORT_DESC:    STRING,
              LONG_DESC:     STRING,
@@ -100,7 +100,7 @@ class MetadataTable:
         # each key points to a list of metadata items
 
         items = {}
-        for mdClass, className in MDClass.className.items():
+        for mdClass, className in list(MDClass.className.items()):
             classType = MDClass.types[mdClass]
 
             if classType == MDClass.STRING:
@@ -119,7 +119,7 @@ class MetadataTable:
             elif classType == MDClass.LIST:
                 items[className].append(data)
 
-        for key, value in items.iteritems():
+        for key, value in items.items():
             if isinstance(value, list):
                 items[key] = sorted(value)
         return items

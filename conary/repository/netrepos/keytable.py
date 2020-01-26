@@ -18,9 +18,9 @@
 import weakref
 
 try:
-    from cStringIO import StringIO
+    from io import StringIO
 except ImportError:
-    from StringIO import StringIO
+    from io import StringIO
 import base64
 
 from conary.lib import openpgpfile, openpgpkey, util

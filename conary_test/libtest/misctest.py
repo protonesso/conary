@@ -27,22 +27,22 @@ from conary.lib.ext import digest_uncompress
 class MiscTest(rephelp.RepositoryHelper):
 
     def testMkdirIfMissing(self):
-        umask = os.umask(022)
+        umask = os.umask(0o22)
         os.umask(umask)
 
         assert(not util.exists(self.workDir + '/newdir'))
         file_utils.mkdirIfMissing(self.workDir + '/newdir')
-        assert((os.stat(self.workDir + '/newdir').st_mode & 0777)==
-                (0777 & ~umask))
+        assert((os.stat(self.workDir + '/newdir').st_mode & 0o777)==
+                (0o777 & ~umask))
         assert(util.exists(self.workDir + '/newdir'))
         file_utils.mkdirIfMissing(self.workDir + '/newdir')
 
         try:
             file_utils.mkdirIfMissing(self.workDir + '/first/second')
-        except OSError, e:
+        except OSError as e:
             assert(e.errno == errno.ENOENT)
         else:
-            raise AssertionError, "mkdir should fail"
+            raise AssertionError("mkdir should fail")
 
         self.writeFile(self.workDir + '/dirent', '')
         file_utils.mkdirIfMissing(self.workDir + '/dirent')

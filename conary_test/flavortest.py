@@ -39,12 +39,12 @@ class FlavorTest(rephelp.RepositoryHelper):
             else:
                 return 1
 
-        for versionDict in d.itervalues():
-            for flavorList in versionDict.itervalues():
+        for versionDict in d.values():
+            for flavorList in versionDict.values():
                 flavorList.sort(_flavorCmp)
 
-        for versionDict in targ.itervalues():
-            for flavorList in versionDict.itervalues():
+        for versionDict in targ.values():
+            for flavorList in versionDict.values():
                 flavorList.sort(_flavorCmp)
 
         assert(d == targ)
@@ -461,9 +461,9 @@ class FlavorTest(rephelp.RepositoryHelper):
                 args.append(tname)
             cu.execute(query, args)
             ret = cu.fetchall()
-            print "Dataset is: (trove, version, TS, finalTS)"
+            print("Dataset is: (trove, version, TS, finalTS)")
             for x in ret:
-                print x
+                print(x)
 
         # update a node's timestamps
         def set_ts(db, tname, tversion, ts):
@@ -494,13 +494,13 @@ class FlavorTest(rephelp.RepositoryHelper):
         def xcombinations(items, n):
             if n==0: yield []
             else:
-                for i in xrange(len(items)):
+                for i in range(len(items)):
                     for cc in xcombinations(items[:i]+items[i+1:],n-1):
                         yield [items[i]]+cc
 
         cnt = 0
         req = {}
-        for xlist in xcombinations(range(len(tlist)), len(tlist)):            
+        for xlist in xcombinations(list(range(len(tlist))), len(tlist)):            
             cnt = cnt + 1
             # each permutation gets its own trove name
             tname = "test%d:test" % (cnt,)
@@ -523,13 +523,13 @@ class FlavorTest(rephelp.RepositoryHelper):
                 bestFlavor=True)
             # we only ask for one element
             assert(len(d) == 1)
-            assert(d.has_key(tname))
+            assert(tname in d)
             ret = d[tname]
             need = {versions.VersionFromString(tlast[0] % (cnt,)): [deps.parseFlavor(tlast[1])]}
             if  ret != need:
-                print
-                print "NEED:", need
-                print "GOT :", ret
+                print()
+                print("NEED:", need)
+                print("GOT :", ret)
                 print_db(db, tname)
             assert(ret == need)
 
@@ -550,14 +550,14 @@ class FlavorTest(rephelp.RepositoryHelper):
         repos = self.openRepository()
 
         d = repos.getTroveLatestByLabel( { 't:rt' : { l : None } } )
-        assert(d['t:rt'].keys() == [ v2 ])
+        assert(list(d['t:rt'].keys()) == [ v2 ])
 
         d = repos.getTroveLatestByLabel( { 't:rt' : { l : [ defFlavor ] } } )
-        assert(d['t:rt'].keys() == [ v2 ])
+        assert(list(d['t:rt'].keys()) == [ v2 ])
 
         d = repos.getTroveLatestByLabel( { 't:rt' : { l : [ defFlavor ] } },
                                         bestFlavor = True)
-        assert(d['t:rt'].keys() == [ v2 ])
+        assert(list(d['t:rt'].keys()) == [ v2 ])
 
         _build( (v1, noReadLine) )
 

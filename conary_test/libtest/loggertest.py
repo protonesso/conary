@@ -20,7 +20,7 @@ from testrunner import testhelp
 import bz2
 import gzip
 import os
-import StringIO
+import io
 import tempfile
 import time
 
@@ -39,20 +39,20 @@ class XmlLogParseTest(testhelp.TestCase):
                 f.write('test')
                 f.close()
             data = open(uncomp).read()
-            self.assertEquals(data, 'test')
+            self.assertEqual(data, 'test')
 
             data = gzip.GzipFile(gzipComp, 'r').read()
-            self.assertEquals(data, 'test')
+            self.assertEqual(data, 'test')
 
             data = bz2.BZ2File(bz2Comp, 'r').read()
-            self.assertEquals(data, 'test')
+            self.assertEqual(data, 'test')
         finally:
             util.rmtree(tmpDir)
 
     def doStreamLogger(self):
         writer = logger.StreamLogWriter()
         lgr = logger.Logger(withStdin = False, writers = [writer])
-        self.assertEquals(lgr.marker, lgr.lexer.marker)
+        self.assertEqual(lgr.marker, lgr.lexer.marker)
         lgr.startLog()
         lgr.pushDescriptor('cook')
         lgr.write('shown message')
@@ -67,8 +67,8 @@ class XmlLogParseTest(testhelp.TestCase):
         if not (('built-in' in str(os.fork)) or ('fork_wrapper' in str(os.fork))):
             self.fail("unexpected fork class: %s" % str(os.fork))
         exc, data = self.captureOutput(self.doStreamLogger)
-        self.assertEquals(exc, None)
-        self.assertEquals(data, 'shown message')
+        self.assertEqual(exc, None)
+        self.assertEqual(data, 'shown message')
 
 
 class FakeLogWriter(logger.LogWriter):
@@ -85,7 +85,7 @@ class FakeLogWriter(logger.LogWriter):
 
     @logger.callable
     def raiseUnknown(self, data):
-        raise IOError, 'asdf'
+        raise IOError('asdf')
 
 class WritersTest(testhelp.TestCase):
     def testBadCommands(self):
@@ -93,7 +93,7 @@ class WritersTest(testhelp.TestCase):
         writer = FakeLogWriter()
         writer.handleToken((logger.COMMAND, ('brokenCommand',)))
         writer.handleToken((logger.COMMAND, ('raiseUnknown', 'foo')))
-        self.assertEquals(writer.record, [
+        self.assertEqual(writer.record, [
             '\nERROR: failed attempt to call function brokenCommand with arguments ()\n',
             "\nERROR: unhandled exception %s: asdf calling function raiseUnknown with arguments ('foo',)\n" % str(IOError),
             ])
@@ -116,7 +116,7 @@ class WritersTest(testhelp.TestCase):
             data = open(logPath).read()
         finally:
             util.rmtree(tmpDir)
-        self.assertEquals(data, 'message 1\nmessage 2\n\nmessage 3\n'
+        self.assertEqual(data, 'message 1\nmessage 2\n\nmessage 3\n'
             "warning: Suggested buildRequires additions: ['foo:runtime', 'bar:lib']\n")
 
     def testBasicStreamLogWriter(self):
@@ -125,7 +125,7 @@ class WritersTest(testhelp.TestCase):
         msg3 = "three"
         msg4 = "four"
         msg5 = 85 * "a"
-        stream = StringIO.StringIO()
+        stream = io.StringIO()
         writer = logger.StreamLogWriter(stream)
         writer.freetext(msg1)
         writer.newline()
@@ -144,29 +144,29 @@ class WritersTest(testhelp.TestCase):
         spaces4 = (78 - len(msg4)) * ' '
         # check that we wrap at 80 columns
         spaces5 = 73 * ' '
-        self.assertEquals(data, '%s\n%s%s\r\n%s%s\r%s%s\r%s%s\r' % \
+        self.assertEqual(data, '%s\n%s%s\r\n%s%s\r%s%s\r%s%s\r' % \
                 (msg1, msg2, spaces2, msg3, spaces3, msg4, spaces4,
                     msg5, spaces5))
 
     def testStreamLogWriterCR(self):
         # prove that carriage return doesn't add extra whitespace to blank lines
-        stream = StringIO.StringIO()
+        stream = io.StringIO()
         writer = logger.StreamLogWriter(stream)
         writer.freetext('a')
         writer.newline()
         writer.carriageReturn()
         data = stream.getvalue()
-        self.assertEquals(data, 'a\n\r')
+        self.assertEqual(data, 'a\n\r')
 
     def testStreamLogWriterCR2(self):
         # prove that carriage return adds extra whitespace to non-blank lines
-        stream = StringIO.StringIO()
+        stream = io.StringIO()
         writer = logger.StreamLogWriter(stream)
         writer.freetext('a')
         writer.carriageReturn()
         writer.newline()
         data = stream.getvalue()
-        self.assertEquals(data, 'a' + (77 * ' ') + '\r\n')
+        self.assertEqual(data, 'a' + (77 * ' ') + '\r\n')
 
     def testXmlLogWriter(self):
         tmpDir = tempfile.mkdtemp()
@@ -188,11 +188,11 @@ class WritersTest(testhelp.TestCase):
             util.rmtree(tmpDir)
 
         lines = data.splitlines()
-        self.assertEquals(len(lines), 9)
-        self.assertEquals(lines[-1], '</log>')
+        self.assertEqual(len(lines), 9)
+        self.assertEqual(lines[-1], '</log>')
         recordsMatch = min(x.startswith('<record>') and x.endswith('</record>')
                 for x in lines[2:-1])
-        self.assertEquals(recordsMatch, True)
+        self.assertEqual(recordsMatch, True)
         assert(x for x in lines
                if 'missingBuildRequires</descriptor><level>WARNING</level><message>foo:runtime bar:lib</message>' in x)
 
@@ -264,7 +264,7 @@ class WritersTest(testhelp.TestCase):
             lexer.close()
             data = open(logPath).read()
             # test that close flushed the lexer
-            self.assertEquals(data, 'testtext 2\n')
+            self.assertEqual(data, 'testtext 2\n')
         finally:
             util.rmtree(tmpDir)
 
@@ -287,54 +287,54 @@ class LexerRulesTest(testhelp.TestCase):
         # test basic freetext. note the newline is not emitted until we know
         # it's not a marker
         self.lexer.scan('freetext\n')
-        self.assertEquals(self.tokens, [(logger.FREETEXT, 'freetext')])
-        self.assertEquals(self.lexer.state, logger.NEWLINE)
+        self.assertEqual(self.tokens, [(logger.FREETEXT, 'freetext')])
+        self.assertEqual(self.lexer.state, logger.NEWLINE)
 
     @testhelp.context('logLexer')
     def testAggregatdNewlines(self):
         # test that newlines are aggregated
         self.lexer.scan('\n')
-        self.assertEquals(self.tokens, [])
-        self.assertEquals(self.lexer.state, logger.NEWLINE)
+        self.assertEqual(self.tokens, [])
+        self.assertEqual(self.lexer.state, logger.NEWLINE)
         self.lexer.scan('\ntest')
-        self.assertEquals(self.tokens, [(logger.NEWLINE, None),
+        self.assertEqual(self.tokens, [(logger.NEWLINE, None),
                                         (logger.NEWLINE, None),
                                         (logger.FREETEXT, 'test')])
-        self.assertEquals(self.lexer.state, logger.FREETEXT)
+        self.assertEqual(self.lexer.state, logger.FREETEXT)
 
     @testhelp.context('logLexer')
     def testEatCommandSequence(self):
         # test a command sequence. note both newlines get eaten
         self.lexer.scan('\n%s pushDescriptor foo\n' % self.marker)
-        self.assertEquals(self.tokens, [(logger.COMMAND,
+        self.assertEqual(self.tokens, [(logger.COMMAND,
                                         ['pushDescriptor', 'foo'])])
-        self.assertEquals(self.lexer.state, logger.FREETEXT)
+        self.assertEqual(self.lexer.state, logger.FREETEXT)
 
     @testhelp.context('logLexer')
     def testEatCommandSequence2(self):
         # test a command sequence. note both newlines get eaten
         self.lexer.scan('\n%s addRecordData foo bar\n' % self.marker)
-        self.assertEquals(self.tokens, [(logger.COMMAND,
+        self.assertEqual(self.tokens, [(logger.COMMAND,
                                         ['addRecordData', 'foo bar'])])
-        self.assertEquals(self.lexer.state, logger.FREETEXT)
+        self.assertEqual(self.lexer.state, logger.FREETEXT)
 
     @testhelp.context('logLexer')
     def testCompositeStream(self):
         # test all of that together
         self.lexer.scan('freetext\n\n%s junk arg1  arg2\n\nb' % self.marker)
-        self.assertEquals(self.tokens, [(logger.FREETEXT, 'freetext'),
+        self.assertEqual(self.tokens, [(logger.FREETEXT, 'freetext'),
                                         (logger.NEWLINE, None),
                                         (logger.COMMAND, ['junk', 'arg1  arg2']),
                                         (logger.NEWLINE, None),
                                         (logger.FREETEXT, 'b')])
-        self.assertEquals(self.lexer.state, logger.FREETEXT)
+        self.assertEqual(self.lexer.state, logger.FREETEXT)
 
     @testhelp.context('logLexer')
     def testCarriageReturns(self):
         # test carriage returns, they aggregate with newlines,
         # but they don't delimit markers. they defer for aggregation.
         self.lexer.scan('foo\rbar\r\r\nbaz\r')
-        self.assertEquals(self.tokens, [(logger.FREETEXT, 'foo'),
+        self.assertEqual(self.tokens, [(logger.FREETEXT, 'foo'),
                                          (logger.CARRIAGE_RETURN, None),
                                          (logger.FREETEXT, 'bar'),
                                          (logger.CARRIAGE_RETURN, None),
@@ -342,71 +342,71 @@ class LexerRulesTest(testhelp.TestCase):
                                          (logger.NEWLINE, None),
                                          (logger.FREETEXT, 'baz'),
                                          (logger.CARRIAGE_RETURN, None)])
-        self.assertEquals(self.lexer.state, logger.FREETEXT)
+        self.assertEqual(self.lexer.state, logger.FREETEXT)
 
     @testhelp.context('logLexer')
     def testImmediateCarriageReturn(self):
         # test deferring of carriage return
         self.lexer.scan('\r')
-        self.assertEquals(self.tokens, [(logger.CARRIAGE_RETURN, None)])
+        self.assertEqual(self.tokens, [(logger.CARRIAGE_RETURN, None)])
         self.lexer.scan('\ra')
-        self.assertEquals(self.tokens, [(logger.CARRIAGE_RETURN, None),
+        self.assertEqual(self.tokens, [(logger.CARRIAGE_RETURN, None),
                                         (logger.CARRIAGE_RETURN, None),
                                         (logger.FREETEXT, 'a')])
-        self.assertEquals(self.lexer.state, logger.FREETEXT)
+        self.assertEqual(self.lexer.state, logger.FREETEXT)
 
     @testhelp.context('logLexer')
     def testMarkerComparison(self):
         # test marker comparison
         self.lexer.scan('\n')
-        self.assertEquals(self.tokens, [])
+        self.assertEqual(self.tokens, [])
         for char in ('0', '1', '2', '3'):
             self.lexer.scan(char)
-            self.assertEquals(self.tokens, [])
-            self.assertEquals(self.lexer.state, logger.MARKER)
+            self.assertEqual(self.tokens, [])
+            self.assertEqual(self.lexer.state, logger.MARKER)
         self.lexer.scan('4')
-        self.assertEquals(self.tokens, [(logger.NEWLINE, None),
+        self.assertEqual(self.tokens, [(logger.NEWLINE, None),
                                         (logger.FREETEXT, '01234')])
-        self.assertEquals(self.lexer.state, logger.FREETEXT)
+        self.assertEqual(self.lexer.state, logger.FREETEXT)
 
     @testhelp.context('logLexer')
     def testFragmentedFreetext(self):
         # test fragmented freetext
         self.lexer.scan('foo')
         self.lexer.scan('bar')
-        self.assertEquals(self.tokens, [(logger.FREETEXT, 'foo'),
+        self.assertEqual(self.tokens, [(logger.FREETEXT, 'foo'),
                                         (logger.FREETEXT, 'bar')])
 
     @testhelp.context('logLexer')
     def testNewlineAbortsMarker(self):
         # test newline aborts marker start
         self.lexer.scan('\n')
-        self.assertEquals(self.tokens, [])
-        self.assertEquals(self.lexer.state, logger.NEWLINE)
+        self.assertEqual(self.tokens, [])
+        self.assertEqual(self.lexer.state, logger.NEWLINE)
         self.lexer.scan('0123')
-        self.assertEquals(self.tokens, [])
-        self.assertEquals(self.lexer.state, logger.MARKER)
+        self.assertEqual(self.tokens, [])
+        self.assertEqual(self.lexer.state, logger.MARKER)
 
         self.lexer.scan('\n')
-        self.assertEquals(self.tokens, [(logger.NEWLINE, None),
+        self.assertEqual(self.tokens, [(logger.NEWLINE, None),
                                         (logger.FREETEXT, '0123')])
-        self.assertEquals(self.lexer.state, logger.NEWLINE)
+        self.assertEqual(self.lexer.state, logger.NEWLINE)
 
     @testhelp.context('logLexer')
     def testNewlineAbortsMarker2(self):
         # test newline aborts marker start
         self.lexer.scan('\n')
-        self.assertEquals(self.tokens, [])
-        self.assertEquals(self.lexer.state, logger.NEWLINE)
+        self.assertEqual(self.tokens, [])
+        self.assertEqual(self.lexer.state, logger.NEWLINE)
         self.lexer.scan('0123')
-        self.assertEquals(self.tokens, [])
-        self.assertEquals(self.lexer.state, logger.MARKER)
+        self.assertEqual(self.tokens, [])
+        self.assertEqual(self.lexer.state, logger.MARKER)
 
         self.lexer.scan('\r')
-        self.assertEquals(self.tokens, [(logger.NEWLINE, None),
+        self.assertEqual(self.tokens, [(logger.NEWLINE, None),
                                         (logger.FREETEXT, '0123'),
                                         (logger.CARRIAGE_RETURN, None)])
-        self.assertEquals(self.lexer.state, logger.FREETEXT)
+        self.assertEqual(self.lexer.state, logger.FREETEXT)
 
     @testhelp.context('logLexer')
     def testLexerNewlineFlush(self):
@@ -416,9 +416,9 @@ class LexerRulesTest(testhelp.TestCase):
         lex = logger.Lexer('foo')
         lex.registerCallback(recordToken)
         lex.scan('\n')
-        self.assertEquals(self.tokens, [])
+        self.assertEqual(self.tokens, [])
         lex.close()
-        self.assertEquals(self.tokens, [(logger.NEWLINE, None),
+        self.assertEqual(self.tokens, [(logger.NEWLINE, None),
                                         (logger.CLOSE, None)])
 
 class MiscTest(testhelp.TestCase):

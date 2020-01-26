@@ -15,8 +15,8 @@
 #
 
 
-from base_drv import BaseDatabase as Database
-import sqllib, sqlerrors
+from .base_drv import BaseDatabase as Database
+from . import sqllib, sqlerrors
 
 # retrieve the Database version
 def getDatabaseVersion(db):
@@ -28,7 +28,7 @@ def getDatabaseVersion(db):
     except:
         return sqllib.DBversion(0)
     ret = cu.fetchone()
-    if ret.has_key("minor"):
+    if "minor" in ret:
         return sqllib.DBversion(ret["version"], ret["minor"])
     return sqllib.DBversion(ret["version"])
 

@@ -106,7 +106,7 @@ class DependencyTables:
         for depStr in depList:
             depSet = deps.ThawDependencySet(depStr)
             requires[depSet] = depStr
-        depSetList = requires.keys()
+        depSetList = list(requires.keys())
         depNums = self._setupDepSets(cu, depSetList)
 
         # 1. look up inmstances whose provides fully satisfy all the
@@ -185,20 +185,20 @@ class DependencyTables:
 
         ret = {}
         for (depId, depNum, troveName, flavorStr, versionStr, timeStamps, ft) in retList:
-            retd = ret.setdefault(depId, [{} for x in xrange(depNums[depId])])
+            retd = ret.setdefault(depId, [{} for x in range(depNums[depId])])
             # remember the first version of each (n,f) tuple for each query
             retd[depNum].setdefault((troveName, flavorStr), (versionStr, timeStamps))
         ret2 = {}
-        for depId, depDictList in ret.iteritems():
+        for depId, depDictList in ret.items():
             key = requires[depSetList[depId]]
-            retList = ret2.setdefault(key, [ [] for x in xrange(len(depDictList)) ])
+            retList = ret2.setdefault(key, [ [] for x in range(len(depDictList)) ])
             for i, depDict in enumerate(depDictList):
                 retList[i] = [ (trv[0], versions.strToFrozen(ver[0], ver[1].split(":")),
-                                trv[1]) for trv, ver in depDict.iteritems() ]
+                                trv[1]) for trv, ver in depDict.items() ]
         # fill in the result dictionary for the values we have not resolved deps for
         result = {}
         for depId, depSet in enumerate(depSetList):
             result.setdefault(requires[depSet],
-                              [ [] for x in xrange(depNums[depId])])
+                              [ [] for x in range(depNums[depId])])
         result.update(ret2)
         return result

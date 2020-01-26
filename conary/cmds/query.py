@@ -187,7 +187,7 @@ def getTrovesToDisplay(db, troveSpecs, pathList=[], whatProvidesList=[],
                      for x in pathList ]
 
     troveTups = []
-    for path, origPath in itertools.izip(normPathList, pathList):
+    for path, origPath in zip(normPathList, pathList):
         if origPath.endswith('/'):
             allPaths = [ path + '/' + x for x in os.listdir(db.root + path) ]
         else:
@@ -200,7 +200,7 @@ def getTrovesToDisplay(db, troveSpecs, pathList=[], whatProvidesList=[],
 
     if whatProvidesList:
         results = db.getTrovesWithProvides(whatProvidesList)
-        troveTups.extend(itertools.chain(*results.itervalues()))
+        troveTups.extend(itertools.chain(*iter(results.values())))
 
     if not (troveSpecs or pathList or whatProvidesList):
         troveTups = sorted(db.iterAllTroves())

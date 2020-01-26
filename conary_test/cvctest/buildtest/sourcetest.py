@@ -22,7 +22,7 @@ import stat
 import shutil
 import tempfile
 from testrunner import testhelp
-import SimpleHTTPServer
+import http.server
 
 from conary import files, versions, rpmhelper
 from conary import trove as trovemod
@@ -532,7 +532,7 @@ class TestApplyMacrosSource(PackageRecipe):
         assert(rv != -1)
         rv = self.findInFile(util.joinPaths(self.buildDir, 'tmpwatch/tmpwatch-2.9.0/sourcefile'), 'XXX YYY ZZZ')
         assert(rv != -1)
-        assert(os.stat(util.joinPaths(self.buildDir, 'tmpwatch/tmpwatch-2.9.0/sourcefile'))[stat.ST_MODE] & 07777 == 0676)
+        assert(os.stat(util.joinPaths(self.buildDir, 'tmpwatch/tmpwatch-2.9.0/sourcefile'))[stat.ST_MODE] & 0o7777 == 0o676)
 
 
     def testPatchFilter(self):
@@ -1081,7 +1081,7 @@ class TestTar(PackageRecipe):
             extra = sorted(list(set(actual.keys()) - set(expected.keys())))
             for m in extra:
                 l.append('%s is extra' %m)
-            for path in actual.keys():
+            for path in list(actual.keys()):
                 if path in expected and actual[path] != expected[path]:
                     l.append('%s should be %s:%s %s but is %s:%s %s'
                              %((path,) + expected[path] + actual[path]))
@@ -1161,7 +1161,7 @@ class TestTar(PackageRecipe):
 
         if actual != expected:
             l = []
-            for path in actual.keys():
+            for path in list(actual.keys()):
                 if actual[path] != expected[path]:
                     l.append('%s should be %s:%s but is %s:%s'
                              %((path,) + expected[path] + actual[path]))
@@ -1179,7 +1179,7 @@ class TestTar(PackageRecipe):
 """
         try:
             self.buildRecipe(recipestr, "TestTar")
-        except source.SourceError, e:
+        except source.SourceError as e:
             assert(str(e) == 'preserveOwnership, preserveSetid, and '
                              'preserveDirectories not allowed when '
                              'unpacking into build directory')
@@ -1198,7 +1198,7 @@ class TestTar(PackageRecipe):
 
         try:
             self.buildRecipe(recipestr, "TestTar")
-        except source.SourceError, e:
+        except source.SourceError as e:
             assert(str(e) == 'cannot preserveOwnership, preserveSetid, or '
                              'preserveDirectories for iso images')
         else:
@@ -1216,7 +1216,7 @@ class TestTar(PackageRecipe):
 
         try:
             self.buildRecipe(recipestr, "TestTar")
-        except source.SourceError, e:
+        except source.SourceError as e:
             assert(str(e) == 'cannot preserveOwnership, preserveSetid, or '
                              'preserveDirectories for xpi or zip archives')
         else:
@@ -1250,7 +1250,7 @@ class Yo(PackageRecipe):
 
         try:
             self.buildRecipe(recipestr, "Yo")
-        except source.SourceError, e:
+        except source.SourceError as e:
             assert(str(e) == 'cannot specify a directory as input to addSource')
         else:
             assert(False)
@@ -1270,7 +1270,7 @@ class TestAddSourceDir(PackageRecipe):
 
         def mockDoDownload(x):
             f = x._findSource(x.httpHeaders)
-            self.assertEquals(f, os.path.join(x.builddir,
+            self.assertEqual(f, os.path.join(x.builddir,
                                               x.recipe.macros.maindir,
                                               'test'))
             raise Stop
@@ -1339,10 +1339,10 @@ class TestSource(PackageRecipe):
         # globs for addPatch are only used if soruceDir is defined.
         try:
             self.buildRecipe(recipestr, "TestSource")
-        except OSError, e:
+        except OSError as e:
             if e.errno != 2:
                 raise
-            self.assertEquals(str(e),
+            self.assertEqual(str(e),
                   "[Errno 2] No such file or directory: 'tmpwatch.fakebug.*'")
         else:
             self.fail("addPatch on bad filename should have failed")
@@ -1361,10 +1361,10 @@ class TestSource(PackageRecipe):
         self.orderedCalls = []
         addPatch = TestAddPatch()
         addPatch.do()
-        self.assertEquals(self.orderedCalls, ["1", "2", "3"])
+        self.assertEqual(self.orderedCalls, ["1", "2", "3"])
 
     def _getHTTPServer(self, logFile):
-        class FileHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
+        class FileHandler(http.server.SimpleHTTPRequestHandler):
             count = 0
             def log_message(slf, *args, **kw):
                 file(logFile, "a").write("%s\n" % slf.path)
@@ -1492,7 +1492,7 @@ class Foo(PackageRecipe):
             self.commit()
             xx = self.cookItem(self.openRepository(), self.cfg, 'foo')
             self.updatePkg('foo')
-            self.assertEquals(open(self.cfg.root + '/foo').read(), '2\n')
+            self.assertEqual(open(self.cfg.root + '/foo').read(), '2\n')
         finally:
             hs.close()
 
@@ -1623,10 +1623,10 @@ class Foo(PackageRecipe):
         nvf = built[0]
         nvf = repos.findTrove(None, nvf)[0]
         fileDict = client.getFilesFromTrove(*nvf)
-        self.assertNotEquals(fileDict['/bar/foo'].read(), 'wrong stuff')
+        self.assertNotEqual(fileDict['/bar/foo'].read(), 'wrong stuff')
         rpmLookaside = open(os.path.join(self.cfg.lookaside,
                 '=RPM_CONTENTS=', 'foo', 'foo-1.0-1.src.rpm', 'foo')).read()
-        self.assertEquals(rpmLookaside, '')
+        self.assertEqual(rpmLookaside, '')
         fooLookasidePath = os.path.join(self.cfg.lookaside,'foo', 'foo')
         self.assertFalse(os.path.exists(fooLookasidePath),
                 "foo file from sourcedir should not have been referenced.")
@@ -1660,13 +1660,13 @@ class Foo(PackageRecipe):
         nvf = built[0]
         nvf = repos.findTrove(None, nvf)[0]
         fileDict = client.getFilesFromTrove(*nvf)
-        self.assertNotEquals(fileDict['/bar/foo'].read(), 'wrong stuff')
+        self.assertNotEqual(fileDict['/bar/foo'].read(), 'wrong stuff')
         rpmLookaside = open(os.path.join(self.cfg.lookaside,
                 '=RPM_CONTENTS=', 'foo', 'foo-1.0-1.src.rpm', 'foo')).read()
-        self.assertEquals(rpmLookaside, '')
+        self.assertEqual(rpmLookaside, '')
         fooLookasidePath = os.path.join(self.cfg.lookaside,'foo', 'foo')
-        self.assertEquals(open(fooLookasidePath).read(), 'wrong stuff')
-        self.assertEquals(fileDict['/baz/foo'].read(), 'wrong stuff')
+        self.assertEqual(open(fooLookasidePath).read(), 'wrong stuff')
+        self.assertEqual(fileDict['/baz/foo'].read(), 'wrong stuff')
 
     @testhelp.context('CNY-2627')
     def testRpmLookaside3(self):
@@ -1702,7 +1702,7 @@ class Foo(PackageRecipe):
         # prove each specfile has distinct contents.
         self.assertTrue('Release: 1' in fileDict['/1/foo.spec'].read())
         self.assertTrue('Release: 2' in fileDict['/2/foo.spec'].read())
-        self.assertEquals(set(fileDict.keys()),
+        self.assertEqual(set(fileDict.keys()),
                 set(['/1/foo.spec', '/2/foo.spec']))
 
     @testhelp.context('CNY-2627')
@@ -1726,7 +1726,7 @@ class Foo(PackageRecipe):
         client = self.getConaryClient()
         repos = client.getRepos()
         err = self.assertRaises(IOError, self.cookItem, repos, self.cfg, 'foo')
-        self.assertEquals(str(err),
+        self.assertEqual(str(err),
                 'failed to extract source notfound from RPM foo-1.0-1.src.rpm')
 
     def testRepositoryCookNoDownload(self):

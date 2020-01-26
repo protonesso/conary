@@ -167,7 +167,7 @@ class AbstractTroveSource:
                                             **kw)
         return troveFinder.findTroves(troves, allowMissing)
 
-    def findTrove(self, labelPath, (name, versionStr, flavor),
+    def findTrove(self, labelPath, xxx_todo_changeme1,
                   defaultFlavor=None, acrossLabels = False,
                   acrossFlavors = False, affinityDatabase = None,
                   bestFlavor = None, getLeaves = None,
@@ -175,6 +175,7 @@ class AbstractTroveSource:
         """
         See L{repository.trovesource.AbstractTroveSource.findTroves}
         """
+        (name, versionStr, flavor) = xxx_todo_changeme1
         res = self.findTroves(labelPath, ((name, versionStr, flavor),),
                               defaultFlavor, acrossLabels, acrossFlavors,
                               affinityDatabase, bestFlavor=bestFlavor,
@@ -220,7 +221,7 @@ class AbstractTroveSource:
                 refs = self.getTroveTroves([ x[0] for x in getList],
                                                justPresent = True)
 
-                for item, refList in itertools.izip(getList, refs):
+                for item, refList in zip(getList, refs):
                     item[1] = []
                     for x in refList:
                         if x not in seen:
@@ -250,7 +251,7 @@ class AbstractTroveSource:
             (name, version, flavor) = troveList[0]
             del troveList[0]
 
-            if seen.has_key(name):
+            if name in seen:
                 match = False
                 for (ver, fla) in seen[name]:
                     if version == ver and fla == flavor:
@@ -283,7 +284,7 @@ class AbstractTroveSource:
             Given two suggestion lists, merge them so that
             all the suggestions are together.
         """
-        for depSet, trovesByDepList in newSugg.iteritems():
+        for depSet, trovesByDepList in newSugg.items():
             if depSet not in allSuggs:
                 lst = [ [] for x in trovesByDepList ]
                 allSuggs[depSet] = lst
@@ -403,8 +404,8 @@ class SearchableTroveSource(AbstractTroveSource):
                          bestFlavor=False, troveTypes=TROVE_QUERY_PRESENT):
         if isinstance(troveSpecs, dict):
             troveSpecList = []
-            for name, versionDict in troveSpecs.iteritems():
-                for version, flavorList in versionDict.iteritems():
+            for name, versionDict in troveSpecs.items():
+                for version, flavorList in versionDict.items():
                     if flavorList is None or flavorList is '':
                         troveSpecList.append((name, version, flavorList))
                     else:
@@ -433,7 +434,7 @@ class SearchableTroveSource(AbstractTroveSource):
                 else:
                     fList = vDict[version]
                 fList.append(flavor)
-        for name, versionDict in resultDict.iteritems():
+        for name, versionDict in resultDict.items():
             for version in versionDict:
                 versionDict[version] = list(set(versionDict[version]))
         return resultDict
@@ -492,7 +493,7 @@ class SearchableTroveSource(AbstractTroveSource):
             fDict = vDict.setdefault(versionSpec, {})
             fDict.setdefault(flavorSpec, []).append(idx)
 
-        for name, versionQuery in troveSpecDict.iteritems():
+        for name, versionQuery in troveSpecDict.items():
             troves = self._toQueryDict(self.trovesByName(name))
             if not troves:
                 continue
@@ -501,15 +502,15 @@ class SearchableTroveSource(AbstractTroveSource):
                 continue
             for resultName in troves:
                 versionResults = self._filterByVersionQuery(versionType,
-                                                            troves[resultName].keys(),
+                                                            list(troves[resultName].keys()),
                                                             versionQuery)
 
-                for queryKey, versionList in versionResults.iteritems():
+                for queryKey, versionList in versionResults.items():
 
                     flavorQueryList = versionQuery[queryKey]
                     versionFlavorDict = dict((x, troves[resultName][x])
                                               for x in versionList)
-                    for flavorQuery, idxList in flavorQueryList.iteritems():
+                    for flavorQuery, idxList in flavorQueryList.items():
                         results, altFlavors = self._filterResultsByFlavor(
                                                     versionFlavorDict,
                                                     flavorQuery, filterOptions,
@@ -520,7 +521,7 @@ class SearchableTroveSource(AbstractTroveSource):
                             else:
                                 finalAltFlavors[idx] = altFlavors
                             for idx in troveSpecDict[name][queryKey][flavorQuery]:
-                                for version, flavorList in results.iteritems():
+                                for version, flavorList in results.items():
                                     finalResults[idx].extend((resultName, version, x)
                                                              for x in flavorList)
 
@@ -534,7 +535,7 @@ class SearchableTroveSource(AbstractTroveSource):
                                                troveTypes=troveTypes)
         scoreCache = {}
         newResults, newAltFlavors = [], []
-        for flavorQuery, troveList in itertools.izip(flavorQueryList,
+        for flavorQuery, troveList in zip(flavorQueryList,
                                                      troveLists):
             results, altFlavors = self.filterByFlavor(flavorQuery, troveList,
                                                   filterOptions, scoreCache)
@@ -558,7 +559,7 @@ class SearchableTroveSource(AbstractTroveSource):
                                                           scoreCache)
 
         resultsList = []
-        for version, flavorList in results.iteritems():
+        for version, flavorList in results.items():
             for flavor in flavorList:
                 for name in versionFlavorDict[version][flavor]:
                     resultsList.append(trovetup.TroveTuple(name, version, flavor))
@@ -598,7 +599,7 @@ class SearchableTroveSource(AbstractTroveSource):
             allAltFlavors.extend(altFlavors)
             if not filteredDict:
                 continue
-            for version, flavorList in filteredDict.iteritems():
+            for version, flavorList in filteredDict.items():
                 if version not in results:
                     results[version] = []
                 results[version].extend(flavorList)
@@ -612,7 +613,7 @@ class SearchableTroveSource(AbstractTroveSource):
             versionsByBranch.setdefault(version.branch(),
                                         []).append(version)
         versionFlavorDicts = []
-        for versionList in versionsByBranch.values():
+        for versionList in list(versionsByBranch.values()):
             versionFlavorDicts.append(
                     dict((x, versionFlavorDict[x]) for x in
                             versionList))
@@ -657,7 +658,7 @@ class SearchableTroveSource(AbstractTroveSource):
         latestFilter = filterOptions.latestFilter
         flavorCheck  = filterOptions.flavorCheck
         if latestFilter == _GET_TROVE_VERY_LATEST:
-            versionFlavorList = sorted(versionFlavorDict.iteritems(),
+            versionFlavorList = sorted(iter(versionFlavorDict.items()),
                                        reverse=True)
         else:
             versionFlavorList = list(versionFlavorDict.items())
@@ -793,7 +794,7 @@ class SearchableTroveSource(AbstractTroveSource):
         else:
             altFlavors = []
         results = {}
-        for version, flavorList in queryResults.iteritems():
+        for version, flavorList in queryResults.items():
             results.setdefault(version, set()).update(flavorList)
         return results, altFlavors
 
@@ -855,7 +856,7 @@ class SearchableTroveSource(AbstractTroveSource):
             return
         if flavorCheck == _CHECK_TROVE_STRONG_FLAVOR:
             strongFlavors = [x.toStrongFlavor() for x in toCalc]
-            toCalc = zip(strongFlavors, toCalc)
+            toCalc = list(zip(strongFlavors, toCalc))
             scores = ((x[0].score(flavorQuery), x[1]) \
                                         for x in toCalc)
         else:
@@ -946,7 +947,7 @@ class SimpleTroveSource(SearchableTroveSource):
         return len([x for x in self ])
 
     def __iter__(self):
-        return itertools.chain(*self._trovesByName.itervalues())
+        return itertools.chain(*iter(self._trovesByName.values()))
 
     def addTrove(self, n, v, f):
         self._trovesByName.setdefault(n,set()).add((n,v,f))
@@ -1297,7 +1298,7 @@ class ChangesetFilesTroveSource(SearchableTroveSource):
                        (oldVer, oldFla))
                 trvCsList.append(trvCs)
             else:
-                raise NotImplementedError, 'we don"t store erasures'
+                raise NotImplementedError('we don"t store erasures')
         return trvCsList
 
     def getTroveChangeSet(self, job, withFiles=False):
@@ -1325,7 +1326,7 @@ class ChangesetFilesTroveSource(SearchableTroveSource):
     def resolveDependencies(self, label, depList, leavesOnly=False):
         assert(self.storeDeps)
         suggMap = self.depDb.resolve(label, depList, leavesOnly=leavesOnly)
-        for depSet, solListList in suggMap.iteritems():
+        for depSet, solListList in suggMap.items():
             newSolListList = []
             for solList in solListList:
                 newSolListList.append([ self.idMap[x] for x in solList ])
@@ -1338,7 +1339,8 @@ class ChangesetFilesTroveSource(SearchableTroveSource):
                         callback = None):
         # Returns the changeset plus a remainder list of the bits it
         # couldn't do
-        def _findTroveObj(availSet, (name, version, flavor)):
+        def _findTroveObj(availSet, xxx_todo_changeme):
+            (name, version, flavor) = xxx_todo_changeme
             info = (name, version, flavor)
             (inDb, fromCs) = availSet[info]
 
@@ -1375,7 +1377,7 @@ class ChangesetFilesTroveSource(SearchableTroveSource):
 
         asChangeset = [ info in self.troveCsMap for info in troves ]
         trovesAvailable = dict((x[0], (x[1], x[2])) for x in
-                            itertools.izip(troves, inDatabase, asChangeset))
+                            zip(troves, inDatabase, asChangeset))
 
         remainder = []
 
@@ -1608,7 +1610,7 @@ class SourceStack(object):
                                           callback=callback)
             except NotImplementedError:
                 continue
-            for ((index, troveTup), trove) in itertools.izip(troveList, troves):
+            for ((index, troveTup), trove) in zip(troveList, troves):
                 if trove is None:
                     newTroveList.append((index, troveTup))
                 else:
@@ -1624,13 +1626,13 @@ class SourceStack(object):
         results = [ -1 ] * len(troveTupList)
         for source in self.sources:
             need = [ (i, troveTup) for i, (troveTup, ti) in
-                        enumerate(itertools.izip(troveTupList, results))
+                        enumerate(zip(troveTupList, results))
                         if ti == -1]
             if not need:
                 break
 
             tiList = source.getTroveInfo(infoType, [ x[1] for x in need] )
-            for (i, troveTup), troveInfo in itertools.izip(need, tiList):
+            for (i, troveTup), troveInfo in zip(need, tiList):
                 if troveInfo == 0:
                     results[0] = None
                 else:
@@ -1643,13 +1645,13 @@ class SourceStack(object):
         results = [ None ] * len(troveInfoList)
         for source in self.sources:
             need = [ (i, troveInfo) for i, (troveInfo, depTuple) in
-                        enumerate(itertools.izip(troveInfoList, results))
+                        enumerate(zip(troveInfoList, results))
                         if depTuple is None ]
             if not need:
                 break
 
             depList = source.getDepsForTroveList([ x[1] for x in need] )
-            for (i, troveInfo), depTuple in itertools.izip(need, depList):
+            for (i, troveInfo), depTuple in zip(need, depList):
                 if depTuple is not None:
                     results[i] = depTuple
 
@@ -1683,7 +1685,7 @@ class SourceStack(object):
         for source in self.sources:
             try:
                 newResults = source.getFileVersions([ x[1] for x in needed ])
-                for result, (i, info) in itertools.izip(newResults, needed):
+                for result, (i, info) in zip(newResults, needed):
                     if info:
                         results[i] = result
                 needed = [ tup for tup in needed if results[tup[0]] is None ]
@@ -1691,7 +1693,7 @@ class SourceStack(object):
                     break
 
             # FIXME: there should be a better error for this
-            except (KeyError, NotImplementedError), e:
+            except (KeyError, NotImplementedError) as e:
                 continue
 
         return results
@@ -1702,7 +1704,7 @@ class SourceStack(object):
             try:
                 return source.getFileVersion(pathId, fileId, version)
             # FIXME: there should be a better error for this
-            except (KeyError, NotImplementedError), e:
+            except (KeyError, NotImplementedError) as e:
                 continue
         return None
 
@@ -1846,7 +1848,7 @@ class TroveSourceStack(SourceStack, SearchableTroveSource):
 
             sugg = source.resolveDependencies(label, depList,
                                               leavesOnly=leavesOnly)
-            for depSet, troves in sugg.iteritems():
+            for depSet, troves in sugg.items():
                 if [ x for x in troves if x ]:
                     # only consider this depSet 'solved' if at least
                     # on of the deps had a trove suggested for it.

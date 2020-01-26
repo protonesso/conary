@@ -38,7 +38,7 @@ class GroupPathConflicts(CookError):
         self.conflicts = conflicts
         self.groupDict = groupDict
         errStrings = []
-        for groupName, conflictSets in conflicts.iteritems():
+        for groupName, conflictSets in conflicts.items():
             group = groupDict[groupName]
             errStrings.append('%s:' % groupName)
             for conflictSet, paths in conflictSets:

@@ -43,20 +43,20 @@ class PatchTest(unittest.TestCase):
 
         diff = difflib.unified_diff(orig, new)
         # advance past header
-        diff.next()
-        diff.next()
+        next(diff)
+        next(diff)
         d = [ x for x in diff ]
 
         (new2, conflicts) = patch(target, d)
 
         diff = difflib.unified_diff(final, new2)
         try:
-            diff.next()
-            print "%s '%s' failed:" % (fileName, sedCmd)
-            diff.next()
+            next(diff)
+            print("%s '%s' failed:" % (fileName, sedCmd))
+            next(diff)
             for line in diff:
                 line = line[:-1]
-                print "\t%s" % line
+                print("\t%s" % line)
         except StopIteration:
             pass
 
@@ -92,13 +92,13 @@ class PatchTest(unittest.TestCase):
 
         diff = difflib.unified_diff(old, new, lineterm = "")
         # advance past header
-        diff.next()
-        diff.next()
+        next(diff)
+        next(diff)
 
         (new2, conflicts) = patch(old, diff)
         assert(not conflicts)
         diff = difflib.unified_diff(new, new2)
-        self.assertRaises(StopIteration, diff.next)
+        self.assertRaises(StopIteration, diff.__next__)
 
     def test10(self):
         """test reversing a diff and applying it to the new file, check
@@ -108,8 +108,8 @@ class PatchTest(unittest.TestCase):
 
         diff = difflib.unified_diff(old, new, lineterm = "")
         # advance past header
-        diff.next()
-        diff.next()
+        next(diff)
+        next(diff)
         diff = reverse(diff)
         
         (old2, conflicts) = patch(new, diff)
@@ -132,8 +132,8 @@ class PatchTest(unittest.TestCase):
 
         diff = difflib.unified_diff(old, new, lineterm = "")
         # advance past header
-        diff.next()
-        diff.next()
+        next(diff)
+        next(diff)
 
         (results, conflicts) = patch(oldchanged, diff)
         assert(results == newmerged)
@@ -154,8 +154,8 @@ class PatchTest(unittest.TestCase):
 
         diff = difflib.unified_diff(base, tip, lineterm = "")
         # advance past header
-        diff.next()
-        diff.next()
+        next(diff)
+        next(diff)
 
         # this should be like "patch appears to already be applied"
         (results, conflicts) = patch(trunk, diff)
@@ -201,7 +201,7 @@ class PatchTest(unittest.TestCase):
         assert(conflicts)
 
     def testEraseAlreadyApplied(self):
-        first = [ "%s\n" % x for x in xrange(10) ]
+        first = [ "%s\n" % x for x in range(10) ]
         second = first[:]
         second.remove("4\n")
 
@@ -211,7 +211,7 @@ class PatchTest(unittest.TestCase):
         assert(not conflicts)
 
     def testMergeAtEnd(self):
-        first = [ "%s\n" % x for x in xrange(10) ]
+        first = [ "%s\n" % x for x in range(10) ]
         second = first[:]
         second.remove("7\n")
         diff = list(difflib.unified_diff(first, second))

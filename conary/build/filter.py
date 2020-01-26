@@ -81,7 +81,7 @@ class Filter:
         if type(regex) is str:
             try:
                 self.regexp = self._anchor(regex %macros)
-            except ValueError, msg:
+            except ValueError as msg:
                 log.error('invalid macro substitution in "%s", missing "s"?' %regex)
                 raise
             self.re = re.compile(self.regexp)
@@ -89,7 +89,7 @@ class Filter:
             for subre in regex:
                 try:
                     subre = self._anchor(subre %macros)
-                except ValueError, msg:
+                except ValueError as msg:
                     log.error('invalid macro substitution in "%s", missing "s"?' %subre)
                     raise
                 tmplist.append('(?:' + subre + ')')

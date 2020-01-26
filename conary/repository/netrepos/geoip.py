@@ -72,7 +72,7 @@ class GeoIPLookup(object):
     def getFlags(self, remote_ip):
         if not isinstance(remote_ip, networking.BaseIPAddress):
             remote_ip = networking.BaseIPAddress.parse(remote_ip)
-        for space, networks in self.RESERVED.items():
+        for space, networks in list(self.RESERVED.items()):
             for network in networks:
                 if network.match(remote_ip):
                     return deps.parseFlavor('reserved.' + space)

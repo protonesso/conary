@@ -57,7 +57,7 @@ class VerifyTest(rephelp.RepositoryHelper):
 
         rc, str = self.captureOutput(verify.verify, ['testcase:runtime'], db,
                                      self.cfg, diffBinaries=True)
-        self.assertEquals(str,
+        self.assertEqual(str,
             'diff --git a/etc/changedconfig b/etc/changedconfig\n'
             'old user root\n'
             'new user %(user)s\n'
@@ -177,7 +177,7 @@ class VerifyTest(rephelp.RepositoryHelper):
             fileContents = [ ( '/a', rephelp.RegularFile(contents = '1234',
                                                          owner = user,
                                                          group = group)) ] )
-        fileInfo = trv.iterFileList().next()
+        fileInfo = next(trv.iterFileList())
         self.updatePkg('foo:runtime')
 
         f = open(self.rootDir + '/a', "w")
@@ -210,19 +210,19 @@ class VerifyTest(rephelp.RepositoryHelper):
         db = self.openDatabase()
         s = self.captureOutput(verify.verify, ['foo:run'], db, self.cfg,
                                asDiff = True)[1]
-        self.assertEquals(s, '')
+        self.assertEqual(s, '')
 
         # we don't notice the new file unless all is given because
         # nothing owns /bin
         self.writeFile(self.rootDir + '/bin/new-file', 'newtext\n')
         s = self.captureOutput(verify.verify, ['foo:run'], db, self.cfg,
                                asDiff = True, newFiles = True)[1]
-        self.assertEquals(s, '')
+        self.assertEqual(s, '')
 
         s = self.captureOutput(verify.verify, [], db, self.cfg,
                                asDiff = True, newFiles = True,
                                all = True)[1]
-        self.assertEquals(s,
+        self.assertEqual(s,
              'diff --git a/bin/new-file b/bin/new-file\n'
              'new user %(user)s\n'
              'new group %(group)s\n'
@@ -237,7 +237,7 @@ class VerifyTest(rephelp.RepositoryHelper):
                                newFiles = True, all = True)[1]
         # filter out the timestamp
         s = ' '.join(s.split()[0:8] + s.split()[10:])
-        self.assertEquals(s,
+        self.assertEqual(s,
             'Install @new:files=1.0-1-1 New -rw-r--r-- 1 %(user)s %(group)s '
             '8 UTC /bin/new-file' % userDict)
 
@@ -249,7 +249,7 @@ class VerifyTest(rephelp.RepositoryHelper):
             s = self.captureOutput(verify.verify, [], db, self.cfg,
                                    asDiff = True, newFiles = True,
                                    all = True)[1]
-            self.assertEquals(s, '')
+            self.assertEqual(s, '')
         finally:
             self.cfg.verifyDirsNoNewFiles = oldCfg
 
@@ -262,7 +262,7 @@ class VerifyTest(rephelp.RepositoryHelper):
         self.updatePkg('foo:dir=1')
         s = self.captureOutput(verify.verify, ['foo:dir'], db, self.cfg,
                                asDiff = True, newFiles = True)[1]
-        self.assertEquals(s,
+        self.assertEqual(s,
              'diff --git a/bin/new-file b/bin/new-file\n'
              'new user %(user)s\n'
              'new group %(group)s\n'
@@ -298,12 +298,12 @@ class VerifyTest(rephelp.RepositoryHelper):
         cs = changeset.ChangeSetFromFile('foo.ccs')
 
         trvCsByName = dict((x.getName(), x) for x in cs.iterNewTroveList())
-        self.assertEquals(
+        self.assertEqual(
             [ x[1] for x in trvCsByName['foo:bin'].getNewFileList() ],
             [ '/bin/new'] )
-        self.assertEquals(
+        self.assertEqual(
             [ x[1] for x in trvCsByName['foo:lib'].getNewFileList() ],
             [ '/lib/new'] )
-        self.assertEquals(
+        self.assertEqual(
             [ x[1] for x in trvCsByName['@new:files'].getNewFileList() ],
             [ '/rootfile'] )

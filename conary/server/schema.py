@@ -114,7 +114,7 @@ def createFlavors(db):
             value           INTEGER NOT NULL DEFAULT -1000000
         )  %(TABLEOPTS)s""" % db.keywords)
         db.tables["FlavorScores"] = []
-        for (request, present), value in deps.flavorScores.iteritems():
+        for (request, present), value in deps.flavorScores.items():
             if value is None:
                 value = -1000000
             cu.execute("INSERT INTO FlavorScores (request, present, value) VALUES (?,?,?)",
@@ -1379,7 +1379,7 @@ def loadSchema(db, doMigrate=False):
     global VERSION
     try:
         version =  checkVersion(db)
-    except sqlerrors.SchemaVersionError, e:
+    except sqlerrors.SchemaVersionError as e:
         version = e.args[0]
     logMe(1, "current =", version, "required =", VERSION)
     # load the current schema object list

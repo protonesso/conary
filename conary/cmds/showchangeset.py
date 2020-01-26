@@ -30,14 +30,14 @@ from conary.lib import log
 from conary.repository import trovesource
 
 def usage():
-    print "conary showcs   <changeset> [trove[=version]]"
-    print "  Accepts all common display options.  Also,"
-    print "                --show-changes        For modifications, show the old "
-    print "                                      file info below new"
-    print "                --all                 Combine tags to display most information about the changeset"
-    print "                --recurse-repository  Search repositories for information about referenced but not"
-    print "                                      included troves"
-    print ""
+    print("conary showcs   <changeset> [trove[=version]]")
+    print("  Accepts all common display options.  Also,")
+    print("                --show-changes        For modifications, show the old ")
+    print("                                      file info below new")
+    print("                --all                 Combine tags to display most information about the changeset")
+    print("                --recurse-repository  Search repositories for information about referenced but not")
+    print("                                      included troves")
+    print("")
 
 def displayChangeSet(db, cs, troveSpecs, cfg,
                      asDiff = False, diffBinaries = False,
@@ -172,7 +172,7 @@ def getJobsToDisplay(jobSource, jobSpecs):
 
     if jobSpecs:
         results = jobSource.findJobs(jobSpecs)
-        jobs = list(itertools.chain(*results.itervalues()))
+        jobs = list(itertools.chain(*iter(results.values())))
     else:
         jobs = list(jobSource.iterAllJobs())
 

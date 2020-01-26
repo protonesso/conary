@@ -170,7 +170,7 @@ class CheckoutCommand(CvcCommand):
     def runCommand(self, cfg, argSet, args, profile = False,
                    callback = None, repos = None):
         args = args[1:]
-        if argSet.has_key("dir"):
+        if "dir" in argSet:
             dir = argSet['dir']
             del argSet['dir']
         else:
@@ -354,7 +354,7 @@ class CommitCommand(CvcCommand):
             else:
                 try:
                     message = open(logfile).read()
-                except IOError, e:
+                except IOError as e:
                     raise errors.ConaryError("While opening %s: %s" % (
                         e.filename, e.strerror))
             # Get rid of trailing white spaces, they're probably not
@@ -455,14 +455,14 @@ class CookCommand(CvcCommand):
         prep = 0
         downloadOnly = False
         resume = None
-        if argSet.has_key('flavor'):
+        if 'flavor' in argSet:
             buildFlavor = deps.deps.parseFlavor(argSet['flavor'],
                                                 raiseError=True)
             cfg.buildFlavor = deps.deps.overrideFlavor(cfg.buildFlavor,
                                                        buildFlavor)
             del argSet['flavor']
 
-        if argSet.has_key('macros'):
+        if 'macros' in argSet:
             f = open(argSet['macros'])
             for row in f:
                 row = row.strip()
@@ -473,25 +473,25 @@ class CookCommand(CvcCommand):
             del f
             del argSet['macros']
 
-        if argSet.has_key('macro'):
+        if 'macro' in argSet:
             for macro in argSet['macro']:
                 cfg.configLine('macros ' + macro)
             del argSet['macro']
 
-        if argSet.has_key('prep'):
+        if 'prep' in argSet:
             del argSet['prep']
             prep = 1
-        if argSet.has_key('ignore-buildreqs'):
+        if 'ignore-buildreqs' in argSet:
             del argSet['ignore-buildreqs']
             ignoreDeps = True
-        elif argSet.has_key('no-deps'):
+        elif 'no-deps' in argSet:
             del argSet['no-deps']
             ignoreDeps = True
         else:
             ignoreDeps = False
 
-        if argSet.has_key('download'):
-            if argSet.has_key('prep') or prep==True:
+        if 'download' in argSet:
+            if 'prep' in argSet or prep==True:
                 log.warn('download and prep should not be used together... prefering download only')
             del argSet['download']
             ignoreDeps = True
@@ -499,7 +499,7 @@ class CookCommand(CvcCommand):
 
         showBuildReqs = argSet.pop('show-buildreqs', False)
 
-        if argSet.has_key('quiet'):
+        if 'quiet' in argSet:
             cfg.quiet = True
             del argSet['quiet']
 
@@ -509,15 +509,15 @@ class CookCommand(CvcCommand):
 
         allowFlavorChange = argSet.pop('allow-flavor-change', False)
 
-        if argSet.has_key('resume'):
+        if 'resume' in argSet:
             resume = argSet['resume']
             del argSet['resume']
-        if argSet.has_key('unknown-flags'):
+        if 'unknown-flags' in argSet:
             unknownFlags = argSet['unknown-flags']
             del argSet['unknown-flags']
         else:
             unknownFlags = False
-        if argSet.has_key('debug-exceptions'):
+        if 'debug-exceptions' in argSet:
             del argSet['debug-exceptions']
             cfg.debugRecipeExceptions = True
 
@@ -567,7 +567,7 @@ class CookCommand(CvcCommand):
                          groupOptions=groupOptions,
                          changeSetFile=targetFile,
                          )
-        except builderrors.GroupFlavorChangedError, err:
+        except builderrors.GroupFlavorChangedError as err:
             err.args = (err.args[0] +
                         '\n(Add the --allow-flavor-change flag to override this error)\n',)
             raise
@@ -600,7 +600,7 @@ class DeriveCommand(CvcCommand):
         extract = argSet.pop('extract', False)
         targetLabel = argSet.pop('target', None)
         info = False
-        if argSet.has_key('info'):
+        if 'info' in argSet:
             del argSet['info']
             info = True
 
@@ -830,7 +830,7 @@ class SignCommand(CvcCommand):
                    callback = None, repos = None):
         args = args[1:]
         if len(args) <2: return self.usage()
-        if argSet.has_key('quiet'):
+        if 'quiet' in argSet:
             cfg.quiet = True
             del argSet['quiet']
         recurse = argSet.pop('recurse', False)
@@ -994,10 +994,10 @@ class CvcMain(command.MainHandler):
     hobbleShortOpts = True
 
     def usage(self, rc=1, showAll=False):
-        print 'Conary Version Control (cvc)'
+        print('Conary Version Control (cvc)')
         if not showAll:
-            print
-            print 'Common Commands (use "cvc help" for the full list)'
+            print()
+            print('Common Commands (use "cvc help" for the full list)')
         return options.MainHandler.usage(self, rc, showAll=showAll)
 
     def runCommand(self, thisCommand, cfg, argSet, args, debugAll=False):
@@ -1025,7 +1025,7 @@ class CvcMain(command.MainHandler):
         use.setBuildFlagsFromFlavor(None, cfg.buildFlavor, error=False)
 
         profile = False
-        if argSet.has_key('lsprof'):
+        if 'lsprof' in argSet:
             import cProfile
             prof = cProfile.Profile()
             prof.enable()
@@ -1099,13 +1099,13 @@ def main(argv=None):
     except debuggerException:
         raise
     except (errors.ConaryError, errors.CvcError, cfg.CfgError,
-            openpgpfile.PGPError), e:
+            openpgpfile.PGPError) as e:
         if str(e):
             log.error(str(e))
             sys.exit(2)
         else:
             raise
-    except KeyboardInterrupt, e:
+    except KeyboardInterrupt as e:
         pass
     return 1
 

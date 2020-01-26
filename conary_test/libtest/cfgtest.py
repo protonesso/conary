@@ -17,13 +17,13 @@
 
 import os
 import pickle
-import cPickle
+import pickle
 import re
 from testrunner import testhelp
 import shutil
 
 import tempfile
-from StringIO import StringIO
+from io import StringIO
 
 #conary
 #from conary.conarycfg import *
@@ -434,7 +434,7 @@ class ConfigTest(testhelp.TestCase):
             try:
                 cfg.read('%s/foo' % dir)
                 assert(0)
-            except Exception, e:
+            except Exception as e:
                 if 'failure in name resolution' in str(e):
                     raise testhelp.SkipTestException('requires default route')
                 desc, sep, err = str(e).partition('bar: ')
@@ -494,7 +494,7 @@ class ConfigTest(testhelp.TestCase):
         assert not cfg.isDefault('foo')
 
         cfg.resetToDefault('foo')
-        self.assertEquals(cfg.foo, 'foo')
+        self.assertEqual(cfg.foo, 'foo')
         assert cfg.isDefault('foo')
 
         cfg.foo = 'bar'
@@ -525,7 +525,7 @@ class ConfigTest(testhelp.TestCase):
 
                 sio = StringIO()
                 restored.store(sio)
-                self.assertEquals(sio.getvalue(), reference)
+                self.assertEqual(sio.getvalue(), reference)
 
 
 # This has to be at module level or pickle can't find it.

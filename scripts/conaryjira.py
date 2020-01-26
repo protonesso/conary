@@ -101,7 +101,7 @@ class jiraMine:
 
     def log(self, message):
         if self.verbose:
-            print message
+            print(message)
 
 
 
@@ -131,7 +131,7 @@ class jiraMine:
 
     def mineLabel(self, labelText, jiraProject):
 
-        print 'Looking at %s product...' %jiraProject
+        print('Looking at %s product...' %jiraProject)
 
         sourceMap = {}
         sourceOwner = {}
@@ -206,13 +206,13 @@ class jiraMine:
                 # original committer is more likely to be the responsible party
                 personMap[firstPerson] += 3
 
-            candidate = sorted(personMap.items(), key=lambda x: x[1])[-1][0]
+            candidate = sorted(list(personMap.items()), key=lambda x: x[1])[-1][0]
             if not candidate:
-                print "No best owner recognized for %s" %sourceNick
+                print("No best owner recognized for %s" %sourceNick)
                 continue
             sourceOwner[sourceNick] = candidate
-            print " Best owner for source %s is %s" %(
-                    sourceNick, sourceOwner[sourceNick])
+            print(" Best owner for source %s is %s" %(
+                    sourceNick, sourceOwner[sourceNick]))
 
         self.sourceMap[jiraProject] = sourceMap
         self.sourceOwner[jiraProject] = sourceOwner
@@ -240,8 +240,8 @@ class jiraMine:
                 desc = ', '.join(troveList) + ' packages'
             else:
                 desc = troveList[0] + ' package'
-            print "assigning %s in %s to %s" %(
-                sourceNick, jiraProject, thisSourceOwner)
+            print("assigning %s in %s to %s" %(
+                sourceNick, jiraProject, thisSourceOwner))
             cu.execute("INSERT INTO component"
                        "(cname, lead,  description, project)"
                        " VALUES ('%s', '%s', '%s', '%s');" %(

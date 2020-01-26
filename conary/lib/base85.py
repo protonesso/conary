@@ -89,9 +89,9 @@ def decode(inFile, outFile, uncompress = False):
     else:
         filter = lambda x: x
 
-    for line in inFile.xreadlines():
+    for line in inFile:
         decoded = decodestring(line)
-        outFile.write(filter(decoded))
+        outFile.write(list(filter(decoded)))
 
     if uncompress:
         outFile.write(decompressor.flush())

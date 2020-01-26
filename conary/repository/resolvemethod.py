@@ -73,7 +73,7 @@ class DepResolutionMethod(object):
             seen = set()
             if depSet in sugg:
                 suggList = set()
-                choicesAndDep = itertools.izip(sugg[depSet],
+                choicesAndDep = zip(sugg[depSet],
                                                depSet.iterDeps(sort=True))
                 for choiceList, (depClass, dep) in choicesAndDep:
                     troveNames = set(x[0] for x in choiceList)
@@ -108,7 +108,7 @@ class DepResolutionMethod(object):
                             break
 
                 if choicesBySolution:
-                    for choice, depSet in sorted(choicesBySolution.iteritems()):
+                    for choice, depSet in sorted(choicesBySolution.items()):
                         seen.add(choice)
                         depSet = str(depSet).split('\n')
                         if len(depSet) > 5:
@@ -173,13 +173,13 @@ class DepResolutionMethod(object):
                                      allowMissing=True)
         if results:
             flavoredList = []
-            troveTups = list(itertools.chain(*results.itervalues()))
+            troveTups = list(itertools.chain(*iter(results.values())))
             trovesByName = {}
             for troveTup in troveTups:
                 if troveTup in allAffinityTroves:
                     continue
                 trovesByName.setdefault(troveTup[0], []).append(troveTup)
-            for troveName, troveTups in trovesByName.items():
+            for troveName, troveTups in list(trovesByName.items()):
                 affTups = affFlavorDict[troveName]
                 if affTups:
                     for affTup in affTups:
@@ -201,7 +201,7 @@ class DepResolutionMethod(object):
                                      for x in troveNames], installFlavor,
                                      getLeaves=True,
                                      allowMissing=True)
-            troveTups = list(itertools.chain(*results.itervalues()))
+            troveTups = list(itertools.chain(*iter(results.values())))
             allTups = repos.filterTrovesByPreferences(troveTups)
             flavoredList = [ (installFlavor, x) for x in allTups ]
 
@@ -231,7 +231,7 @@ class DepResolutionMethod(object):
 
             trovesByNL[n,l] = (myScore, myTimeStamp, (n,v,f))
 
-        scoredList = sorted(trovesByNL.itervalues())
+        scoredList = sorted(trovesByNL.values())
         if not scoredList:
             return None
         if len(scoredList) > 1 and [x for x in scoredList if x[1] == 0]:
@@ -260,7 +260,7 @@ class DepResolutionMethod(object):
             newTroves = troveSource.getTroves(
                   [ (x[0], x[2][0], x[2][1]) for x in badJobs ],
                   withFiles = False)
-            for job, oldTrv, newTrv in itertools.izip(badJobs,
+            for job, oldTrv, newTrv in zip(badJobs,
                                                       oldTroves,
                                                       newTroves):
                 if oldTrv.compatibleWith(newTrv):
@@ -364,7 +364,7 @@ class DepResolutionByLabelPath(DepResolutionMethod):
             else:
                 return self.troveSource.resolveDependencies(label,
                                 self.depList, leavesOnly=leavesOnly)
-        except repoerrors.OpenError, err:
+        except repoerrors.OpenError as err:
             log.warning('Could not access %s for dependency resolution: %s' % (
                                 self._labelPathWithLeaves[self.index][0], err))
             # return an empty result.

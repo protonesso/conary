@@ -138,7 +138,7 @@ class QuerySet(object):
             Return alternates and the searches that resulted in those
             alternates being suggested.
         """
-        return itertools.izip(self._searchQueues, self._alternatesByQueue)
+        return zip(self._searchQueues, self._alternatesByQueue)
 
 
 class QuerySetFactory(object):
@@ -350,7 +350,7 @@ class TroveFinder(object):
             if key not in queriesByClass:
                 queriesByClass[key] = []
             queriesByClass[key].append(query)
-        for (queryClass, methodName), queryList in queriesByClass.iteritems():
+        for (queryClass, methodName), queryList in queriesByClass.items():
             self._findAllForQueryClass(queryClass,
                                        queryList, methodName, queryOptions)
         results = {}
@@ -363,10 +363,10 @@ class TroveFinder(object):
 
         if missingMsgs and not allowMissing:
             if len(missingMsgs) > 1:
-                raise errors.TroveNotFound, '%d troves not found:\n%s\n' \
-                        % (len(missingMsgs), '\n'.join(x for x in missingMsgs))
+                raise errors.TroveNotFound('%d troves not found:\n%s\n' \
+                        % (len(missingMsgs), '\n'.join(x for x in missingMsgs)))
             else:
-                raise errors.TroveNotFound, missingMsgs[0]
+                raise errors.TroveNotFound(missingMsgs[0])
 
         return results
 
@@ -403,7 +403,7 @@ class TroveFinder(object):
                           troveTypes=queryOptions.troveTypes)
                 results, errorList = method(searchSpecs, **kw)
 
-            allInfo = itertools.izip(results, errorList, queueIds)
+            allInfo = zip(results, errorList, queueIds)
 
             for (troveList, errorList, (query, queueIdx)) in allInfo:
                 if troveList:
@@ -420,7 +420,7 @@ class TroveFinder(object):
             by flavor.
         """
         newTroveLists = []
-        for (query, queueId), troveList in itertools.izip(queryList,
+        for (query, queueId), troveList in zip(queryList,
                                                           troveLists):
             filterFn = query.getFilter()
             if filterFn is not None:
@@ -451,7 +451,7 @@ class TroveFinder(object):
                                            troveTypes=troveTypes)
         if queryOptions.requireLatest:
             latestRequired = []
-            for origRes, newRes in itertools.izip(savedTroveLists, results):
+            for origRes, newRes in zip(savedTroveLists, results):
                 # empty newRes is a TroveNotFound. we can ignore it for
                 # requireLatest tests
                 if newRes and (origRes != newRes):
@@ -492,8 +492,8 @@ class TroveFinder(object):
         if firstChar == '/':
             try:
                 version = versions.VersionFromString(versionStr)
-            except errors.ParseError, e:
-                raise errors.TroveNotFound, str(e)
+            except errors.ParseError as e:
+                raise errors.TroveNotFound(str(e))
             if isinstance(version, versions.Branch):
                 return QueryByBranchSetFactory, version
             else:
@@ -504,8 +504,7 @@ class TroveFinder(object):
         if slashCount > 1:
             # if we've got a version string, and it doesn't start with a
             # /, only one / is allowed
-            raise errors.TroveNotFound, \
-                    "incomplete version string %s not allowed" % versionStr
+            raise errors.TroveNotFound("incomplete version string %s not allowed" % versionStr)
         labelPath = self._getLabelPath(troveSpec, self.queryOptions,
                                        affinityTroves, versionStr)
         newLabelPath, remainder = self._convertLabelPath(name, labelPath,
@@ -568,8 +567,7 @@ class TroveFinder(object):
                 label = versions.Label(labelPart)
                 newLabelPath = [ label ]
             except errors.ParseError:
-                raise errors.TroveNotFound, \
-                                    "invalid version %s" % versionStr
+                raise errors.TroveNotFound("invalid version %s" % versionStr)
         else:
             # no labelPath parts in versionStr, use the old one.
             newLabelPath = labelPath
@@ -584,7 +582,7 @@ class TroveFinder(object):
             # attempt to parse the versionStr
             try:
                 versions.Revision(remainder)
-            except errors.ParseError, err:
+            except errors.ParseError as err:
                 raise errors.TroveNotFound(str(err))
         return newLabelPath, remainder
 

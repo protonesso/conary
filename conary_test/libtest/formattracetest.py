@@ -17,7 +17,7 @@
 
 from testrunner import testhelp
 
-import StringIO
+import io
 import sys
 
 from conary.lib import formattrace
@@ -28,11 +28,11 @@ class ReprTest(testhelp.TestCase):
         # we need to include the quotes in the calculation
         stringobj1 = '0123456789' * 159 + 'abcdefgh'
         stringobj2 = stringobj1 + 'i'
-        unicodeobj1 = u'0123456789' * 159 + u'abcdefgh'
-        unicodeobj2 = unicodeobj1 + u'i'
+        unicodeobj1 = '0123456789' * 159 + 'abcdefgh'
+        unicodeobj2 = unicodeobj1 + 'i'
         listobj1 = [ 1 ] * 20
         listobj2 = listobj1 + [ 'a' ]
-        sio = StringIO.StringIO()
+        sio = io.StringIO()
         frame = sys._getframe()
         formattrace.formatLocals(frame, sio)
 

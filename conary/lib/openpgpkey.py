@@ -25,15 +25,15 @@ from conary import callbacks, versions
 from conary.lib.util import log
 from conary.lib import graph, util, api
 
-import openpgpfile
-from openpgpfile import BadPassPhrase
-from openpgpfile import KeyNotFound
-from openpgpfile import num_getRelPrime
-from openpgpfile import seekKeyById
-from openpgpfile import parseAsciiArmorKey
-from openpgpfile import PublicKeyring
-from openpgpfile import SEEK_SET, SEEK_END
-from openpgpfile import TRUST_UNTRUSTED, TRUST_TRUSTED
+from . import openpgpfile
+from .openpgpfile import BadPassPhrase
+from .openpgpfile import KeyNotFound
+from .openpgpfile import num_getRelPrime
+from .openpgpfile import seekKeyById
+from .openpgpfile import parseAsciiArmorKey
+from .openpgpfile import PublicKeyring
+from .openpgpfile import SEEK_SET, SEEK_END
+from .openpgpfile import TRUST_UNTRUSTED, TRUST_TRUSTED
 
 #-----#
 #OpenPGPKey structure:
@@ -86,7 +86,7 @@ class OpenPGPKey(object):
                     trustLevel = trustLevel,
                     trustAmount = trustAmount,
                     trustRegex = trustRegex)
-        self.signatures = sorted(sigs.values(), key = lambda x: x.signer)
+        self.signatures = sorted(list(sigs.values()), key = lambda x: x.signer)
 
     def getType(self):
         return openpgpfile.key_type(self.cryptoKey)
@@ -314,7 +314,7 @@ class OpenPGPKeyFileCache(OpenPGPKeyCache):
         kr = self.getPublicKeyring()
         try:
             kr.addKeysAsStrings([keyData])
-        except openpgpfile.KeyringError, e:
+        except openpgpfile.KeyringError as e:
             # Mark the error as uncatchable, so it can pass through and stop
             # the update
             # XXX When RMK-791 (related to CNY-2555) gets fixed, we
@@ -343,7 +343,7 @@ class OpenPGPKeyFileCache(OpenPGPKeyCache):
         tsDbPath = os.path.join(os.path.dirname(pubRing), 'tsdb')
         try:
             kr = PublicKeyring(pubRing, tsDbPath)
-        except openpgpfile.PGPError, e:
+        except openpgpfile.PGPError as e:
             # Mark the error as uncatchable, so it can pass through and stop
             # the update
             e.errorIsUncatchable = True
@@ -426,7 +426,7 @@ class KeyCacheCallback(callbacks.KeyCacheCallback):
             key = self.repos.getAsciiOpenPGPKey(source, keyId)
         except KeyNotFound:
             exc = sys.exc_info()
-            raise _KeyNotFound, _KeyNotFound(keyId), exc[2]
+            raise _KeyNotFound(_KeyNotFound(keyId)).with_traceback(exc[2])
         return key
 
     def _formatSource(self, source):
@@ -465,7 +465,7 @@ class DiskKeyCacheCallback(KeyCacheCallback):
         keyFile = os.path.join(self.dirSource, "%s.asc" % keyId.lower())
         try:
             return file(keyFile).read()
-        except IOError, e:
+        except IOError as e:
             if e.errno in (2, 13):
                 # No such file, permission denied
                 raise _KeyNotFound(keyId)
@@ -491,7 +491,7 @@ class KeyringCacheCallback(KeyCacheCallback):
             sio = openpgpfile.exportKey(keyId, self.srcKeyring)
         except KeyNotFound:
             exc = sys.exc_info()
-            raise _KeyNotFound, _KeyNotFound(keyId), exc[2]
+            raise _KeyNotFound(_KeyNotFound(keyId)).with_traceback(exc[2])
 
         sio.seek(0)
         return sio.read()
@@ -578,7 +578,7 @@ class Trust(object):
         cb = lambda x: self.trustComputationCallback(x, keyRetrievalCallback)
         tstart, tfinishes, ttrees, tpred, tdepth = gt.doBFS(
             start = topLevelKeyIds, getChildrenCallback = cb)
-        self._depth = dict((g.get(x), y) for x, y in tdepth.items())
+        self._depth = dict((g.get(x), y) for x, y in list(tdepth.items()))
         return self._trust, self._depth
 
     def getTrust(self, keyId):

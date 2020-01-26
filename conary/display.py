@@ -75,7 +75,7 @@ def displayTroves(dcfg, formatter, troveTups):
     for (n,v,f), trv, troveFlags, indent in allTups:
         if dcfg.printTroveHeader():
             for ln in formatter.formatTroveHeader(trv, n, v, f, troveFlags, indent):
-                print ln
+                print(ln)
             indent += 1
         else:
             indent = 0
@@ -94,7 +94,7 @@ def displayTroves(dcfg, formatter, troveTups):
                         write(chunk)
                         chunk = ln.read(1024)
                 else:
-                    print ln
+                    print(ln)
 
 def getBuildLog(troveSource, n, v, f):
     iter = troveSource.iterFilesInTrove(n, v, f,
@@ -174,7 +174,7 @@ def iterTroveList(troveSource, troveTups, recurseAll=False,
 
     if needTroves or showFlags:
         troves = troveSource.getTroves(troveTups, withFiles=False, **kw)
-        troveCache = dict(itertools.izip(troveTups, troves))
+        troveCache = dict(zip(troveTups, troves))
     elif recurseAll or recurseOne or recursePackages:
         if recursePackages:
             if recurseOne or recurseAll:
@@ -185,7 +185,7 @@ def iterTroveList(troveSource, troveTups, recurseAll=False,
             colls = [ x for x in troveTups if trove.troveIsCollection(x[0])
                                            and not trove.troveIsPackage(x[0])]
         troves = troveSource.getTroves(colls, withFiles=False, **kw)
-        troveCache = dict(itertools.izip(colls, troves))
+        troveCache = dict(zip(colls, troves))
     else:
         troves = [None] * len(troveTups)
         troveCache = {}
@@ -207,16 +207,16 @@ def iterTroveList(troveSource, troveTups, recurseAll=False,
             colls = set(x for x in troveTups if _check(x))
             childColls = [ x for x in childTups if _check(x)]
             troves = troveSource.getTroves(childColls, withFiles=False, **kw)
-            troveCache.update(itertools.izip(childColls, troves))
+            troveCache.update(zip(childColls, troves))
         allTups = troveTups + childTups
         if checkExists:
             hasTroves = troveSource.hasTroves(allTups)
-            hasTrovesCache = dict(itertools.izip(allTups, hasTroves))
+            hasTrovesCache = dict(zip(allTups, hasTroves))
         troves = [ troveCache.get(x, None) for x in troveTups ]
 
     seen = set()  # cached info about what troves we've called hasTrove on.
     #import epdb; epdb.st()
-    for troveTup, trv in itertools.izip(troveTups, troves):
+    for troveTup, trv in zip(troveTups, troves):
         if recurseAll:
             # recurse all troves, depth first.
             topTrove = trv
@@ -254,7 +254,7 @@ def iterTroveList(troveSource, troveTups, recurseAll=False,
                                                       withFiles=False)
 
                     troveCache.update(x for x \
-                        in itertools.izip(neededTroveTups, newTroves) if x[1])
+                        in zip(neededTroveTups, newTroves) if x[1])
                     seen.update(neededTroveTups)
                 else:
                     newColls = [ x for x in trv.iterTroveList(weakRefs=True,
@@ -263,7 +263,7 @@ def iterTroveList(troveSource, troveTups, recurseAll=False,
                                             and x not in troveCache ]
                     newTroves = troveSource.getTroves(newColls,
                                                       withFiles=False)
-                    troveCache.update(x for x in itertools.izip(newColls, newTroves))
+                    troveCache.update(x for x in zip(newColls, newTroves))
                     seen.update(newColls)
 
                 if checkExists:
@@ -284,7 +284,7 @@ def iterTroveList(troveSource, troveTups, recurseAll=False,
                                     newToCheck.append(tup)
                             elif trv.includeTroveByDefault(*tup):
                                 newToCheck.append(tup)
-                        for tup, parent in alsoToCheck.iteritems():
+                        for tup, parent in alsoToCheck.items():
                             if topTrove.hasTrove(*tup):
                                 if topTrove.includeTroveByDefault(*tup):
                                     newToCheck.append(tup)
@@ -301,7 +301,7 @@ def iterTroveList(troveSource, troveTups, recurseAll=False,
                         seen.update(toCheck)
                         toCheck = [ x for x in toCheck if x not in hasTrovesCache ]
                         hasTroves = troveSource.hasTroves(toCheck)
-                        hasTrovesCache.update(x for x in itertools.izip(toCheck, hasTroves))
+                        hasTrovesCache.update(x for x in zip(toCheck, hasTroves))
 
                 trovesToAdd = []
                 depth += 1
@@ -359,13 +359,13 @@ def iterTroveList(troveSource, troveTups, recurseAll=False,
                 if checkExists:
                     toAdd = [ x[0] for x in newTroveTups if x[0] not in hasTrovesCache ]
                     hasTroves = troveSource.hasTroves(toAdd)
-                    hasTrovesCache.update(itertools.izip(toAdd, hasTroves))
+                    hasTrovesCache.update(zip(toAdd, hasTroves))
                     hasTroves = [ hasTrovesCache[x[0]] for x in newTroveTups ]
                 else:
                     hasTroves = [True] * len(newTroveTups)
 
                 for (troveTup, byDefault, strongRef), trv, hasTrove \
-                        in itertools.izip(newTroveTups, newTroves, hasTroves):
+                        in zip(newTroveTups, newTroves, hasTroves):
                     flags = 0
                     if strongRef:
                         flags |= TROVE_STRONGREF
@@ -983,16 +983,16 @@ def displayJobs(dcfg, formatter, jobs, prepare=True, jobNum=0, total=0):
         formatter.prepareJobs(jobs)
 
     if jobNum and total:
-        print formatter.formatJobNum(jobNum, total)
+        print(formatter.formatJobNum(jobNum, total))
 
     for job, comps in formatter.compressJobList(sorted(jobs, key=jobKey)):
         if dcfg.printTroveHeader():
             for ln in formatter.formatJobHeader(job, comps):
-                print ln
+                print(ln)
 
         if dcfg.printFiles():
             for ln in formatter.formatJobFiles(job):
-                print ln
+                print(ln)
 
 
 class JobDisplayConfig(DisplayConfig):

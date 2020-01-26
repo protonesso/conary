@@ -19,7 +19,7 @@ import struct
 import os
 
 from conary_test import rephelp
-import cPickle
+import pickle
 
 from conary.repository.netrepos import reposlog
 
@@ -71,7 +71,7 @@ class CallLogTest(rephelp.RepositoryHelper):
         ]
 
         for info in infos:
-            entData = cPickle.dumps(info)
+            entData = pickle.dumps(info)
             stream.write(struct.pack("!I", len(entData)))
             stream.write(entData)
         stream.close()

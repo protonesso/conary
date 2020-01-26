@@ -136,7 +136,7 @@ class _addInfo(policy.Policy):
                     self.excluded[info] = []
                 self.excluded[info].append(keywords.pop('exceptions'))
             else:
-                raise TypeError, 'no paths provided'
+                raise TypeError('no paths provided')
         policy.Policy.updateArgs(self, **keywords)
 
     def doProcess(self, recipe):
@@ -282,7 +282,7 @@ class Config(policy.Policy):
             try:
                 while utf8.tell() < limit:
                     utf8.read(65536)
-            except UnicodeDecodeError, e:
+            except UnicodeDecodeError as e:
                 # Still want to print a warning if it is not unicode;
                 # Note that Code Page 1252 is considered a legacy
                 # encoding on Windows
@@ -290,7 +290,7 @@ class Config(policy.Policy):
                 try:
                     while win1252.tell() < limit:
                         win1252.read(65536)
-                except UnicodeDecodeError, e:
+                except UnicodeDecodeError as e:
                     self.warn('%s: %s', path, str(e))
                     return decodeFailIsError
         finally:
@@ -308,10 +308,10 @@ class Config(policy.Policy):
                 filename)
         mode = os.lstat(fullpath)[stat.ST_MODE]
         oldmode = None
-        if mode & 0600 != 0600:
+        if mode & 0o600 != 0o600:
             # need to be able to read and write the file to fix it
             oldmode = mode
-            os.chmod(fullpath, mode|0600)
+            os.chmod(fullpath, mode|0o600)
 
         f = open(fullpath, 'a')
         f.seek(0, 2)
@@ -470,7 +470,7 @@ class ComponentSpec(_filterSpec):
             ('invariant', invariantFilterMap, self.invariantFilters),
             ('base', baseFilterMap, self.baseFilters)):
             dg = graph.DirectedGraph()
-            for filterName in map.keys():
+            for filterName in list(map.keys()):
                 dg.addNode(filterName)
                 filter, follows, precedes  = map[filterName]
 
@@ -1158,7 +1158,7 @@ class MakeDevices(policy.Policy):
             if l > 6 and mode is None:
                 mode = args[6]
             if mode is None:
-                mode = 0400
+                mode = 0o400
             if l > 7 and package is None:
                 package = args[7]
             self.devices.append(
@@ -1224,10 +1224,10 @@ class setModes(policy.Policy):
             return
         newmode = oldmode = self.recipe.autopkg.pathMap[path].inode.perms()
         if path in self.userbits:
-            newmode = (newmode & 077077) | self.userbits[path]
+            newmode = (newmode & 0o77077) | self.userbits[path]
         if path in self.sidbits and self.sidbits[path]:
             newmode |= self.sidbits[path]
-            self.info('suid/sgid: %s mode 0%o', path, newmode & 07777)
+            self.info('suid/sgid: %s mode 0%o', path, newmode & 0o7777)
         if newmode != oldmode:
             self.recipe.autopkg.pathMap[path].inode.perms.set(newmode)
 
@@ -1426,8 +1426,8 @@ class ExcludeDirectories(policy.Policy):
         s = os.lstat(fullpath)
         mode = s[stat.ST_MODE]
 
-        if mode & 0777 != 0755:
-            self.info('excluding directory %s with mode %o', path, mode&0777)
+        if mode & 0o777 != 0o755:
+            self.info('excluding directory %s with mode %o', path, mode&0o777)
         elif not os.listdir(fullpath):
             d = self.recipe.autopkg.pathMap[path]
             if d.inode.owner.freeze() != 'root':
@@ -1790,7 +1790,7 @@ class ComponentRequires(policy.Policy):
 
     def updateArgs(self, *args, **keywords):
         d = args[0]
-        if isinstance(d[d.keys()[0]], dict): # dict of dicts
+        if isinstance(d[list(d.keys())[0]], dict): # dict of dicts
             for packageName in d:
                 if packageName not in self.overridesMap:
                     # start with defaults, then override them individually
@@ -1910,7 +1910,7 @@ class ComponentProvides(policy.Policy):
             flags.append(('target-%s' % self.macros.target,
                           deps.FLAG_SENSE_REQUIRED))
 
-        for component in self.recipe.autopkg.components.values():
+        for component in list(self.recipe.autopkg.components.values()):
             component.provides.addDep(deps.TroveDependencies,
                 deps.Dependency(component.name, flags))
 
@@ -2182,7 +2182,7 @@ class _dependency(policy.Policy):
 
     def _isPerl(self, path, m, f):
         return self._isPerlModule(path) or (
-            f.inode.perms() & 0111 and m and m.name == 'script'
+            f.inode.perms() & 0o111 and m and m.name == 'script'
             and 'interpreter' in m.contents
             and '/bin/perl' in m.contents['interpreter'])
 
@@ -2737,7 +2737,7 @@ class Provides(_dependency):
             try:
                 exceptDeps.append((filter.Filter(fE, macros),
                                    re.compile(rE % self.macros)))
-            except sre_constants.error, e:
+            except sre_constants.error as e:
                 self.error('Bad regular expression %s for file spec %s: %s', rE, fE, e)
         self.exceptDeps= exceptDeps
         for filespec, provision in self.provisions:
@@ -3100,7 +3100,7 @@ class Provides(_dependency):
                 try:
                     exceptDeps.append((filter.Filter(fE, macros),
                                        re.compile(rE % macros)))
-                except sre_constants.error, e:
+                except sre_constants.error as e:
                     self.error('Bad regular expression %s for file spec %s: %s',
                         rE, fE, e)
             # We will no longer need this, we have the compiled version now
@@ -3129,13 +3129,13 @@ class Provides(_dependency):
             # We need to cache the internal java provides, otherwise we do too
             # much work for each file (CNY-3372)
             self.recipe._internalJavaProvides = internalProvides = set()
-            for opath, ofiles in internalJavaDepMap.items():
-                internalProvides.update(x[0] for x in ofiles.values()
+            for opath, ofiles in list(internalJavaDepMap.items()):
+                internalProvides.update(x[0] for x in list(ofiles.values())
                     if x[0] is not None)
             # Now drop internal provides from individual class requires
 
-            for opath, ofiles in internalJavaDepMap.items():
-                for oclassName, (oclassProv, oclassReqSet) in ofiles.items():
+            for opath, ofiles in list(internalJavaDepMap.items()):
+                for oclassName, (oclassProv, oclassReqSet) in list(ofiles.items()):
                     if oclassReqSet is None:
                         continue
                     oclassReqSet.difference_update(internalProvides)
@@ -3188,7 +3188,7 @@ class Provides(_dependency):
                 if filteredMissingDeps:
                     # We need to take them out of the per-file requires
                     ofiles = internalJavaDepMap[path]
-                    for _, (oclassProv, oclassReqSet) in ofiles.items():
+                    for _, (oclassProv, oclassReqSet) in list(ofiles.items()):
                         if oclassProv is not None:
                             oclassReqSet.difference_update(filteredMissingDeps)
 
@@ -3198,7 +3198,7 @@ class Provides(_dependency):
                 # Walk its list of classes to determine which ones are not
                 # satisfied.
                 satisfiedClasses = dict((fpath, (fprov, freqs))
-                    for (fpath, (fprov, freqs)) in fileDeps.iteritems()
+                    for (fpath, (fprov, freqs)) in fileDeps.items()
                         if freqs is not None
                             and not freqs.intersection(missingReqs))
                 internalJavaDepMap[path] = satisfiedClasses
@@ -3212,7 +3212,7 @@ class Provides(_dependency):
 
         # Add the remaining provides
         fileDeps = internalJavaDepMap[path]
-        provs = set(fprov for fpath, (fprov, freqs) in fileDeps.iteritems()
+        provs = set(fprov for fpath, (fprov, freqs) in fileDeps.items()
                         if fprov is not None)
         for prov in provs:
             dep = deps.Dependency(prov, [])
@@ -3549,7 +3549,7 @@ class Requires(_addInfo, _dependency):
         for fE, rE in self.exceptDeps:
             try:
                 exceptDeps.append((filter.Filter(fE, macros), re.compile(rE % macros)))
-            except sre_constants.error, e:
+            except sre_constants.error as e:
                 self.error('Bad regular expression %s for file spec %s: %s', rE, fE, e)
         self.exceptDeps= exceptDeps
         _dependency.preProcess(self)
@@ -3572,7 +3572,7 @@ class Requires(_addInfo, _dependency):
         # r.Requires('foo:runtime', ':msi')
         # r.Requires('foo:runtime', 'bar:msi')
         depClass = deps.TroveDependencies
-        for info, troves in self.troveDeps.iteritems():
+        for info, troves in self.troveDeps.items():
             # Sanity check inputs.
             if ':' not in info:
                 self.error('package dependency %s not allowed', info)
@@ -3617,7 +3617,7 @@ class Requires(_addInfo, _dependency):
                     self._markManualRequirement(info, path, pkgFiles, m)
 
         # now check for automatic dependencies besides ELF
-        if f.inode.perms() & 0111 and m and m.name == 'script':
+        if f.inode.perms() & 0o111 and m and m.name == 'script':
             interp = m.contents['interpreter']
             if interp.strip().startswith('/') and self._checkInclusion(interp,
                                                                        path):
@@ -3635,13 +3635,13 @@ class Requires(_addInfo, _dependency):
                 self._addRequirement(path, interp, [], pkgFiles,
                                      deps.FileDependencies)
 
-        if (f.inode.perms() & 0111 and m and m.name == 'script' and
+        if (f.inode.perms() & 0o111 and m and m.name == 'script' and
             os.path.basename(m.contents['interpreter']).startswith('python')):
             self._addPythonRequirements(path, fullpath, pkgFiles)
         elif self._isPython(path):
             self._addPythonRequirements(path, fullpath, pkgFiles)
 
-        if (f.inode.perms() & 0111 and m and m.name == 'script' and
+        if (f.inode.perms() & 0o111 and m and m.name == 'script' and
             os.path.basename(m.contents['interpreter']).startswith('ruby')):
             self._addRubyRequirements(path, fullpath, pkgFiles, script=True)
         elif '/ruby/' in path and path.endswith('.rb'):
@@ -3689,7 +3689,7 @@ class Requires(_addInfo, _dependency):
             self.recipe._internalJavaDepMap = {}
         fileDeps = self.recipe._internalJavaDepMap.get(path, {})
         reqs = set()
-        for fpath, (fprov, freq) in fileDeps.items():
+        for fpath, (fprov, freq) in list(fileDeps.items()):
             if freq is not None:
                 reqs.update(freq)
         for req in reqs:
@@ -3839,7 +3839,7 @@ class Requires(_addInfo, _dependency):
         if pythonPath not in self.pythonModuleFinderMap:
             try:
                 self.pythonModuleFinderMap[pythonPath] = pydeps.moduleFinderProxy(pythonPath, destdir, libdir, sysPath, self.error)
-            except pydeps.ModuleFinderInitializationError, e:
+            except pydeps.ModuleFinderInitializationError as e:
                 if bootstrapPython:
                     # another case, like isCrossCompiling, where we cannot
                     # run pythonPath -- ModuleFinderInitializationError
@@ -3851,7 +3851,7 @@ class Requires(_addInfo, _dependency):
         return self.pythonModuleFinderMap[pythonPath]
 
     def _delPythonRequiresModuleFinder(self):
-        for finder in self.pythonModuleFinderMap.values():
+        for finder in list(self.pythonModuleFinderMap.values()):
             if finder is not None:
                 finder.close()
 
@@ -4371,7 +4371,7 @@ class Flavor(policy.Policy):
 
         # all troves need to share the same flavor so that we can
         # distinguish them later
-        for pkg in self.recipe.autopkg.components.values():
+        for pkg in list(self.recipe.autopkg.components.values()):
             pkg.flavor.union(self.packageFlavor)
 
     def hasLibInPath(self, path):
@@ -4815,8 +4815,8 @@ class reportErrors(policy.Policy, policy.GroupPolicy):
     def do(self):
         if self.errors:
             msg = self.groupError and 'Group' or 'Package'
-            raise policy.PolicyError, ('%s Policy errors found:\n%%s' % msg) \
-                    % "\n".join(self.errors)
+            raise policy.PolicyError(('%s Policy errors found:\n%%s' % msg) \
+                    % "\n".join(self.errors))
 
 class _TroveScript(policy.PackagePolicy):
     processUnmodified = False

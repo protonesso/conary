@@ -46,9 +46,9 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Conary'
-copyright = u'2015, SAS Institute Inc.'
-author = u'SAS Institute Inc.'
+project = 'Conary'
+copyright = '2015, SAS Institute Inc.'
+author = 'SAS Institute Inc.'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -222,8 +222,8 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  (master_doc, 'Conary.tex', u'Conary Documentation',
-   u'SAS Institute Inc.', 'manual'),
+  (master_doc, 'Conary.tex', 'Conary Documentation',
+   'SAS Institute Inc.', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -252,7 +252,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'conary', u'Conary Documentation',
+    (master_doc, 'conary', 'Conary Documentation',
      [author], 1)
 ]
 
@@ -266,7 +266,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  (master_doc, 'Conary', u'Conary Documentation',
+  (master_doc, 'Conary', 'Conary Documentation',
    author, 'Conary', 'One line description of project.',
    'Miscellaneous'),
 ]

@@ -167,10 +167,10 @@ class DependencyWorkTables:
         allDeps = []
         if requires:
             allDeps += [ (0, x) for x in
-                            sorted(requires.getDepClasses().iteritems()) ]
+                            sorted(requires.getDepClasses().items()) ]
         if provides:
             allDeps += [ (1,  x) for x in
-                            sorted(provides.getDepClasses().iteritems()) ]
+                            sorted(provides.getDepClasses().items()) ]
 
         toInsert = []
         _len = len
@@ -292,7 +292,8 @@ class DependencyWorkTables:
         WHERE NOT Dependencies.class IN (%s) AND RemovedTroveIds.rowId > ?
         """% ",".join('"%d"' % x.tag for x in self.ignoreDepClasses), max)
 
-    def removeTrove(self, (name, version, flavor), nodeId):
+    def removeTrove(self, xxx_todo_changeme, nodeId):
+        (name, version, flavor) = xxx_todo_changeme
         if flavor is None or flavor.isEmpty():
             flavor = None
         else:
@@ -612,7 +613,7 @@ class DependencyChecker:
                 failedSets[info][1].extend(wasIn[depNum])
 
             return [ (x[0], x[1][0], x[1][1])
-                                for x in failedSets.iteritems() ]
+                                for x in failedSets.items() ]
 
         def _expandProvidedBy(cu, itemList):
             for info, depSet, provideList in itemList:
@@ -1351,7 +1352,7 @@ class DependencyTables:
                                     restrictBy = restrictBy)
 
         result = {}
-        depSolutions = [ [] for x in xrange(len(depList)) ]
+        depSolutions = [ [] for x in range(len(depList)) ]
         for depId, troveId in cu:
             depId = -depId
             depSolutions[depId].append(troveId)
@@ -1410,7 +1411,7 @@ class DependencyTables:
 
         cu.execute(full, start_transaction = False)
 
-        depSolutions = [ [] for x in xrange(len(depList)) ]
+        depSolutions = [ [] for x in range(len(depList)) ]
 
         for (depId, troveName, versionStr, timeStamps, flavorStr) in cu:
             depId = -depId

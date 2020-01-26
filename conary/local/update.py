@@ -177,7 +177,7 @@ class FilesystemJob:
         d.append((pathId, content, fileObj))
 
     def iterUserRemovals(self):
-        return self.userRemovals.iteritems()
+        return iter(self.userRemovals.items())
 
     def findAliasedRemovals(self, absolutePath):
         """
@@ -208,10 +208,10 @@ class FilesystemJob:
         # processing these before the tagRemoves taghandler files ensures
         # we run them even if the taghandler will be removed in the same
         # job
-        for tag, l in self.tagUpdates.iteritems():
+        for tag, l in self.tagUpdates.items():
             if tag == 'tagdescription' or tag == 'taghandler':
                 continue
-            if not tagSet.has_key(tag): continue
+            if tag not in tagSet: continue
             tagInfo = tagSet[tag]
 
             if "files preupdate" in tagInfo.implements:
@@ -221,7 +221,7 @@ class FilesystemJob:
         for path in self.tagRemoves.get('taghandler', []):
             path = path[rootLen:]
             tagInfo = []
-            for ti in tagSet.itervalues():
+            for ti in tagSet.values():
                 if ti.file == path:
                     tagInfo.append(ti)
 
@@ -234,17 +234,17 @@ class FilesystemJob:
                 # we're running "handler preremove"; we don't need to run
                 # "files preremove" as well, and we won't be able to run "files
                 # remove" (since the taghandler would have disappeared)
-                if self.tagRemoves.has_key(ti.tag):
+                if ti.tag in self.tagRemoves:
                     del self.tagRemoves[ti.tag]
 
                 if "handler preremove" in ti.implements:
                     tagCommands.addCommand(ti, 'handler', 'preremove',
                         [x for x in self.db.iterFilesWithTag(ti.tag)])
 
-        for tag, l in self.tagRemoves.iteritems():
+        for tag, l in self.tagRemoves.items():
             if tag == 'tagdescription' or tag == 'taghandler':
                 continue
-            if not tagSet.has_key(tag): continue
+            if tag not in tagSet: continue
             tagInfo = tagSet[tag]
 
             if "files preremove" in tagInfo.implements:
@@ -263,7 +263,7 @@ class FilesystemJob:
             util.createLink(linkPath, target)
             # continue with the next file to restore
             return True
-        except OSError, e:
+        except OSError as e:
             # ignore failure to create a cross-device symlink.
             # we'll restore the file as if it's not a hard link
             # below
@@ -360,7 +360,7 @@ class FilesystemJob:
         # is sorted by pathId,fileId combos
         # pathId, fileId, fileObj, targetPath, contentsOverride, msg
         restores = [ (x[1][0], x[1][5], x[1][1], x[0], x[1][2], x[1][3]) for x
-                            in self.restores.iteritems() ]
+                            in self.restores.items() ]
 
         restores.sort()
         delayedRestores = []
@@ -369,7 +369,7 @@ class FilesystemJob:
         tmpPtrFiles = []
 
         # this sorting ensures /dir/file is removed before /dir
-        paths = self.removes.keys()
+        paths = list(self.removes.keys())
         paths.sort()
         paths.reverse()
         for fileNum, target in enumerate(paths):
@@ -379,7 +379,7 @@ class FilesystemJob:
             # don't worry about files which don't exist
             try:
                 info = os.lstat(target)
-            except OSError, e:
+            except OSError as e:
                 if ignoreMissing:
                     pass
                 elif e.errno == errno.ENOENT:
@@ -401,7 +401,7 @@ class FilesystemJob:
                 try:
                     fileObj.remove(target)
                     opJournal.remove(target)
-                except OSError, e:
+                except OSError as e:
                     self.callback.error("%s could not be removed: %s",
                                         target[rootLen:], e.strerror)
                     raise
@@ -484,7 +484,7 @@ class FilesystemJob:
                                     [ (None, None, fileObj) ])[0]
                     contents = filecontents.FromString(contents.get().read())
                 elif fileObj.linkGroup() and \
-                        self.linkGroups.has_key(fileObj.linkGroup()):
+                        fileObj.linkGroup() in self.linkGroups:
                     # this creates links whose target we already know
                     # (because it was already present or already restored)
                     if self._createLink(fileObj.linkGroup(), target, opJournal):
@@ -524,7 +524,7 @@ class FilesystemJob:
 
                         delayedRestores.append((pathId, fileObj, target, msg,
                                                 targetPtrId, fileId))
-                        if not ptrTargets.has_key(targetPtrId):
+                        if targetPtrId not in ptrTargets:
                             ptrTargets[targetPtrId] = None
                             targetPtrPathId = targetPtrId[:16]
                             targetPtrFileId = targetPtrId[16:]
@@ -586,7 +586,7 @@ class FilesystemJob:
             # for everything else
             if fileObj.linkGroup():
                 linkGroup = fileObj.linkGroup()
-                if self.linkGroups.has_key(linkGroup):
+                if linkGroup in self.linkGroups:
                     # this could create spurious backups, but they won't
                     # hurt anything
                     if self._createLink(fileObj.linkGroup(), target, opJournal):
@@ -617,7 +617,7 @@ class FilesystemJob:
             opJournal.backup(target)
             try:
                 os.unlink(target)
-            except OSError, e:
+            except OSError as e:
                 if e.errno != errno.ENOENT:
                     raise
             f = open(target, "w")
@@ -673,7 +673,7 @@ class FilesystemJob:
             if tagInfo is None:
                 path = path[rootLen:]
                 tagInfo = None
-                for ti in tagSet.itervalues():
+                for ti in tagSet.values():
                     if ti.file == path:
                         tagInfo = ti
                         break
@@ -699,7 +699,7 @@ class FilesystemJob:
             path = path[rootLen:]
 
             # don't run these twice
-            if self.tagUpdates.has_key(tagInfo.tag):
+            if tagInfo.tag in self.tagUpdates:
                 del self.tagUpdates[tagInfo.tag]
 
             # Only fire "handler update" if the handler exists 
@@ -719,7 +719,7 @@ class FilesystemJob:
 
             tagSet[tagInfo.tag] = tagInfo
 
-        for (tag, l) in self.tagUpdates.iteritems():
+        for (tag, l) in self.tagUpdates.items():
             if tag == 'tagdescription':
                 continue
 
@@ -730,8 +730,8 @@ class FilesystemJob:
                 tagCommands.addCommand(tagInfo, 'files', 'update',
                     [x[rootLen:] for x in l])
 
-        for tag, l in self.tagRemoves.iteritems():
-            if not tagSet.has_key(tag): continue
+        for tag, l in self.tagRemoves.items():
+            if tag not in tagSet: continue
             tagInfo = tagSet[tag]
 
             if "files remove" in tagInfo.implements:
@@ -776,9 +776,9 @@ class FilesystemJob:
         alone.
         """
         # this is (fullPath, relativePath)
-        files = [ (x[0], x[1][0]) for x in self.removes.iteritems() ]
+        files = [ (x[0], x[1][0]) for x in self.removes.items() ]
         ownedList = self.db.pathsOwned( [ x[1] for x in files ] )
-        for (fullPath, relativePath), owned in itertools.izip(files, ownedList):
+        for (fullPath, relativePath), owned in zip(files, ownedList):
             if owned:
                 del self.removes[fullPath]
 
@@ -792,7 +792,7 @@ class FilesystemJob:
         fileObjs = repos.getFileVersions(fileList)
         hasCapsule = troveCs.hasCapsule()
 
-        for pathId, oldFile in itertools.izip(troveCs.getOldFileList(),
+        for pathId, oldFile in zip(troveCs.getOldFileList(),
                                               fileObjs):
             if not baseTrove.hasFile(pathId):
                 # this file was removed with 'conary remove /path', so
@@ -824,7 +824,7 @@ class FilesystemJob:
                     # don't remove files if they've been changed locally
                     localFile = files.FileFromFilesystem(realPath, pathId,
                                                 possibleMatch = oldFile)
-                except OSError, exc:
+                except OSError as exc:
                     # it's okay if the file is missing, it means we all agree
                     if exc.errno == errno.ENOENT:
                         fsTrove.removeFile(pathId)
@@ -1124,7 +1124,7 @@ class FilesystemJob:
                                    troveCs.getNewFlavor()))
                 elif (not(flags.ignoreInitialContents) and
                       headFile.flags.isInitialContents() and
-                      not self.removes.has_key(headRealPath)):
+                      headRealPath not in self.removes):
                     # don't replace InitialContents files if they already
                     # have contents on disk
                     fullyUpdated = False
@@ -1225,9 +1225,9 @@ class FilesystemJob:
         # the diff for the later type, while we need to get that from
         # the change set in the normal case.
         repeat = itertools.repeat
-        changedHere = itertools.izip(troveCs.getChangedFileList(),
+        changedHere = zip(troveCs.getChangedFileList(),
                                      baseFileList, repeat(None), repeat(None))
-        changedOther = [ x[1:] for x in pathsMoved.itervalues()
+        changedOther = [ x[1:] for x in pathsMoved.values()
                                 if x[0] == newTroveInfo ]
 
         # Handle files which have changed betweeen versions. This is by
@@ -1846,7 +1846,7 @@ class FilesystemJob:
             fileList = [ (x[0], x[2], x[3]) for x in oldTrove.iterFileList() ]
             fileObjs = db.getFileVersions(fileList)
             for (pathId, path, fileId, version), fileObj in \
-                    itertools.izip(oldTrove.iterFileList(), fileObjs):
+                    zip(oldTrove.iterFileList(), fileObjs):
                 if (trove.conaryContents(hasCapsule, pathId, fileObj) and
                     path not in pathsMoved):
                     self._remove(fileObj, path, util.joinPaths(root, path),
@@ -1987,9 +1987,9 @@ def _localChanges(repos, changeSet, curTrove, srcTrove, newVersion, root, flags,
                                                         fileList ],
                                             allowMissingFiles=allowMissingFiles)
     for (pathId, srcPath, srcFileId, srcFileVersion), srcFile in \
-                    itertools.izip(fileList, srcFileObjs):
+                    zip(fileList, srcFileObjs):
         # files which disappear don't need to make it into newTrove
-        if not pathIds.has_key(pathId): continue
+        if pathId not in pathIds: continue
         del pathIds[pathId]
 
         # transient files never show up in in local changesets...
@@ -2038,7 +2038,7 @@ def _localChanges(repos, changeSet, curTrove, srcTrove, newVersion, root, flags,
                                          possibleMatch = possibleMatch,
                                          statBuf =
                                             statCache.get(realPath, None))
-        except OSError, e:
+        except OSError as e:
             if isSrcTrove:
                 callback.error(
                     "%s is missing (use remove if this is intentional)"
@@ -2112,7 +2112,7 @@ def _localChanges(repos, changeSet, curTrove, srcTrove, newVersion, root, flags,
                                                   f.flags.isConfig())
 
     # anything left in pathIds has been newly added
-    for pathId in pathIds.iterkeys():
+    for pathId in pathIds.keys():
         (path, fileId, version) = newTrove.getFile(pathId)
 
         if isSrcTrove:
@@ -2335,7 +2335,7 @@ def shlibAction(root, shlibList, tagScript = None, logger=log):
             os.chown(ldsotmpname, 0, 0)
         try:
             ldso = os.fdopen(ldsofd, 'w')
-            os.chmod(ldsotmpname, 0644)
+            os.chmod(ldsotmpname, 0o644)
             ldso.writelines(ldsolines)
             ldso.close()
             os.rename(ldsotmpname, ldsopath)
@@ -2459,7 +2459,7 @@ class _InfoFile(dict):
             # security or anything else...
             fileName = '/'.join((self._root, self._path))
             f = file(fileName, 'w+')
-            os.chmod(fileName, 0644)
+            os.chmod(fileName, 0o644)
             # sort lines based on id
             lines = sorted(self._lines, self.cmpLine)
             f.writelines(['%s\n' %(':'.join(x)) for x in lines])
@@ -2513,7 +2513,7 @@ def userAction(root, userFileList):
             # but --no-deps exists
             try:
                 group.extendList(groupName, f['USER'])
-            except KeyError, e:
+            except KeyError as e:
                 raise errors.ConaryError(
                     'error: /etc/group is missing group "%s"' %e)
     passwd.write()
@@ -2602,7 +2602,7 @@ class TagCommand:
                     # stable sort order to be able to reproduce bugs,
                     # whether in conary or in the packaged software
                     hi = self.commands[updateType][updateClass][handler]
-                    tagInfoList = hi.tagToFile.keys()
+                    tagInfoList = list(hi.tagToFile.keys())
                     if (len(tagInfoList) > 1):
                         # multiple tags for one tag handler
                         if self._badMultiTag(handler, tagInfoList):
@@ -2646,7 +2646,7 @@ class TagCommand:
             for handler in sorted(self.commands[updateType][updateClass]):
                 # stable sort order
                 hi = self.commands[updateType][updateClass][handler]
-                tagInfoList = hi.tagToFile.keys()
+                tagInfoList = list(hi.tagToFile.keys())
 
                 # start building the command line -- all the tag
                 # handler protocols begin the same way
@@ -2687,7 +2687,7 @@ class TagCommand:
                                 for filename in sorted(hi.tagToFile[tagInfo]):
                                     try:
                                         os.write(inputPipe[1], filename + "\n")
-                                    except OSError, e:
+                                    except OSError as e:
                                         if e.errno != errno.EPIPE:
                                             raise
                                         self.callback.error(str(e))
@@ -2700,13 +2700,13 @@ class TagCommand:
                                             sorted([x.tag for x in
                                                     hi.fileToTag[fileName]])),
                                             fileName))
-                                    except OSError, e:
+                                    except OSError as e:
                                         if e.errno != errno.EPIPE:
                                             raise
                                         self.callback.error(str(e))
                                         break
                             os._exit(0)
-                        except Exception, err:
+                        except Exception as err:
                             try:
                                 sys.stderr.write('%s\n' %err)
                             finally:
@@ -2739,7 +2739,7 @@ class TagCommand:
                             assert(root[0] == '/')
                             os.chroot(root)
                         os.execve(command[0], command, env)
-                    except Exception, e:
+                    except Exception as e:
                         try:
                             sys.stderr.write('%s\n' %e)
                         finally:
@@ -2760,7 +2760,7 @@ class TagCommand:
                     tagName = tagInfo.tag
                 else:
                     tagName = ' '.join(
-                        sorted(x.tag for x in hi.tagToFile.keys()))
+                        sorted(x.tag for x in list(hi.tagToFile.keys())))
                 while count:
                     fds = [ x[0] for x in poller.poll() ]
                     for (fd, reader, isError) in (
@@ -2825,17 +2825,17 @@ def runTroveScript(job, script, tagScript, tmpDir, root, callback,
 
     scriptFd, scriptName = tempfile.mkstemp(suffix = '.trvscript',
                                             dir = root + tmpDir)
-    os.chmod(scriptName, 0700)
+    os.chmod(scriptName, 0o700)
     os.write(scriptFd, script)
     os.close(scriptFd)
 
     if tagScript is not None:
         scriptName = scriptName[len(root):]
 
-        f = open(tagScript, "a", 0600)
+        f = open(tagScript, "a", 0o600)
         if isPre:
             f.write('# ')
-        for env, value in sorted(environ.iteritems()):
+        for env, value in sorted(environ.items()):
             f.write("%s='%s' " % (env, value))
         f.write(scriptName)
         f.write("\n")
@@ -2888,7 +2888,7 @@ def runTroveScript(job, script, tagScript, tmpDir, root, callback,
 
             try:
                 os.execve(scriptName, [ scriptName ], environ)
-            except Exception, e:
+            except Exception as e:
                 os.write(2, str(e) + '\n')
 
             os._exit(1)

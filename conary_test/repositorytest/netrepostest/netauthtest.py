@@ -469,12 +469,12 @@ class NetAuthTest(dbstoretest.DBStoreTestBase):
 
         try:
             na.addUser("test user", "testpass")
-        except errors.InvalidName, e:
+        except errors.InvalidName as e:
             self.assertEqual(str(e), 'InvalidName: test user')
 
         try:
             na.addRole("test group")
-        except errors.InvalidName, e:
+        except errors.InvalidName as e:
             self.assertEqual(str(e), 'InvalidName: test group')
 
     def testInvalidEntitlementClass(self):

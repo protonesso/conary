@@ -83,7 +83,7 @@ class IdTable(object):
         return cu.lastrowid
 
     def delId(self, theId):
-        assert(isinstance(theId, (int, long)))
+        assert(isinstance(theId, int))
         cu = self.db.cursor()
         cu.execute("DELETE FROM %s WHERE %s=?"
                    %(self.tableName, self.keyName), (theId,))
@@ -95,7 +95,7 @@ class IdTable(object):
         try:
             return cu.next()[0]
         except StopIteration:
-            raise KeyError, theId
+            raise KeyError(theId)
 
     def __select(self):
         return "SELECT %s FROM %s WHERE %s=?" %(
@@ -118,7 +118,7 @@ class IdTable(object):
         try:
             return cu.next()[0]
         except StopIteration:
-            raise KeyError, item
+            raise KeyError(item)
 
     def get(self, item, defValue):
         cu = self.db.cursor()
@@ -155,13 +155,13 @@ class IdTable(object):
             yield row
 
     def keys(self):
-        return [ x for x in self.iterkeys() ]
+        return [ x for x in self.keys() ]
 
     def values(self):
-        return [ x for x in self.itervalues() ]
+        return [ x for x in self.values() ]
 
     def items(self):
-        return [ x for x in self.iteritems() ]
+        return [ x for x in self.items() ]
 
 
 class CachedIdTable(IdTable):
@@ -240,7 +240,7 @@ class IdPairMapping:
         try:
             return cu.next()[0]
         except StopIteration:
-            raise KeyError, key
+            raise KeyError(key)
 
     def get(self, key, defValue):
         (first, second) = key
@@ -292,7 +292,7 @@ class IdMapping:
         try:
             return cu.next()[0]
         except StopIteration:
-            raise KeyError, key
+            raise KeyError(key)
 
     def get(self, key, defValue):
         cu = self.db.cursor()
@@ -336,7 +336,7 @@ class IdPairSet(IdPairMapping):
         cu.execute(self.__select(), (first, second))
         first = cu.fetchone()
         if not first:
-            raise KeyError, key
+            raise KeyError(key)
         return self._getitemgen(first, cu)
 
     def get(self, key, default):
@@ -356,7 +356,7 @@ class IdPairSet(IdPairMapping):
                    first)
         first = cu.fetchone()
         if not first:
-            raise KeyError, first
+            raise KeyError(first)
         return self._getitemgen(first, cu)
 
     def __setitem__(self, key, value):

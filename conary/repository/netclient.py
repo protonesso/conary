@@ -21,7 +21,7 @@ import gzip
 import itertools
 import os
 import time
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import xml
 
 #conary
@@ -57,13 +57,13 @@ PermissionAlreadyExists = errors.PermissionAlreadyExists
 shims = xmlshims.NetworkConvertors()
 
 # end of range or last protocol version + 1
-CLIENT_VERSIONS = range(36, 73 + 1)
+CLIENT_VERSIONS = list(range(36, 73 + 1))
 
 from conary.repository.trovesource import TROVE_QUERY_ALL, TROVE_QUERY_PRESENT, TROVE_QUERY_NORMAL
 
 # this is a quote function that quotes all RFC 2396 reserved characters,
 # including / (which is normally considered "safe" by urllib.quote)
-quote = lambda s: urllib.quote(s, safe='')
+quote = lambda s: urllib.parse.quote(s, safe='')
 
 class PartialResultsError(Exception):
 
@@ -135,7 +135,7 @@ class ServerProxy(util.ServerProxy):
                 kwargs=kwargs)
         try:
             return self._marshalCall(method, request)
-        except errors.EntitlementTimeout, err:
+        except errors.EntitlementTimeout as err:
             entList = self._transport.getEntitlements()
 
             singleEnt = conarycfg.loadEntitlement(self._entitlementDir,
@@ -174,7 +174,7 @@ class ServerProxy(util.ServerProxy):
                  entitlementDir, callLog):
         try:
             util.ServerProxy.__init__(self, url=url, transport=transporter)
-        except IOError, e:
+        except IOError as e:
             raise errors.OpenError('Error occurred opening repository '
                     '%s: %s' % (url, e))
         self._serverName = serverName
@@ -258,7 +258,7 @@ class ServerCache(object):
         del self.cache[serverName]
 
     def keys(self):
-        return self.cache.keys()
+        return list(self.cache.keys())
 
     def singleServer(self, *items):
         foundServer = None
@@ -419,7 +419,7 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
 
     def reopen(self, hostname = None):
         if hostname is None:
-            for hostname in self.c.keys():
+            for hostname in list(self.c.keys()):
                 del self.c[hostname]
         else:
             del self.c[hostname]
@@ -496,7 +496,7 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
 
         mdDict = {}
         md = self.c[label].getMetadata(frozenList, language)
-        for troveName, md in md.items():
+        for troveName, md in list(md.items()):
             mdDict[troveName] = metadata.Metadata(md)
         return mdDict
 
@@ -536,7 +536,7 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
             l = byServer.setdefault(host, [])
             l.append(cs)
         fingerprints = {}
-        for host, subCsList in byServer.iteritems():
+        for host, subCsList in byServer.items():
             req = []
             for name, oldVF, newVF, absolute in subCsList:
                 if oldVF[0]:
@@ -554,7 +554,7 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
                 withFileContents=(withFileContents and 1 or 0),
                 excludeAutoSource=(excludeAutoSource and 1 or 0),
                 mirrorMode=(mirrorMode and 1 or 0))
-            for cs, fp in itertools.izip(subCsList, l):
+            for cs, fp in zip(subCsList, l):
                 fingerprints[cs] = fp
 
         l = []
@@ -572,12 +572,12 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
             l.append(
                 ((name, self.fromVersion(version), self.fromFlavor(flavor)),
                  base64.b64encode(item.freeze())))
-        for server in byServer.keys():
+        for server in list(byServer.keys()):
             s = self.c[version]
             if s.getProtocolVersion() < 47:
                 raise errors.InvalidServerVersion("Cannot add metadata to "
                         "troves on repositories older than 1.1.24")
-        for server in byServer.keys():
+        for server in list(byServer.keys()):
             s = self.c[server]
             s.addMetadataItems(byServer[server])
 
@@ -651,7 +651,7 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
                     "server running Conary 2.5.0 or later")
         result = self.c[label].getRoleFilters(roles)
         ret = {}
-        for role, (acceptFlags, filterFlags) in result.iteritems():
+        for role, (acceptFlags, filterFlags) in result.items():
             ret[role] = ( self.toFlavor(acceptFlags),
                     self.toFlavor(filterFlags) )
         return ret
@@ -661,7 +661,7 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
             raise errors.InvalidServerVersion("setRoleFilters requires a "
                     "server running Conary 2.5.0 or later")
         out = {}
-        for role, (acceptFlags, filterFlags) in roleFiltersMap.iteritems():
+        for role, (acceptFlags, filterFlags) in roleFiltersMap.items():
             out[role] = ( self.fromFlavor(acceptFlags),
                     self.fromFlavor(filterFlags) )
         self.c[label].setRoleFilters(out)
@@ -673,7 +673,7 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
             l.append( (tup[0], self.fromVersion(tup[1]),
                        self.fromFlavor(tup[2])) )
 
-        for serverName, troveList in byServer.iteritems():
+        for serverName, troveList in byServer.items():
             self.c[serverName].addTroveAccess(role, troveList)
 
     def deleteTroveAccess(self, role, troveList):
@@ -683,7 +683,7 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
             l.append( (tup[0], self.fromVersion(tup[1]),
                        self.fromFlavor(tup[2])) )
 
-        for serverName, troveList in byServer.iteritems():
+        for serverName, troveList in byServer.items():
             self.c[serverName].deleteTroveAccess(role, troveList)
 
     def listTroveAccess(self, serverName, role):
@@ -845,13 +845,13 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
                                            False)
         return dict([ (x[0],
                         [(y[0], self.thawVersion(y[1]), self.toFlavor(y[2]))
-                         for y in x[1]]) for x in itertools.izip(pathList, l) ])
+                         for y in x[1]]) for x in zip(pathList, l) ])
 
     def getTroveVersionsByPath(self, pathList, label):
         l = self.c[label].getTrovesByPaths(pathList, self.fromLabel(label), True)
         return dict([ (x[0],
                        [(y[0], self.thawVersion(y[1]), self.toFlavor(y[2]))
-                         for y in x[1]]) for x in itertools.izip(pathList, l) ])
+                         for y in x[1]]) for x in zip(pathList, l) ])
 
     def iterFilesInTrove(self, troveName, version, flavor,
                          sortByPath = False, withFiles = False,
@@ -875,7 +875,7 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
             for pathId, path, fileId, version in t.iterFileList(
                                 capsules = capsules, members = not capsules):
                 pathDict[path] = (pathId, fileId, version)
-            paths = pathDict.keys()
+            paths = list(pathDict.keys())
             paths.sort()
             def rearrange(paths, pathDict):
                 for path in paths:
@@ -894,10 +894,10 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
                 yield (pathId, path, fileId, version)
 
     def _mergeTroveQuery(self, resultD, response):
-        for troveName, troveVersions in response.iteritems():
-            if not resultD.has_key(troveName):
+        for troveName, troveVersions in response.items():
+            if troveName not in resultD:
                 resultD[troveName] = {}
-            for versionStr, flavors in troveVersions.iteritems():
+            for versionStr, flavors in troveVersions.items():
                 version = self.thawVersion(versionStr)
                 resultD[troveName][version] = \
                             [ self.toFlavor(x) for x in flavors ]
@@ -914,7 +914,7 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
     def getAllTroveLeaves(self, serverName, troveNameList,
                           troveTypes = TROVE_QUERY_PRESENT):
         req = {}
-        for name, flavors in troveNameList.iteritems():
+        for name, flavors in troveNameList.items():
             if name is None:
                 name = ''
 
@@ -932,12 +932,12 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
         # filter the result by server name; repositories hosting multiple
         # server names will return results for all server names the user
         # is allowed to see
-        for versionDict in result.itervalues():
-            for version in versionDict.keys():
+        for versionDict in result.values():
+            for version in list(versionDict.keys()):
                 if version.trailingLabel().getHost() != serverName:
                     del versionDict[version]
 
-        for name, versionDict in result.items():
+        for name, versionDict in list(result.items()):
             if not versionDict:
                 del result[name]
 
@@ -947,7 +947,7 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
     def getTroveVersionList(self, serverName, troveNameList,
                             troveTypes = TROVE_QUERY_PRESENT):
         req = {}
-        for name, flavors in troveNameList.iteritems():
+        for name, flavors in troveNameList.items():
             if name is None:
                 name = ''
 
@@ -996,7 +996,7 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
 
     def getAllTroveFlavors(self, troveDict):
         d = {}
-        for name, versionList in troveDict.iteritems():
+        for name, versionList in troveDict.items():
             d[name] = {}.fromkeys(versionList, [ None ])
 
         return self.getTroveVersionFlavors(d)
@@ -1040,7 +1040,7 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
             flavorDict[verStr] = ''
 
         result = {}
-        for host, requestD in d.iteritems():
+        for host, requestD in d.items():
             respD = self.c[host].__getattr__(method)(
                             *self._setTroveTypeArgs(host, requestD,
                                                     bestFlavor,
@@ -1056,11 +1056,11 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
                                                splitByBranch=splitByBranch)
 
         scoreCache = {}
-        for name, versionFlavorDict in result.iteritems():
+        for name, versionFlavorDict in result.items():
             resultsByKey = {}
             # create a results dictionary that is based off of the key
             # passed in.
-            for version, flavorList in versionFlavorDict.iteritems():
+            for version, flavorList in versionFlavorDict.items():
                 key = keyFn(version)
                 if key not in resultsByKey:
                     resultsByKey[key] = {}
@@ -1092,7 +1092,7 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
                                             scoreCache)
                 if altFlavors:
                     finalAltFlavors[idx].extend(altFlavors)
-                for version, flavorList in results.iteritems():
+                for version, flavorList in results.items():
                     for flavor in flavorList:
                         for name in versionFlavorDict[version][flavor]:
                             finalResults[idx].append(trovetup.TroveTuple(name,
@@ -1115,8 +1115,8 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
         # massaging so we do all work in tuple form.
         troveSpecList = []
         if isinstance(troveSpecs, dict):
-            for name, versionDict in troveSpecs.iteritems():
-                for version, flavorList in versionDict.iteritems():
+            for name, versionDict in troveSpecs.items():
+                for version, flavorList in versionDict.items():
                     if flavorList is None or flavorList is '':
                         troveSpecList.append((name, version, flavorList))
                     else:
@@ -1147,7 +1147,7 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
                 else:
                     fList = vDict[version]
                 fList.append(flavor)
-        for name, versionDict in resultDict.iteritems():
+        for name, versionDict in resultDict.items():
             for version in versionDict:
                 versionDict[version] = list(set(versionDict[version]))
         return resultDict
@@ -1213,7 +1213,7 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
                              self.fromFlavor(flavor))))
 
         d = {}
-        for server, l in byServer.iteritems():
+        for server, l in byServer.items():
             if server == 'local':
                 exists = [False] * len(l)
             else:
@@ -1224,7 +1224,7 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
                     args = []
 
                 exists = self.c[server].hasTroves([x[1] for x in l], *args)
-            d.update(dict(itertools.izip((x[0] for x in l), exists)))
+            d.update(dict(zip((x[0] for x in l), exists)))
 
         return d
 
@@ -1339,7 +1339,7 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
         for host in hosts:
             url = self.c.map[host]
             if url:
-                mappedHost = urllib.splithost(urllib.splittype(url)[1])[0]
+                mappedHost = urllib.parse.splithost(urllib.parse.splittype(url)[1])[0]
             else:
                 mappedHost = host
             transport.httputils.IPCache.get(mappedHost)
@@ -1370,7 +1370,7 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
                     return cs
 
                 mergeTarget.merge(cs)
-            except errors.TroveMissing, e:
+            except errors.TroveMissing as e:
                 if forceLocal:
                     # trying again won't help
                     raise
@@ -1565,7 +1565,7 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
                 f = util.SeekableNestedFile(outFile, size, start)
                 try:
                     newCs = changeset.ChangeSetFromFile(f)
-                except IOError, err:
+                except IOError as err:
                     assert False, 'IOError in changeset (%s); args = %r' % (
                             str(err), args,)
                 if not cs:
@@ -1611,7 +1611,7 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
                 inF = open(url, 'rb')
                 try:
                     os.unlink(url)
-                except OSError, err:
+                except OSError as err:
                     if err.args[0] != errno.EPERM:
                         raise
             else:
@@ -1622,7 +1622,7 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
                 try:
                     inF = transport.ConaryURLOpener(proxyMap=self.c.proxyMap
                             ).open(url, forceProxy=forceProxy, headers=headers)
-                except transport.TransportError, e:
+                except transport.TransportError as e:
                     raise errors.RepositoryError(str(e))
 
             if callback:
@@ -1645,7 +1645,7 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
                 raise errors.RepositoryError("Unknown error downloading changeset")
             totalSize = copied + resumeOffset
             if hasattr(inF, 'headers') and 'content-length' in inF.headers:
-                expectSize = resumeOffset + long(inF.headers['content-length'])
+                expectSize = resumeOffset + int(inF.headers['content-length'])
                 if totalSize != expectSize:
                     raise errors.TruncatedResponseError(expectSize, totalSize)
                 assert sum(sizes) == expectSize
@@ -1685,7 +1685,7 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
         if target:
             try:
                 outFile = util.ExtendedFile(target, "w+", buffering = False)
-            except IOError, e:
+            except IOError as e:
                 strerr = "Error writing to file %s: %s" % (e.filename,
                     e.strerror)
                 raise errors.FilesystemError(e.errno, e.filename, e.strerror,
@@ -1710,7 +1710,7 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
             chgSetList = []
             removedList = []
 
-            for serverName, job in serverJobs.iteritems():
+            for serverName, job in serverJobs.items():
                 server = self.c[serverName]
                 args = (target, cs, server, job, recurse, withFiles,
                         withFileContents, excludeAutoSource,
@@ -1754,8 +1754,8 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
             # it's easier than other approaches :-(
             trvs = self.getTroves([ x[0] for x in timesNeeded ],
                                   withFiles = False)
-            timeDict = dict(zip([ x[0] for x in timesNeeded ],
-                                [ x.getVersion() for x in trvs ]))
+            timeDict = dict(list(zip([ x[0] for x in timesNeeded ],
+                                [ x.getVersion() for x in trvs ])))
 
             # this lets us remove from ourJobList from back to front, keeping
             # our indices valid
@@ -2015,7 +2015,7 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
 
         d = self.c[label].getDepSuggestions(self.fromLabel(label), l, *args)
         r = {}
-        for (key, val) in d.iteritems():
+        for (key, val) in d.items():
             l = []
             for items in val:
                 l.append([ (x[0], self.thawVersion(x[1]), self.toFlavor(x[2]))
@@ -2072,14 +2072,14 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
         frozenDeps = [ self.fromDepSet(x) for x in depList ]
 
         r = {}
-        for host, troveList in trovesByHost.iteritems():
+        for host, troveList in trovesByHost.items():
             t = [ self.fromTroveTup(x) for x in set(troveList) ]
             d = self.c[host].getDepSuggestionsByTroves(frozenDeps, t)
 
             # combine the results for the same dep on different host -
             # there's no preference of troves on different hosts in a group
             # therefore there can be no preference here.
-            for (key, val) in d.iteritems():
+            for (key, val) in d.items():
                 dep = self.toDepSet(key)
                 if dep not in r:
                     lst = [ [] for x in val ]
@@ -2119,14 +2119,14 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
             while sentFiles:
                 # Concatenate all the values in the send list
                 templ = []
-                for l in sentFiles.values():
+                for l in list(sentFiles.values()):
                     templ.extend(l)
                 templ.sort(lambda a, b: cmp(a[0], b[0]))
                 sendL = [ x[1] for x in templ ]
                 idxL = [ x[0] for x in templ ]
                 try:
                     fileStreams = self.c[server].getFileVersions(sendL)
-                except errors.FileStreamMissing, e:
+                except errors.FileStreamMissing as e:
                     if not allowMissingFiles:
                         # Re-raise the exception
                         raise
@@ -2139,7 +2139,7 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
                     # Remove this file from the big dictionary and try again
                     del sentFiles[missingFileId]
                     continue
-                except errors.OpenError, e:
+                except errors.OpenError as e:
                     if not allowMissingFiles:
                         # Re-raise the exception
                         raise
@@ -2170,12 +2170,12 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
                 continue
 
             server = version.getHost()
-            if not byServer.has_key(server):
+            if server not in byServer:
                 byServer[server] = []
             byServer[server].append((i, (self.fromPathId(pathId),
                                      self.fromFileId(fileId))))
 
-        for (server, l) in byServer.iteritems():
+        for (server, l) in byServer.items():
             getFromServer(server, l, result)
 
         return result
@@ -2226,7 +2226,7 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
         if totalSize == None:
             raise errors.RepositoryError("Unknown error downloading changeset")
         elif hasattr(inF, 'headers') and 'content-length' in inF.headers:
-            expectSize = long(inF.headers['content-length'])
+            expectSize = int(inF.headers['content-length'])
             if totalSize != expectSize:
                 raise errors.TruncatedResponseError(expectSize, totalSize)
         elif totalSize != sum(sizes):
@@ -2340,7 +2340,7 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
             os.close(fd)
             os.unlink(path)
 
-        for server, itemList in byServer.iteritems():
+        for server, itemList in byServer.items():
             fileList = [ (self.fromFileId(x[1][0]),
                           self.fromVersion(x[1][1])) for x in itemList ]
             if callback:
@@ -2353,7 +2353,7 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
                                                       callback, outF,
                                                       compressed)
 
-            for (i, item), fObj in itertools.izip(itemList, fileObjList):
+            for (i, item), fObj in zip(itemList, fileObjList):
                 contents[i] = fObj
 
         return contents
@@ -2402,7 +2402,7 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
         return dict((self.toPath(x[0]), (self.toPathId(x[1][0]),
                                          self.toVersion(x[1][1]),
                                          self.toFileId(x[1][2])))
-                    for x in ids.iteritems())
+                    for x in ids.items())
 
     def getCollectionMembers(self, troveName, branch):
         """
@@ -2463,14 +2463,14 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
         for tup in troveList:
             l = byServer.setdefault(tup[1].getHost(), [])
             l.append((tup[0], tup[1]))
-        for host, l in byServer.iteritems():
+        for host, l in byServer.items():
             server = self.c[host]
             if server.getProtocolVersion() < 62:
                 raise errors.InvalidServerVersion(
                         "Server %s does not have support "
                                            "for a commitCheck() call" % (host,))
             ret = self.c[host].commitCheck([(n, self.fromVersion(v)) for n,v in l])
-            for (n,v), r in itertools.izip(l, ret):
+            for (n,v), r in zip(l, ret):
                 if not r:
                     raise errors.TroveAccessError(n,v)
         return True
@@ -2481,11 +2481,11 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
         for i, info in enumerate(troveList):
             l = byServer.setdefault(info[1].getHost(), [])
             l.append((i, info))
-        for host, l in byServer.iteritems():
+        for host, l in byServer.items():
             sigs = self.c[host].getTroveSigs([
                        (x[1][0], self.fromVersion(x[1][1]),
                         self.fromFlavor(x[1][2])) for x in l ])
-            for (i, info), sig in itertools.izip(l, sigs):
+            for (i, info), sig in zip(l, sigs):
                 results[i] = base64.decodestring(sig)
         return results
 
@@ -2497,7 +2497,7 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
             l.append(item)
 
         total = 0
-        for host, itemList in byServer.iteritems():
+        for host, itemList in byServer.items():
             total += self.c[host].setTroveSigs(
                     [ ((x[0][0], self.fromVersion(x[0][1]),
                                  self.fromFlavor(x[0][2])),
@@ -2542,14 +2542,14 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
             l.append(item)
         total = 0
         # all servers we talk to have to support the protocol we need
-        for host in byServer.iterkeys():
+        for host in byServer.keys():
             server = self.c[host]
             if server.getProtocolVersion() < 47:
                 raise errors.InvalidServerVersion(
                     'setTroveInfo requires Conary repository running 1.1.24 or newer')
         # now we can do work
         total = 0
-        for host, infoList in byServer.iteritems():
+        for host, infoList in byServer.items():
             server = self.c[host]
             #(n,v,f) are always assumed to be instances
             infoList = [(self.fromTroveTup(tup), ti_)
@@ -2597,7 +2597,7 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
 
         partialOnly = False
         results = [ None ] * len(troveList)
-        for host, l in byServer.iteritems():
+        for host, l in byServer.items():
             if self.c[host].getProtocolVersion() < 70:
                 partialOnly = True
                 continue
@@ -2605,7 +2605,7 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
             tl = [ (x[1][0], self.fromVersion(x[1][1]) ) for x in l ]
             hostResult = self.c[host].getTimestamps(tl)
 
-            for ((idx, troveTup), timeStamps) in itertools.izip(l, hostResult):
+            for ((idx, troveTup), timeStamps) in zip(l, hostResult):
                 if timeStamps == 0:
                     results[idx] = None
                 else:
@@ -2630,7 +2630,7 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
 
         results = [ None ] * len(troveList)
         partialOnly = False
-        for host, l in byServer.iteritems():
+        for host, l in byServer.items():
             if self.c[host].getProtocolVersion() < 70:
                 partialOnly = True
                 continue
@@ -2643,7 +2643,7 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
 
             provSet = None
             reqSet = None
-            for ((idx, troveTup), (prov, req)) in itertools.izip(l, result):
+            for ((idx, troveTup), (prov, req)) in zip(l, result):
                 if provides:
                     provSet = self.toDepSet(prov)
                 if requires:
@@ -2658,7 +2658,7 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
 
     def getTroveInfo(self, infoType, troveList):
         # first, we need to know about this infoType
-        if infoType not in trv_mod.TroveInfo.streamDict.keys():
+        if infoType not in list(trv_mod.TroveInfo.streamDict.keys()):
             raise Exception("Invalid infoType requested")
 
         byServer = {}
@@ -2666,13 +2666,13 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
         for i, info in enumerate(troveList):
             l = byServer.setdefault(info[1].getHost(), [])
             l.append((i, info))
-        for host, l in byServer.iteritems():
+        for host, l in byServer.items():
             tl = [ x[1] for x in l ]
             if self.c[host].getProtocolVersion() < 41:
                 # this server does not support the getTroveInfo call,
                 # so we need to synthetize it from a getTroves call
                 troveInfoList = self.getTroves(tl, withFiles = False)
-                for (i, tup), trv in itertools.izip(l, troveInfoList):
+                for (i, tup), trv in zip(l, troveInfoList):
                     if trv is not None:
                         attrname = trv_mod.TroveInfo.streamDict[infoType][2]
                         results[i] = getattr(trv.troveInfo, attrname, None)
@@ -2685,7 +2685,7 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
             tl = [ (x[0], self.fromVersion(x[1]), self.fromFlavor(x[2]))
                    for x in tl ]
             infoList = self.c[host].getTroveInfo(infoType, tl)
-            for (i, tup), (present, dataStr) in itertools.izip(l, infoList):
+            for (i, tup), (present, dataStr) in zip(l, infoList):
                 if present == -1:
                     raise errors.TroveMissing(tup[0], tup[1])
                 if present  == 0:
@@ -2780,11 +2780,12 @@ class NetworkRepositoryClient(xmlshims.NetworkConvertors,
         return troveFinder.findTroves(troves, allowMissing)
 
     @api.publicApi
-    def findTrove(self, labelPath, (name, versionStr, flavor),
+    def findTrove(self, labelPath, xxx_todo_changeme,
                   defaultFlavor=None, acrossLabels = False,
                   acrossFlavors = False, affinityDatabase = None,
                   getLeaves = True, bestFlavor = True,
                   troveTypes = TROVE_QUERY_PRESENT, exactFlavors = False):
+        (name, versionStr, flavor) = xxx_todo_changeme
         res = self.findTroves(labelPath, ((name, versionStr, flavor),),
                               defaultFlavor, acrossLabels, acrossFlavors,
                               affinityDatabase, False, getLeaves, bestFlavor,

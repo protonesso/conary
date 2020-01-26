@@ -41,17 +41,17 @@ class RollbackTest(rephelp.RepositoryHelper):
         self.addComponent('foo:runtime', '1.0')
         self.updatePkg('foo:runtime')
         assert(os.stat(rbPath).st_mode
-                    & 0777 == 0700)
+                    & 0o777 == 0o700)
         assert(os.stat(rbPath + '/status').st_mode
-                    & 0777 == 0600)
+                    & 0o777 == 0o600)
         assert(os.stat(rbPath + '/0').st_mode
-                    & 0777 == 0700)
+                    & 0o777 == 0o700)
         assert(os.stat(rbPath + '/0/count').st_mode
-                    & 0777 == 0600)
+                    & 0o777 == 0o600)
         assert(os.stat(rbPath + '/0/local.0').st_mode
-                    & 0777 == 0600)
+                    & 0o777 == 0o600)
         assert(os.stat(rbPath + '/0/repos.0').st_mode
-                    & 0777 == 0600)
+                    & 0o777 == 0o600)
 
         # ensure we can open the database even though we can't read the
         # rollback status
@@ -63,7 +63,7 @@ class RollbackTest(rephelp.RepositoryHelper):
             try:
                 db.getRollbackStack().getList()
                 self.fail("ConaryError not raised")
-            except errors.ConaryError, e:
+            except errors.ConaryError as e:
                 self.assertEqual(str(e),
                     "Unable to open rollback directory")
             except:
@@ -75,7 +75,7 @@ class RollbackTest(rephelp.RepositoryHelper):
             try:
                 db.rollbackStack.hasRollback('r.1')
                 self.fail("ConaryError not raised")
-            except errors.ConaryError, e:
+            except errors.ConaryError as e:
                 self.assertEqual(str(e),
                     "Unable to open rollback directory")
             except:
@@ -106,7 +106,7 @@ class RollbackTest(rephelp.RepositoryHelper):
         elif use.Arch.x86_64:
             flavor = 'is: x86_64'
         else:
-            raise NotImplementedError, 'edit test for this arch'
+            raise NotImplementedError('edit test for this arch')
         errstr = ('rollback r.1 cannot be applied:\n'
                   'applying update would cause errors:\n'
                   '%s is in the way of a newly created file in '
@@ -115,7 +115,7 @@ class RollbackTest(rephelp.RepositoryHelper):
         self.logFilter.add()
         try:
             self.rollback(self.rootDir, 1)
-        except database.RollbackError, e:
+        except database.RollbackError as e:
             self.assertEqual(str(e), errstr)
             self.logFilter.compare('error: ' + errstr)
         self.logFilter.clear()
@@ -137,7 +137,7 @@ class RollbackTest(rephelp.RepositoryHelper):
         self.logFilter.add()
         try:
             rollbacks.applyRollback(client, 'r.2')
-        except database.RollbackDoesNotExist, e:
+        except database.RollbackDoesNotExist as e:
             self.assertEqual(str(e), 'rollback r.2 does not exist')
         else:
             self.fail("Should have raised exception")
@@ -150,7 +150,7 @@ class RollbackTest(rephelp.RepositoryHelper):
         self.logFilter.add()
         try:
             rollbacks.applyRollback(client, 'r.r')
-        except database.RollbackDoesNotExist, e:
+        except database.RollbackDoesNotExist as e:
             self.assertEqual(str(e), 'rollback r.r does not exist')
         else:
             self.fail("Should have raised exception")
@@ -163,7 +163,7 @@ class RollbackTest(rephelp.RepositoryHelper):
         self.logFilter.add()
         try:
             rollbacks.applyRollback(client, 'abc')
-        except database.RollbackDoesNotExist, e:
+        except database.RollbackDoesNotExist as e:
             self.assertEqual(str(e), 'rollback abc does not exist')
         else:
             self.fail("Should have raised exception")
@@ -176,7 +176,7 @@ class RollbackTest(rephelp.RepositoryHelper):
         self.logFilter.add()
         try:
             rollbacks.applyRollback(client, '-1')
-        except database.RollbackDoesNotExist, e:
+        except database.RollbackDoesNotExist as e:
             self.assertEqual(str(e), 'rollback -1 does not exist')
         else:
             self.fail("Should have raised exception")
@@ -189,7 +189,7 @@ class RollbackTest(rephelp.RepositoryHelper):
         self.logFilter.add()
         try:
             rollbacks.applyRollback(client, '2')
-        except database.RollbackDoesNotExist, e:
+        except database.RollbackDoesNotExist as e:
             self.assertEqual(str(e), 'rollback 2 does not exist')
         else:
             self.fail("Should have raised exception")
@@ -635,11 +635,11 @@ class testRecipe(PackageRecipe):
 
         self.cfg.localRollbacks = True
         self.updatePkg('foo:run=1.0')
-        os.chmod(self.rootDir + '/dir1/file1', 0100)
+        os.chmod(self.rootDir + '/dir1/file1', 0o100)
         self.updatePkg('foo:run=2.0')
         self.rollback(1)
-        assert(os.stat(self.rootDir + '/dir1/file1').st_mode & 0777 == 0100)
-        os.chmod(self.rootDir + '/dir1/file1', 0400)
+        assert(os.stat(self.rootDir + '/dir1/file1').st_mode & 0o777 == 0o100)
+        os.chmod(self.rootDir + '/dir1/file1', 0o400)
         self.verifyFile(self.rootDir + '/dir1/file1', 'contents1')
 
     @testhelp.context('rollback')
@@ -654,7 +654,7 @@ class testRecipe(PackageRecipe):
         try:
             client.db.applyRollbackList('junk', 'junk',
                 transactionCounter = 1000)
-        except database.RollbackError, e:
+        except database.RollbackError as e:
             self.assertEqual(str(e), 'rollback junk cannot be applied:\n'
                 'Database state has changed, please run the rollback '
                 'command again')
@@ -769,7 +769,7 @@ class testRecipe(PackageRecipe):
 
     @testhelp.context('rollback')
     def testLocalRollbackInteractive(self):
-        import StringIO
+        import io
         
         #install foo, bar
         self.addComponent('foo:runtime=1.0', filePrimer=1)
@@ -782,7 +782,7 @@ class testRecipe(PackageRecipe):
         
         oldsysstdin = sys.stdin 
         try:
-            stdin = StringIO.StringIO('y')
+            stdin = io.StringIO('y')
             sys.stdin = stdin
             (retVal, output) = self.captureOutput(self.rollback, self.rootDir, 1)
             self.assertEqual(output, expected_testRollbackInteractive1)

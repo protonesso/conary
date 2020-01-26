@@ -20,13 +20,13 @@ Provides a cache for storing files locally, including
 downloads and unpacking layers of files.
 """
 import base64
-import cookielib
+import http.cookiejar
 import errno
 import os
 import socket
 import time
-import urllib
-import urllib2
+import urllib.request, urllib.parse, urllib.error
+import urllib.request, urllib.error, urllib.parse
 import copy
 
 from conary.lib import log
@@ -54,7 +54,7 @@ class laUrl(object):
 
     def __init__(self, urlString, parent=None, extension=None,
                  isHostname=False):
-        urlString = urllib.unquote(urlString)
+        urlString = urllib.parse.unquote(urlString)
         (self.scheme, self.user, self.passwd, self.host, self.port,
          self.path, self.params, self.fragment) = util.urlSplit(urlString)
 
@@ -72,7 +72,7 @@ class laUrl(object):
             path += '.' + self.extension
 
         if quoted:
-            path = urllib.quote(path)
+            path = urllib.parse.quote(path)
 
         if noAuth:
             return util.urlUnsplit((self.scheme, None, None,
@@ -186,7 +186,7 @@ def fetchURL(cfg, name, location, httpHeaders={}, guessName=None, mirror=None):
     try:
         url = laUrl(name)
         return ff.searchNetworkSources(url, headers=httpHeaders, single=True)
-    except PathFound, pathInfo:
+    except PathFound as pathInfo:
         return pathInfo.path
 
 
@@ -225,7 +225,7 @@ class FileFinder(object):
                             searchMethod=searchMethod,
                             single=single,
                             )
-            except PathFound, pathInfo:
+            except PathFound as pathInfo:
                 return pathInfo.isFromRepos, pathInfo.path
 
         # we didn't find any matching url.
@@ -342,7 +342,7 @@ class FileFinder(object):
             urlObjList = newUrlObjList
         return urlObjList
 
-    class BasicPasswordManager(urllib2.HTTPPasswordMgr):
+    class BasicPasswordManager(urllib.request.HTTPPasswordMgr):
         # password manager class for urllib2 that handles exactly 1 password
         def __init__(self):
             self.user = ''
@@ -369,8 +369,8 @@ class FileFinder(object):
             try:
                 # set up a handler that tracks cookies to handle
                 # sites like Colabnet that want to set a session cookie
-                cj = cookielib.LWPCookieJar()
-                opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj))
+                cj = http.cookiejar.LWPCookieJar()
+                opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
 
                 # add password handler if needed
                 if url.user:
@@ -381,8 +381,8 @@ class FileFinder(object):
                 # add proxy and proxy password handler if needed
                 if self.cfg.proxy and \
                         not self.noproxyFilter.bypassProxy(url.host):
-                    proxyPasswdMgr = urllib2.HTTPPasswordMgr()
-                    for v in self.cfg.proxy.values():
+                    proxyPasswdMgr = urllib.request.HTTPPasswordMgr()
+                    for v in list(self.cfg.proxy.values()):
                         pUrl = laUrl(v[1])
                         if pUrl.user:
                             pUrl.passwd = pUrl.passwd or ''
@@ -391,33 +391,33 @@ class FileFinder(object):
                                 url.user, url.passwd)
 
                     opener.add_handler(
-                        urllib2.ProxyBasicAuthHandler(proxyPasswdMgr))
+                        urllib.request.ProxyBasicAuthHandler(proxyPasswdMgr))
                     opener.add_handler(
-                        urllib2.ProxyHandler(self.cfg.proxy))
+                        urllib.request.ProxyHandler(self.cfg.proxy))
 
                 if url.scheme == 'ftp':
                     urlStr = url.asStr(noAuth=False, quoted=True)
                 else:
                     urlStr = url.asStr(noAuth=True, quoted=True)
-                req = urllib2.Request(urlStr, headers=headers)
+                req = urllib.request.Request(urlStr, headers=headers)
 
                 inFile = opener.open(req)
                 if not urlStr.startswith('ftp://'):
                     content_type = inFile.info().get('content-type')
                     if not url.explicit() and 'text/html' in content_type:
-                        raise urllib2.URLError('"%s" not found' % urlStr)
+                        raise urllib.error.URLError('"%s" not found' % urlStr)
                 log.info('Downloading %s...', urlStr)
                 break
-            except urllib2.HTTPError, msg:
+            except urllib.error.HTTPError as msg:
                 if msg.code == 404:
                     return None
                 else:
                     log.error('error downloading %s: %s',
                               urlStr, str(msg))
                     return None
-            except urllib2.URLError:
+            except urllib.error.URLError:
                 return None
-            except socket.error, err:
+            except socket.error as err:
                 num, msg = err
                 if num == errno.ECONNRESET:
                     log.info('Connection Reset by server'
@@ -427,7 +427,7 @@ class FileFinder(object):
                     retries += 1
                 else:
                     return None
-            except IOError, msg:
+            except IOError as msg:
                 # only retry for server busy.
                 ftp_error = msg.args[1]
                 if isinstance(ftp_error, EOFError):
@@ -511,14 +511,14 @@ class RepositoryCache(object):
 
             f = self.repos.getFileContents(
                 [(fileId, troveFileVersion)], callback=csCallback)[0].get()
-            outF = util.AtomicFile(cachePath, chmod=0644)
+            outF = util.AtomicFile(cachePath, chmod=0o644)
             util.copyfileobj(f, outF)
             outF.commit()
             fileObj = self.repos.getFileVersion(
                 pathId, fileId, troveFileVersion)
             fileObj.chmod(cachePath)
 
-        cachedMode = os.stat(cachePath).st_mode & 0777
+        cachedMode = os.stat(cachePath).st_mode & 0o777
         if mode != cachedMode:
             os.chmod(cachePath, mode)
         self.cacheMap[url.filePath()] = cachePath
@@ -530,7 +530,7 @@ class RepositoryCache(object):
         # contents in different packages do not collide
         cachedname = self.getCachePath(cachePrefix, url)
         util.mkdirChain(os.path.dirname(cachedname))
-        f = util.AtomicFile(cachedname, chmod=0644)
+        f = util.AtomicFile(cachedname, chmod=0o644)
 
         try:
             BLOCKSIZE = 1024 * 4
@@ -629,7 +629,7 @@ class PathFound(Exception):
         self.isFromRepos = isFromRepos
 
 
-class HTTPBasicAuthHandler(urllib2.BaseHandler):
+class HTTPBasicAuthHandler(urllib.request.BaseHandler):
 
     def __init__(self, user, passwd):
         self.user = user

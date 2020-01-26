@@ -60,7 +60,7 @@ class TestCookWithRPMCapsule(CapsuleRecipe):
         pkgNames, _, _ = self._cookAndInstall(recipestr,
                                               'brltty-3.7.2-1.fc6.1.i386.rpm',
                                               'brltty')
-        self.assertEquals(pkgNames, ['brltty', 'brltty:rpm'])
+        self.assertEqual(pkgNames, ['brltty', 'brltty:rpm'])
 
     @conary_test.rpm
     def testCookWithAddingCapsuleTwice(self):
@@ -144,7 +144,7 @@ VERSIONCMP=""
 echo triggerprein has non-sequential sense flag >/dev/null
 '''),
         ):
-            self.assertEquals(file(
+            self.assertEqual(file(
                 '%s/scripts/_CAPSULE_SCRIPTS_/scripts-1.0-1.x86_64.rpm/%s'
                 %(self.buildDir, scriptName)).read(), scriptContents)
 
@@ -174,15 +174,15 @@ class TestCookWithRPMCapsule(CapsuleRecipe):
                                  'cpio: mknod failed - Operation not permitted\n')
 
         # verify that the package exists
-        self.assertEquals(pkgNames, [pkgName, pkgName +':rpm'])
+        self.assertEqual(pkgNames, [pkgName, pkgName +':rpm'])
 
 
         # get file list from rpm header
         r = file(resources.get_archive() + '/' + rpmName, 'r')
         h = rpmhelper.readHeader(r)
         rpmFileList = dict(
-            itertools.izip( h[rpmhelper.OLDFILENAMES],
-                            itertools.izip( h[rpmhelper.FILEUSERNAME],
+            zip( h[rpmhelper.OLDFILENAMES],
+                            zip( h[rpmhelper.FILEUSERNAME],
                                             h[rpmhelper.FILEGROUPNAME],
                                             h[rpmhelper.FILEMODES],
                                             h[rpmhelper.FILESIZES],
@@ -210,7 +210,7 @@ class TestCookWithRPMCapsule(CapsuleRecipe):
             self.assertEqual(rUser, fileObj.inode.owner())
             self.assertEqual(rGroup, fileObj.inode.group())
             if isinstance(fileObj, cfiles.SymbolicLink):
-                self.assertEqual(0777, fileObj.inode.perms()) # CNY-3304
+                self.assertEqual(0o777, fileObj.inode.perms()) # CNY-3304
             else:
                 self.assertEqual(stat.S_IMODE(rMode), fileObj.inode.perms())
 
@@ -252,7 +252,7 @@ class TestCookWithRPMCapsule(CapsuleRecipe):
                 assert not fileObj.flags.isEncapsulatedContent()
             elif isinstance(fileObj, cfiles.SymbolicLink):
                 assert( stat.S_ISLNK( rMode ) )
-                self.assertEquals( fileObj.target(), rLinkto )
+                self.assertEqual( fileObj.target(), rLinkto )
 
                 assert not fileObj.flags.isEncapsulatedContent()
             else:
@@ -288,7 +288,7 @@ class TestCookWithRPMCapsule(CapsuleRecipe):
                 assert not fileObj.flags.isInitialContents()
 
         # Make sure we have explicitly checked every file in the RPM
-        uncheckedFiles = [x[0] for x in foundFiles.iteritems() if not x[1]]
+        uncheckedFiles = [x[0] for x in foundFiles.items() if not x[1]]
         assert not uncheckedFiles, uncheckedFiles
 
     @conary_test.rpm
@@ -310,7 +310,7 @@ class TestCookWithEmptyRPMCapsule(CapsuleRecipe):
         # as a conary package
         pkgNames, _, _ = self._cookAndInstall(recipestr,
             'basesystem-8.0-5.1.1.el5.centos.noarch.rpm', 'basesystem')
-        self.assertEquals(pkgNames, ['basesystem', 'basesystem:rpm'])
+        self.assertEqual(pkgNames, ['basesystem', 'basesystem:rpm'])
 
     @conary_test.rpm
     def testCookWithRPMCapsulePackage(self):
@@ -331,7 +331,7 @@ class TestCookWithRPMCapsule(CapsuleRecipe):
 
         pkgNames, _, _ = self._cookAndInstall(recipestr,
             rpmName, pkgName)
-        self.assertEquals(pkgNames, ['brltty', 'brltty:rpm'])
+        self.assertEqual(pkgNames, ['brltty', 'brltty:rpm'])
 
     @conary_test.rpm
     def testCookWithRPMCapsuleHybrid(self):
@@ -355,10 +355,10 @@ class TestCookWithRPMCapsule(CapsuleRecipe):
 
         pkgNames, built, cs = self._cookAndInstall(recipestr,
             [rpmName, 'unstripped_binary.c'], pkgName)
-        self.assertEquals(
+        self.assertEqual(
             set(pkgNames), set(['brltty', 'brltty:rpm', 'brltty:runtime']))
         trvs = [x for x in cs.iterNewTroveList()]
-        trvMap = dict(zip([x.getName() for x in trvs], trvs))
+        trvMap = dict(list(zip([x.getName() for x in trvs], trvs)))
         fooFl = [ x[1] for x in trvMap['brltty:runtime'].getNewFileList() ]
         self.assertEqual(fooFl, [ '/unstripped_binary.c' ])
 
@@ -426,7 +426,7 @@ class TestOddPaths(CapsuleRecipe):
         trv = repos.getTrove(*nvf[0])
         fileList = list(trv.iterFileList())
         fileNames = sorted([x[1] for x in fileList])
-        self.assertEquals(fileNames, ['/foo/%', '/foo/{'])
+        self.assertEqual(fileNames, ['/foo/%', '/foo/{'])
 
     @conary_test.rpm
     def testRPMCapsulePathOverlap(self):
@@ -452,7 +452,7 @@ class TestRPMCapsulePathOverlap(CapsuleRecipe):
 
         pkgNames, built, cs = self._cookAndInstall(recipestr,
             rpmNames, pkgName, builtPkgNames)
-        self.assertEquals(pkgNames,
+        self.assertEqual(pkgNames,
             ['overlap-same-A', 'overlap-same-A:rpm',
              'overlap-same-B', 'overlap-same-B:rpm']
             )
@@ -464,10 +464,10 @@ class TestRPMCapsulePathOverlap(CapsuleRecipe):
             if troveName.endswith(':rpm'):
                 paths = [x[1] for x in trv.iterFileList()]
                 # make sure that each RPM ended up in the right package
-                self.assertEquals(troveName.split(':')[0],
+                self.assertEqual(troveName.split(':')[0],
                                   trv.troveInfo.capsule.rpm.name())
-                self.assertEquals(len(paths), 2)
-                self.assertEquals('/file' in paths, True)
+                self.assertEqual(len(paths), 2)
+                self.assertEqual('/file' in paths, True)
 
     @conary_test.rpm
     def testRPMCapsulePathOverlapConflicts(self):
@@ -518,7 +518,7 @@ class TestRPMCapsulePathOverlapConflictsOK(CapsuleRecipe):
 
         pkgNames, built, cs = self._cookAndInstall(
             recipestr, rpmNames, pkgName, builtPkgNames)
-        self.assertEquals(pkgNames,
+        self.assertEqual(pkgNames,
             ['overlap-conflict', 'overlap-conflict:rpm',
              'overlap-same-A', 'overlap-same-A:rpm']
             )
@@ -529,7 +529,7 @@ class TestRPMCapsulePathOverlapConflictsOK(CapsuleRecipe):
             troveName = trv.getName()
             if troveName.endswith(':rpm'):
                 paths = [x[1] for x in trv.iterFileList()]
-                self.assertEquals('/file' in paths, True)
+                self.assertEqual('/file' in paths, True)
 
 
     @conary_test.rpm
@@ -554,7 +554,7 @@ class TestRPMCapsulePathOverlapConflictsOK(CapsuleRecipe):
 
         pkgNames, built, cs = self._cookAndInstall(
             recipestr, rpmNames, pkgName, builtPkgNames)
-        self.assertEquals(pkgNames, ['simple', 'simple:rpm'])
+        self.assertEqual(pkgNames, ['simple', 'simple:rpm'])
 
         # Ensure that all the paths exist that should, including overlap
         for tcs in cs.iterNewTroveList():
@@ -562,7 +562,7 @@ class TestRPMCapsulePathOverlapConflictsOK(CapsuleRecipe):
             troveName = trv.getName()
             if troveName.endswith(':rpm'):
                 paths = [x[1] for x in trv.iterFileList()]
-                self.assertEquals(sorted(paths), ['/config', '/dir', '/normal'])
+                self.assertEqual(sorted(paths), ['/config', '/dir', '/normal'])
 
 
     @conary_test.rpm
@@ -586,50 +586,50 @@ class TestCookWithRPMCapsule(CapsuleRecipe):
         pkgName = 'overlap-special-difference'
 
         def initialcontents(fileObj, fpath):
-            self.assertEquals(fileObj.flags.isInitialContents() and True, True,
+            self.assertEqual(fileObj.flags.isInitialContents() and True, True,
                 msg='%s should be InitialContents' %fpath)
         def config(fileObj, fpath):
-            self.assertEquals(fileObj.flags.isConfig() and True, True,
+            self.assertEqual(fileObj.flags.isConfig() and True, True,
                 msg='%s should be Config' %fpath)
         def directory(fileObj, fpath):
-            self.assertEquals(isinstance(fileObj, cfiles.Directory), True,
+            self.assertEqual(isinstance(fileObj, cfiles.Directory), True,
                 msg='%s should be Directory' %fpath)
         def blockdevice(fileObj, fpath):
-            self.assertEquals(isinstance(fileObj, cfiles.BlockDevice), True,
+            self.assertEqual(isinstance(fileObj, cfiles.BlockDevice), True,
                 msg='%s should be BlockDevice' %fpath)
         def regular(fileObj, fpath):
-            self.assertEquals(isinstance(fileObj, cfiles.RegularFile), True,
+            self.assertEqual(isinstance(fileObj, cfiles.RegularFile), True,
                 msg='%s should be RegularFile' %fpath)
         def symlink(fileObj, fpath):
-            self.assertEquals(isinstance(fileObj, cfiles.SymbolicLink), True,
+            self.assertEqual(isinstance(fileObj, cfiles.SymbolicLink), True,
                 msg='%s should be SymbolicLink' %fpath)
 
         rpmVerifyData = [
             ('overlap-special-difference-1.0-1.x86_64.rpm', (
-                    ('/etc/conf', 0600, 'root', 'root', initialcontents),
-                    ('/etc/conf2', 0600, 'root', 'root', config),
-                    ('/ghostly', 0700, 'root', 'root', directory),
-                    ('/ghostly/file', 0600, 'root', 'root', initialcontents),
-                    ('/etc/ghostconf', 0777, 'root', 'root', symlink),
-                    ('/dev/sda', 0600, 'root', 'root', blockdevice),
-                    ('/etc/noverify', 0600, 'root', 'root', initialcontents),
-                    ('/etc/maybeverify', 0600, 'root', 'root', initialcontents),
-                    ('/usr/normal', 0600, 'root', 'root', regular),
+                    ('/etc/conf', 0o600, 'root', 'root', initialcontents),
+                    ('/etc/conf2', 0o600, 'root', 'root', config),
+                    ('/ghostly', 0o700, 'root', 'root', directory),
+                    ('/ghostly/file', 0o600, 'root', 'root', initialcontents),
+                    ('/etc/ghostconf', 0o777, 'root', 'root', symlink),
+                    ('/dev/sda', 0o600, 'root', 'root', blockdevice),
+                    ('/etc/noverify', 0o600, 'root', 'root', initialcontents),
+                    ('/etc/maybeverify', 0o600, 'root', 'root', initialcontents),
+                    ('/usr/normal', 0o600, 'root', 'root', regular),
                     ('/usr/lib64/python2.4/config/Makefile',
-                                    0600, 'root', 'root', regular),
+                                    0o600, 'root', 'root', regular),
             )),
             ('overlap-special-other-1.0-1.x86_64.rpm', (
-                    ('/etc/conf', 0644, 'oot', 'oot', initialcontents),
-                    ('/etc/conf2', 0644, 'oot', 'oot', config),
-                    ('/ghostly', 0750, 'oot', 'oot', directory),
-                    ('/ghostly/file', 0640, 'oot', 'oot', initialcontents),
-                    ('/etc/ghostconf', 0777, 'root', 'root', symlink),
-                    ('/dev/sda', 0660, 'oot', 'oot', blockdevice),
-                    ('/etc/noverify', 0660, 'oot', 'oot', initialcontents),
-                    ('/etc/maybeverify', 0600, 'oot', 'oot', regular),
-                    ('/usr/normal', 0640, 'oot', 'oot', regular),
+                    ('/etc/conf', 0o644, 'oot', 'oot', initialcontents),
+                    ('/etc/conf2', 0o644, 'oot', 'oot', config),
+                    ('/ghostly', 0o750, 'oot', 'oot', directory),
+                    ('/ghostly/file', 0o640, 'oot', 'oot', initialcontents),
+                    ('/etc/ghostconf', 0o777, 'root', 'root', symlink),
+                    ('/dev/sda', 0o660, 'oot', 'oot', blockdevice),
+                    ('/etc/noverify', 0o660, 'oot', 'oot', initialcontents),
+                    ('/etc/maybeverify', 0o600, 'oot', 'oot', regular),
+                    ('/usr/normal', 0o640, 'oot', 'oot', regular),
                     ('/usr/lib64/python2.4/config/Makefile',
-                                    0600, 'root', 'root', regular),
+                                    0o600, 'root', 'root', regular),
             )),
         ]
         rpmPaths = sorted([x[0] for x in rpmVerifyData[0][1]])
@@ -646,7 +646,7 @@ class TestCookWithRPMCapsule(CapsuleRecipe):
             trv = trove.Trove(tcs)
             troveName = trv.getName()
             if troveName.endswith(':rpm'):
-                self.assertEquals(sorted([x[1] for x in trv.iterFileList()]),
+                self.assertEqual(sorted([x[1] for x in trv.iterFileList()]),
                     rpmPaths)
 
         pathFlavors = []
@@ -657,8 +657,8 @@ class TestCookWithRPMCapsule(CapsuleRecipe):
             r = file(resources.get_archive() + '/' + rpmName, 'r')
             h = rpmhelper.readHeader(r)
             rpmFileList = dict(
-                itertools.izip( h[rpmhelper.OLDFILENAMES],
-                                itertools.izip( h[rpmhelper.FILEUSERNAME],
+                zip( h[rpmhelper.OLDFILENAMES],
+                                zip( h[rpmhelper.FILEUSERNAME],
                                                 h[rpmhelper.FILEGROUPNAME],
                                                 h[rpmhelper.FILEMODES],
                                                 h[rpmhelper.FILESIZES],
@@ -716,17 +716,17 @@ class TestCookWithRPMCapsule(CapsuleRecipe):
 
                 elif isinstance(fileObj, cfiles.SymbolicLink):
                     assert( stat.S_ISLNK( rMode ) )
-                    self.assertEquals( fileObj.target(), rLinkto )
+                    self.assertEqual( fileObj.target(), rLinkto )
                     assert not fileObj.flags.isEncapsulatedContent()
 
             # Make sure we have explicitly checked every file in the RPM
-            uncheckedFiles = [x[0] for x in foundFiles.iteritems() if not x[1]]
+            uncheckedFiles = [x[0] for x in foundFiles.items() if not x[1]]
             assert not uncheckedFiles, uncheckedFiles
 
         # ensure that the flavor is set (will be different on different archs
         [self.assertTrue(bool(x)) for x in pathFlavors]
         # ensure that the flavor is the same across both components
-        self.assertEquals(pathFlavors[0], pathFlavors[1])
+        self.assertEqual(pathFlavors[0], pathFlavors[1])
 
     @conary_test.rpm
     def testRPMRepresentMtimeInTroveinfo(self):
@@ -739,13 +739,13 @@ class TestCookWithRPMCapsule(CapsuleRecipe):
             h = rpmhelper.readHeader(f)
 
             rpmMtimes = dict( (path, mtime) for path, mtime in
-                                itertools.izip(h[rpmhelper.OLDFILENAMES],
+                                zip(h[rpmhelper.OLDFILENAMES],
                                                h[rpmhelper.FILEMTIMES]) )
             conaryMtimes = dict( (path, mtime) for
                         ((pathId, path, fileId, version), mtime) in
-                        itertools.izip(sorted(trv.iterFileList()),
+                        zip(sorted(trv.iterFileList()),
                                        trv.troveInfo.mtimes) )
-            self.assertEquals(rpmMtimes, conaryMtimes)
+            self.assertEqual(rpmMtimes, conaryMtimes)
 
         recipestr = """
 class TestRPMRepresentMtimeInTroveinfo(CapsuleRecipe):
@@ -806,7 +806,7 @@ class TestRPMObsoletes(CapsuleRecipe):
         obl = [(x.name(), x.flags(), x.version()) for x in obs]
         obl.sort()
 
-        reference = [('bar', 2L, '1.0'), ('baz', 4L, '2.0'), ('foo', 0L, '')]
+        reference = [('bar', 2, '1.0'), ('baz', 4, '2.0'), ('foo', 0, '')]
         self.assertEqual(obl, reference)
 
     @conary_test.rpm
@@ -871,7 +871,7 @@ class GroupShare(GroupRecipe):
         self.overrideBuildFlavor('is: x86')
         c1, d = self.buildRecipe(recipestr % ('i386', 'x86'), 'docConflict')
         g, d = self.buildRecipe(groupRecipe, 'GroupShare')
-        self.assertEquals(g[0][0], 'group-dist')
+        self.assertEqual(g[0][0], 'group-dist')
         self._installPkgs(['group-dist'], output = '^$')
         self.resetRoot()
         self._installPkgs(['doc-conflict[is:x86]'], output = '^$')
@@ -914,7 +914,7 @@ class GroupShare(GroupRecipe):
         c0, d = self.buildRecipe(recipestr % ('1.0', '1.0'), 'ghostConflict')
         c1, d = self.buildRecipe(recipestr % ('1.1', '1.1'), 'ghostConflict')
         g, d = self.buildRecipe(groupRecipe, 'GroupShare')
-        self.assertEquals(g[0][0], 'group-dist')
+        self.assertEqual(g[0][0], 'group-dist')
         self._installPkgs(['group-dist'], output = '')
         self.resetRoot()
         self._installPkgs(['ghost-conflict=1.0'], output = '^$')
@@ -1105,14 +1105,14 @@ class TestCookWithRPMCapsule(CapsuleRecipe):
         nvfB = repos.findTrove(None, builtB[0])
         trvB = repos.getTrove(*nvfB[0])
         listB = list(trvB.iterFileList())
-        mapB = dict(zip([x[1] for x in listB], listB))
+        mapB = dict(list(zip([x[1] for x in listB], listB)))
         nvfC = repos.findTrove(None, builtC[0])
         trvC = repos.getTrove(*nvfC[0])
         listC = list(trvC.iterFileList())
-        mapC = dict(zip([x[1] for x in listC], listC))
+        mapC = dict(list(zip([x[1] for x in listC], listC)))
         for f in trvA.iterFileList():
-            self.assertEquals(f[0:3],mapB[f[1]][0:3])
-            self.assertEquals(f[0:3],mapC[f[1]][0:3])
+            self.assertEqual(f[0:3],mapB[f[1]][0:3])
+            self.assertEqual(f[0:3],mapC[f[1]][0:3])
 
     def _cookAndInstall(self, recipestr, filename, pkgname,
                         builtpkgnames=None, output = ''):
@@ -1144,7 +1144,7 @@ class TestCookWithRPMCapsule(CapsuleRecipe):
             if not updatePackage:
                 self.addfile(recipename)
 
-            if isinstance(filename, types.StringType):
+            if isinstance(filename, bytes):
                 filenames = [filename]
             else:
                 filenames = filename

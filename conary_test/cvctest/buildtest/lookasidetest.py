@@ -17,8 +17,8 @@
 
 import os
 import socket
-import httplib
-from SimpleHTTPServer import SimpleHTTPRequestHandler
+import http.client
+from http.server import SimpleHTTPRequestHandler
 
 from testrunner import testhelp
 
@@ -262,7 +262,7 @@ class RefreshTest(PackageRecipe):
             baseUrl = contentServer.url()
 
             # test with user:pass
-            contentURL = 'http://user:pass@%s' % httplib.urlsplit(baseUrl)[1]
+            contentURL = 'http://user:pass@%s' % http.client.urlsplit(baseUrl)[1]
             name = 'foo.tar.gz'
             url = contentURL + '/' + name
             cached = lookaside.fetchURL(self.cfg, url, name)
@@ -270,7 +270,7 @@ class RefreshTest(PackageRecipe):
             self.assertEqual(f.read(), 'Hello, world!\n')
 
             # test with no password given
-            contentURL = 'http://user@%s' % httplib.urlsplit(baseUrl)[1]
+            contentURL = 'http://user@%s' % http.client.urlsplit(baseUrl)[1]
             name = 'foo2.tar.gz'
             url = contentURL + '/' + name
             cached = lookaside.fetchURL(self.cfg, url, name)
@@ -288,14 +288,14 @@ class RefreshTest(PackageRecipe):
             # test ftp with user:pass
             def fakeOpen(od, req, *args, **kw):
                 self.req = req
-                import StringIO
+                import io
                 s = 'baz file contents'
-                r = StringIO.StringIO(s)
+                r = io.StringIO(s)
                 r.headers = {'contentLength': len(s)}
                 return r
 
-            import urllib2
-            self.mock(urllib2.OpenerDirector, 'open', fakeOpen)
+            import urllib.request, urllib.error, urllib.parse
+            self.mock(urllib.request.OpenerDirector, 'open', fakeOpen)
             url = 'ftp://user:pass@foo.com/bar/baz.tgz'
             name = 'baz.tgz'
             cached = lookaside.fetchURL(self.cfg, url, name)

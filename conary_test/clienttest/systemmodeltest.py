@@ -44,50 +44,50 @@ class SystemModelFileTest(rephelp.RepositoryHelper):
     @context('sysmodel')
     def testInit(self):
         smf = self.getSystemModel('/fake')
-        self.assertEquals(smf.fileName, '/fake')
-        self.assertEquals(smf.fileFullName, self.rootDir + '/fake')
-        self.assertEquals(smf.model.filedata, [])
+        self.assertEqual(smf.fileName, '/fake')
+        self.assertEqual(smf.fileFullName, self.rootDir + '/fake')
+        self.assertEqual(smf.model.filedata, [])
         file(self.rootDir + '/fake', 'w').write('# comment\n')
         smf.read()
-        self.assertEquals(smf.model.filedata, ['# comment\n'])
+        self.assertEqual(smf.model.filedata, ['# comment\n'])
         smf.parse() # does not raise an exception
 
         smf = self.getSystemModel('/fake')
-        self.assertEquals(smf.model.filedata, ['# comment\n'])
-        self.assertEquals(smf.snapshotExists(), False)
+        self.assertEqual(smf.model.filedata, ['# comment\n'])
+        self.assertEqual(smf.snapshotExists(), False)
 
     @context('sysmodel')
     def testSnapshot(self):
         file(self.rootDir + '/fake', 'w').write('# comment\n')
         smf = self.getSystemModel('/fake')
-        self.assertEquals(smf.model.filedata, ['# comment\n'])
-        self.assertEquals(smf.snapshotExists(), False)
-        self.assertEquals(smf.exists(), True)
+        self.assertEqual(smf.model.filedata, ['# comment\n'])
+        self.assertEqual(smf.snapshotExists(), False)
+        self.assertEqual(smf.exists(), True)
 
         smf.writeSnapshot()
-        self.assertEquals(smf.snapshotExists(), True)
-        self.assertEquals(file(self.rootDir + '/fake.next', 'r').read(),
+        self.assertEqual(smf.snapshotExists(), True)
+        self.assertEqual(file(self.rootDir + '/fake.next', 'r').read(),
             '# comment\n')
         smf.closeSnapshot()
-        self.assertEquals(smf.snapshotExists(), False)
-        self.assertEquals(util.exists(self.rootDir + '/fake.next'), False)
+        self.assertEqual(smf.snapshotExists(), False)
+        self.assertEqual(util.exists(self.rootDir + '/fake.next'), False)
 
         file(self.rootDir + '/fake.next', 'w').write('# comment\ninstall foo\n')
         smf = self.getSystemModel('/fake')
-        self.assertEquals(smf.model.filedata, ['# comment\n', 'install foo\n'])
-        self.assertEquals(file(self.rootDir + '/fake.next', 'r').read(),
+        self.assertEqual(smf.model.filedata, ['# comment\n', 'install foo\n'])
+        self.assertEqual(file(self.rootDir + '/fake.next', 'r').read(),
             '# comment\n'
             'install foo\n')
-        self.assertEquals(smf.snapshotExists(), True)
-        self.assertEquals(smf.exists(), True)
+        self.assertEqual(smf.snapshotExists(), True)
+        self.assertEqual(smf.exists(), True)
         smf.closeSnapshot()
-        self.assertEquals(smf.snapshotExists(), False)
-        self.assertEquals(util.exists(self.rootDir + '/fake.next'), False)
+        self.assertEqual(smf.snapshotExists(), False)
+        self.assertEqual(util.exists(self.rootDir + '/fake.next'), False)
 
         smf.writeSnapshot()
-        self.assertEquals(smf.snapshotExists(), True)
+        self.assertEqual(smf.snapshotExists(), True)
         smf.deleteSnapshot()
-        self.assertEquals(smf.snapshotExists(), False)
+        self.assertEqual(smf.snapshotExists(), False)
 
     @context('sysmodel')
     def testStartFromScratch(self):
@@ -95,36 +95,36 @@ class SystemModelFileTest(rephelp.RepositoryHelper):
 
         smf.parse(fileData=['# an initial comment\n'])
         smf.write()
-        self.assertEquals(file(self.rootDir + '/fake').read(),
+        self.assertEqual(file(self.rootDir + '/fake').read(),
             '# an initial comment\n')
 
         smf.model.appendOpByName('update', 'foo')
         smf.write()
-        self.assertEquals(file(self.rootDir + '/fake').read(),
+        self.assertEqual(file(self.rootDir + '/fake').read(),
             '# an initial comment\n'
             'update foo\n')
 
         smf.model.appendOp(cml.SearchLabel('a@b:c'))
         smf.write()
-        self.assertEquals(file(self.rootDir + '/fake').read(),
+        self.assertEqual(file(self.rootDir + '/fake').read(),
             '# an initial comment\n'
             'update foo\n'
             'search a@b:c\n')
 
         smf.write('/asdf')
-        self.assertEquals(file(self.rootDir + '/asdf').read(),
+        self.assertEqual(file(self.rootDir + '/asdf').read(),
             '# an initial comment\n'
             'update foo\n'
             'search a@b:c\n')
-        self.assertEquals(
+        self.assertEqual(
             stat.S_IMODE(os.stat(self.rootDir + '/asdf')[stat.ST_MODE]),
-            0644)
+            0o644)
 
-        os.chmod(self.rootDir + '/asdf', 0640)
+        os.chmod(self.rootDir + '/asdf', 0o640)
         smf.write('/asdf')
-        self.assertEquals(
+        self.assertEqual(
             stat.S_IMODE(os.stat(self.rootDir + '/asdf')[stat.ST_MODE]),
-            0640)
+            0o640)
 
     @context('sysmodel')
     def testParseWrite(self):
@@ -144,20 +144,20 @@ class SystemModelFileTest(rephelp.RepositoryHelper):
         ))
         file(self.rootDir + '/real', 'w').write(fileData)
         smf = self.getSystemModel('/real')
-        self.assertEquals(smf.model.format(), fileData)
+        self.assertEqual(smf.model.format(), fileData)
         smf.write('/copy')
-        self.assertEquals(file(self.rootDir + '/copy').read(), fileData)
+        self.assertEqual(file(self.rootDir + '/copy').read(), fileData)
         smf.model.modelOps[1].modified=True
         modFileData = fileData.replace(' #disappearing act', '')
-        self.assertEquals(smf.model.format(), modFileData)
+        self.assertEqual(smf.model.format(), modFileData)
         smf.model.appendOp(cml.UpdateTroveOperation('newtrove'))
         modFileData = modFileData.replace('erase blah\n',
                                           'erase blah\nupdate newtrove\n')
-        self.assertEquals(smf.model.format(), modFileData)
+        self.assertEqual(smf.model.format(), modFileData)
         smf.model.appendOp(cml.SearchLabel('d@e:f'))
         modFileData = modFileData.replace('update newtrove\n',
                                           'update newtrove\nsearch d@e:f\n')
-        self.assertEquals(smf.model.format(), modFileData)
+        self.assertEqual(smf.model.format(), modFileData)
 
     @context('sysmodel')
     def testParseFail(self):
@@ -167,14 +167,14 @@ class SystemModelFileTest(rephelp.RepositoryHelper):
         )))
         e = self.assertRaises(cml.CMError,
             self.getSystemModel, '/real')
-        self.assertEquals(str(e), '/real:1: Unrecognized command "badverb"')
+        self.assertEqual(str(e), '/real:1: Unrecognized command "badverb"')
 
         file(self.rootDir + '/real', 'w').write('\n'.join((
             'search foo=bar=baz@blah@blah:1-1-1-1-1',
         )))
         e = self.assertRaises(cml.CMError,
             self.getSystemModel, '/real')
-        self.assertEquals(str(e),
+        self.assertEqual(str(e),
             '/real:1: Error with spec "foo=bar=baz@blah@blah:1-1-1-1-1":'
             " Too many ='s")
 
@@ -184,4 +184,4 @@ class SystemModelFileTest(rephelp.RepositoryHelper):
     def testEmptyEverything(self):
         smf = self.getSystemModel('/fake')
         smf.write()
-        self.assertEquals(file(self.rootDir + '/fake').read(), '')
+        self.assertEqual(file(self.rootDir + '/fake').read(), '')

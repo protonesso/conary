@@ -23,9 +23,9 @@ import posixpath
 import select
 import socket
 import sys
-import urllib
-import BaseHTTPServer
-from SimpleHTTPServer import SimpleHTTPRequestHandler
+import urllib.request, urllib.parse, urllib.error
+import http.server
+from http.server import SimpleHTTPRequestHandler
 
 # Secure server support
 try:
@@ -76,10 +76,10 @@ class HttpRequests(SimpleHTTPRequestHandler):
         probably be diagnosed.)
 
         """
-        path = posixpath.normpath(urllib.unquote(path))
+        path = posixpath.normpath(urllib.parse.unquote(path))
         path = path.split("?", 1)[1]
         words = path.split('/')
-        words = filter(None, words)
+        words = [_f for _f in words if _f]
         path = self.tmpDir
         for word in words:
             drive, word = os.path.splitdrive(word)
@@ -174,7 +174,7 @@ class HttpRequests(SimpleHTTPRequestHandler):
         return httpAuthToken
 
     def checkAuth(self):
-        if not self.headers.has_key('Authorization'):
+        if 'Authorization' not in self.headers:
             self.requestAuth()
             return None
         else:
@@ -328,7 +328,7 @@ class HttpRequests(SimpleHTTPRequestHandler):
         self.send_response(200)
         self.end_headers()
 
-class HTTPServer(BaseHTTPServer.HTTPServer):
+class HTTPServer(http.server.HTTPServer):
     isSecure = False
 
     def __init__(self, server_address, *args, **kwargs):
@@ -340,7 +340,7 @@ class HTTPServer(BaseHTTPServer.HTTPServer):
         family, socktype, _, _, sockaddr = socket.getaddrinfo(host, port)[0]
         self.address_family = family
         self.socket_type = socktype
-        BaseHTTPServer.HTTPServer.__init__(self, (host, port), *args, **kwargs)
+        http.server.HTTPServer.__init__(self, (host, port), *args, **kwargs)
 
     def close_request(self, request):
         pollObj = select.poll()
@@ -353,7 +353,7 @@ class HTTPServer(BaseHTTPServer.HTTPServer):
             if not request.recv(8096):
                 break
 
-        BaseHTTPServer.HTTPServer.close_request(self, request)
+        http.server.HTTPServer.close_request(self, request)
 
 if SSL:
     class SSLConnection(SSL.Connection):
@@ -375,7 +375,7 @@ if SSL:
         def get_request(self):
             try:
                 return HTTPServer.get_request(self)
-            except SSL.SSLError, e:
+            except SSL.SSLError as e:
                 raise socket.error(*e.args)
 
         def close_request(self, request):
@@ -389,7 +389,7 @@ if SSL:
                 try:
                     if not request.recv(8096):
                         break
-                except SSL.SSLError, e:
+                except SSL.SSLError as e:
                     if e.args[0] != 'unexpected eof':
                         raise
                     # Client closed connection too
@@ -421,16 +421,16 @@ class ServerConfig(netserver.ServerConfig):
 
 
 def usage():
-    print "usage: %s" % sys.argv[0]
-    print "       %s --add-user <username> [--admin] [--mirror]" % sys.argv[0]
-    print "       %s --analyze" % sys.argv[0]
-    print ""
-    print "server flags: --config-file <path>"
-    print '              --db "driver <path>"'
-    print '              --log-file <path>'
-    print '              --map "<from> <to>"'
-    print "              --server-name <host>"
-    print "              --tmp-dir <path>"
+    print("usage: %s" % sys.argv[0])
+    print("       %s --add-user <username> [--admin] [--mirror]" % sys.argv[0])
+    print("       %s --analyze" % sys.argv[0])
+    print("")
+    print("server flags: --config-file <path>")
+    print('              --db "driver <path>"')
+    print('              --log-file <path>')
+    print('              --map "<from> <to>"')
+    print("              --server-name <host>")
+    print("              --tmp-dir <path>")
     sys.exit(1)
 
 def addUser(netRepos, userName, admin = False, mirror = False):
@@ -441,7 +441,7 @@ def addUser(netRepos, userName, admin = False, mirror = False):
         pw2 = getpass('Reenter password:')
 
         if pw1 != pw2:
-            print "Passwords do not match."
+            print("Passwords do not match.")
             return 1
     else:
         # chop off the trailing newline
@@ -498,21 +498,21 @@ def getServer(argv = sys.argv, reqClass = HttpRequests):
     try:
         argSet, otherArgs = options.processArgs(argDef, cfgMap, cfg, usage,
                                                 argv = argv)
-    except options.OptionError, msg:
-        print >> sys.stderr, msg
+    except options.OptionError as msg:
+        print(msg, file=sys.stderr)
         sys.exit(1)
 
     if 'migrate' not in argSet:
         cfg.check()
 
-    if argSet.has_key('help'):
+    if 'help' in argSet:
         usage()
 
     if not os.path.isdir(cfg.tmpDir):
-        print cfg.tmpDir + " needs to be a directory"
+        print(cfg.tmpDir + " needs to be a directory")
         sys.exit(1)
     if not os.access(cfg.tmpDir, os.R_OK | os.W_OK | os.X_OK):
-        print cfg.tmpDir + " needs to allow full read/write access"
+        print(cfg.tmpDir + " needs to allow full read/write access")
         sys.exit(1)
     reqClass.tmpDir = cfg.tmpDir
     reqClass.cfg = cfg
@@ -544,21 +544,21 @@ def getServer(argv = sys.argv, reqClass = HttpRequests):
     if cfg.tmpDir.endswith('/'):
         cfg.tmpDir = cfg.tmpDir[:-1]
     if os.path.realpath(cfg.tmpDir) != cfg.tmpDir:
-        print "tmpDir cannot include symbolic links"
+        print("tmpDir cannot include symbolic links")
         sys.exit(1)
 
     if cfg.useSSL:
         errmsg = "Unable to start server with SSL support."
         if not SSL:
-            print errmsg + " Please install m2crypto."
+            print(errmsg + " Please install m2crypto.")
             sys.exit(1)
         if not (cfg.sslCert and cfg.sslKey):
-            print errmsg + (" Please set the sslCert and sslKey "
-                            "configuration options.")
+            print(errmsg + (" Please set the sslCert and sslKey "
+                            "configuration options."))
             sys.exit(1)
         for f in [cfg.sslCert, cfg.sslKey]:
             if not os.path.exists(f):
-                print errmsg + " %s does not exist" % f
+                print(errmsg + " %s does not exist" % f)
                 sys.exit(1)
 
     if cfg.proxyContentsDir:
@@ -585,8 +585,8 @@ def getServer(argv = sys.argv, reqClass = HttpRequests):
         dbVersion = db.getVersion()
         # a more recent major is not compatible
         if dbVersion.major > schema.VERSION.major:
-            print "ERROR: code base too old for this repository database"
-            print "ERROR: repo=", dbVersion, "code=", schema.VERSION
+            print("ERROR: code base too old for this repository database")
+            print("ERROR: repo=", dbVersion, "code=", schema.VERSION)
             sys.exit(-1)
         # determine is we need to call the schema migration
         loadSchema = False
@@ -599,8 +599,8 @@ def getServer(argv = sys.argv, reqClass = HttpRequests):
         if loadSchema:
             dbVersion = schema.loadSchema(db, 'migrate' in argSet)
         if dbVersion < schema.VERSION: # migration failed...
-            print "ERROR: schema migration has failed from %s to %s" %(
-                dbVersion, schema.VERSION)
+            print("ERROR: schema migration has failed from %s to %s" %(
+                dbVersion, schema.VERSION))
         if 'migrate' in argSet:
             logMe(1, "Schema migration complete", dbVersion)
             sys.exit(0)
@@ -615,8 +615,8 @@ def getServer(argv = sys.argv, reqClass = HttpRequests):
                 # it a try
                 try:
                     from crest import webhooks as cresthooks
-                except ImportError, e:
-                    print 'warning: failed to import crest:', str(e)
+                except ImportError as e:
+                    print('warning: failed to import crest:', str(e))
                     # fail - let's not try again by setting cresthooks to
                     # False instead of None
                     cresthooks = False
@@ -654,7 +654,7 @@ def serve(httpServer, profiler=None):
     fds[httpServer.fileno()] = httpServer
 
     p = select.poll()
-    for fd in fds.iterkeys():
+    for fd in fds.keys():
         p.register(fd, select.POLLIN)
 
     logMe(1, "Server ready for requests")
@@ -670,7 +670,7 @@ def serve(httpServer, profiler=None):
             if profiler:
                 profiler.disable()
                 profiler.dump_stats('server.lsprof')
-                print "exception happened, exiting"
+                print("exception happened, exiting")
                 sys.exit(1)
             else:
                 raise

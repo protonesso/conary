@@ -273,7 +273,7 @@ def docObject(cfg, what):
     if '.' in what:
         split = what.split('.')
         if len(split) != 2:
-            print 'Too may "." specified in "%s"' %(what)
+            print('Too may "." specified in "%s"' %(what))
             return 1
         className, what = split
 
@@ -317,15 +317,15 @@ def docObject(cfg, what):
         return 0
     elif len(found) > 1:
         found.sort()
-        print ('Ambiguous recipe method "%s" is defined by the following '
+        print(('Ambiguous recipe method "%s" is defined by the following '
                'classes:\n'
                '    %s\n'
                'Specify one of: %s'
                % (what, ', '.join(x[0] for x in found),
-                  ', '.join('%s.%s' % (x[0], what) for x in found)))
+                  ', '.join('%s.%s' % (x[0], what) for x in found))))
         return 1
     else:
-        print 'Unknown recipe method "%s"' %what
+        print('Unknown recipe method "%s"' %what)
         return 1
 
 
@@ -347,7 +347,7 @@ def docClass(cfg, recipeType):
         Actions = display['Build'][:]
         display['Source'] = [x for x in Actions if x.startswith('add')]
         display['Build'] = [x for x in Actions if x not in display['Source'] and x not in display['Policy'] ]
-    for key, val in [x for x in display.iteritems()]:
+    for key, val in [x for x in display.items()]:
         if val:
             display[key] = '\n    '.join(val)
         else:
@@ -355,7 +355,7 @@ def docClass(cfg, recipeType):
     text = r.__class__.__base__.__doc__
     if not text:
         text = 'No documentation available.'
-    text += "\n\n" + '\n\n'.join(["B{%s Actions}:\n    %s" % x for x in sorted(display.iteritems())])
+    text += "\n\n" + '\n\n'.join(["B{%s Actions}:\n    %s" % x for x in sorted(display.items())])
     _pageDoc(recipeType, text)
 
 def docAll(cfg):

@@ -153,10 +153,10 @@ def formatRollbacks(cfg, rollbacks, stream=None):
 def formatRollbacksAsUpdate(cfg, rollbackList):
     updateTempl = "    %-7s %s %s"
     templ = "    %-7s %s=%s"
-    print 'The following actions will be performed:'
+    print('The following actions will be performed:')
 
     for idx, rb in enumerate(rollbackList):
-        print 'Job %s of %s' % (idx + 1, len(rollbackList))
+        print('Job %s of %s' % (idx + 1, len(rollbackList)))
 
         newList = []
         oldList = []
@@ -202,8 +202,8 @@ def formatRollbacksAsUpdate(cfg, rollbackList):
                 continue
 
             if not oldVersion:
-                print(templ % ('Install', name,
-                            verStr(cfg, newVersion, newFlavor)))
+                print((templ % ('Install', name,
+                            verStr(cfg, newVersion, newFlavor))))
             else:
                 ov = oldVersion.trailingRevision()
                 nv = newVersion.trailingRevision()
@@ -214,7 +214,7 @@ def formatRollbacksAsUpdate(cfg, rollbackList):
                                    verStr(cfg, newVersion, oldFlavor,
                                           defaultLabel =
                                             newVersion.branch().label()))
-                print(updateTempl % ('Update', name, pn))
+                print((updateTempl % ('Update', name, pn)))
 
         compByPkg = {}
 
@@ -240,7 +240,7 @@ def formatRollbacksAsUpdate(cfg, rollbackList):
                             if x is not None ]
                 if comps:
                     name += '(%s)' % " ".join(comps)
-            print(templ % ('Erase', name, verStr(cfg, version, flavor)))
+            print((templ % ('Erase', name, verStr(cfg, version, flavor))))
 
     return 0
 
@@ -340,7 +340,7 @@ def applyRollback(client, rollbackSpec, returnOnError = False, **kwargs):
 
     try:
         client.db.applyRollbackList(client.getRepos(), rollbacks, **defaults)
-    except database.RollbackError, e:
+    except database.RollbackError as e:
         log.error("%s", e)
         if returnOnError:
             return 1
@@ -451,7 +451,7 @@ class _RollbackScripts(object):
 
         try:
             stream = file(cls._getMDFileName(dir))
-        except IOError, e:
+        except IOError as e:
             raise RollbackScriptsError("Open error: %s: %s: %s" %
                 (e.errno, e.filename, e.strerror))
 
@@ -515,7 +515,7 @@ class _RollbackScripts(object):
             if arr[0] not in cls._KEYS:
                 continue
             ret[arr[0]] = arr[1]
-        if cls._KEYS.difference(ret.keys()):
+        if cls._KEYS.difference(list(ret.keys())):
             # Missing key
             return None
         job = cmdline.parseChangeList([ret[cls._KEY_JOB]])[0]
@@ -540,8 +540,8 @@ class _RollbackScripts(object):
     def _openFile(cls, fileName):
         flags = os.O_WRONLY | os.O_CREAT
         try:
-            fd = os.open(fileName, flags, 0600)
-        except OSError, e:
+            fd = os.open(fileName, flags, 0o600)
+        except OSError as e:
             raise RollbackScriptsError("Open error: %s: %s: %s" %
                 (e.errno, e.filename, e.strerror))
 

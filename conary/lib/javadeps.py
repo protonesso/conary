@@ -101,7 +101,7 @@ class _javaSymbolTable:
 
     def process(self, tag, contents, poolPos, i):
         if tag not in self._tagToField:
-            raise ValueError, 'unknown tag %d' %tag
+            raise ValueError('unknown tag %d' %tag)
         storage, methodName, incr = self._tagToField[tag]
         field = getattr(self, storage)
         method = getattr(self, methodName)
@@ -212,10 +212,10 @@ def _isValidTLD(refString):
 
 def _parseSymbolTable(contents):
     if len(contents) <= 4 or contents[0:4] != "\xCA\xFE\xBA\xBE":
-        raise ValueError, 'no java magic'
+        raise ValueError('no java magic')
     poolSize = struct.unpack('>H', contents[8:10])[0]
     if not poolSize:
-        raise ValueError, 'bad java file: no string pool'
+        raise ValueError('bad java file: no string pool')
 
     i = 10
     c = 1
@@ -264,7 +264,7 @@ def _parseRefs(refStr):
 def _isAnonymousInnerClass(className):
     # This also catches $1MethodScopedInner
     parts = iter(className.split('$'))
-    parts.next()
+    next(parts)
     for part in parts:
         if not part or part[0].isdigit():
             return True
@@ -278,7 +278,7 @@ def getDeps(contents):
 
     reqSet = set()
 
-    for referencedClassID in symbolTable.classRef.values():
+    for referencedClassID in list(symbolTable.classRef.values()):
         if referencedClassID not in symbolTable.stringList:
             continue
         refString = symbolTable.stringList[referencedClassID]
@@ -294,7 +294,7 @@ def getDeps(contents):
             if _isValidTLD(parsedRef):
                 reqSet.add(parsedRef)
 
-    for nameID, referencedTypeID in symbolTable.typeRef.values():
+    for nameID, referencedTypeID in list(symbolTable.typeRef.values()):
         if referencedTypeID in symbolTable.stringList:
             reqSet.update((x for x in
                            _parseRefs(symbolTable.stringList[referencedTypeID])
@@ -318,7 +318,7 @@ def getDeps(contents):
     className = symbolTable.className.replace('/', '.')
     parts = className.split('$')
     partsIter = iter(parts)
-    outerClassName = partsIter.next()
+    outerClassName = next(partsIter)
     for innerName in partsIter:
         if not innerName or innerName[0].isdigit():
             # Anonymous inner class
@@ -332,4 +332,4 @@ def getDeps(contents):
 
 if __name__ == '__main__':
     import sys
-    print getDeps(file(sys.argv[1]).read())
+    print(getDeps(file(sys.argv[1]).read()))

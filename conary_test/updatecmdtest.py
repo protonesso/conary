@@ -88,21 +88,21 @@ class UpdateCmdTest(rephelp.RepositoryHelper):
     def testTroveSpecError(self):
         err = self.assertRaises(conaryclient.cmdline.TroveSpecError,
                 updatecmd.doUpdate, self.cfg, [ 'test[[~bootstrap]' ])
-        self.assertEquals(str(err),
+        self.assertEqual(str(err),
                 'Error with spec "test[[~bootstrap]": bad flavor spec')
 
         err = self.assertRaises(conaryclient.cmdline.TroveSpecError,
                 updatecmd.doUpdate, self.cfg, [ 'test[~bootstrap isx: x86]' ])
-        self.assertEquals(str(err),
+        self.assertEqual(str(err),
                 'Error with spec "test[~bootstrap isx: x86]": bad flavor spec')
 
         err = self.assertRaises(conaryclient.cmdline.TroveSpecError,
                 updatecmd.doUpdate, self.cfg, [ 'test=1.0-1-1=1.0-1-2' ])
-        self.assertEquals(str(err),
+        self.assertEqual(str(err),
                 'Error with spec "test=1.0-1-1=1.0-1-2": Too many =\'s')
         nvf = conaryclient.cmdline.parseTroveSpec('test=test@rpl;1')
-        self.assertEquals(nvf[0], 'test')
-        self.assertEquals(nvf[1], 'test@rpl;1')
+        self.assertEqual(nvf[0], 'test')
+        self.assertEqual(nvf[1], 'test@rpl;1')
 
     def testDuplicates(self):
         trv = self.build(recipes.testTransientRecipe1, 'TransientRecipe1')
@@ -115,19 +115,19 @@ class UpdateCmdTest(rephelp.RepositoryHelper):
         trv2 = self.build(recipes.testTransientRecipe3, 'TransientRecipe3')
         updatecmd.doUpdate(self.cfg, [ 'testcase=1.0', 'testcase=1.2' ])
         db = database.Database(self.rootDir, self.cfg.dbPath)
-        self.assertEquals(
+        self.assertEqual(
             db.trovesArePinned(sorted([x for x in db.iterAllTroves()])),
             [False, False, False, False])
         updatecmd.changePins(self.cfg, [ 'testcase' ])
-        self.assertEquals(
+        self.assertEqual(
             db.trovesArePinned(sorted([x for x in db.iterAllTroves()])),
             [True, True, True, True])
         updatecmd.changePins(self.cfg, [ 'testcase:runtime=1.0' ], pin = False)
-        self.assertEquals(
+        self.assertEqual(
             db.trovesArePinned(sorted([x for x in db.iterAllTroves()])),
             [True, True, False, True])
         updatecmd.changePins(self.cfg, [ 'testcase=1.2' ], pin = False)
-        self.assertEquals(
+        self.assertEqual(
             db.trovesArePinned(sorted([x for x in db.iterAllTroves()])),
             [True, False, False, False])
 
@@ -139,15 +139,15 @@ class UpdateCmdTest(rephelp.RepositoryHelper):
         updatecmd.doModelUpdate(self.cfg, self.model, self.modelFile,
             [ 'testcase=localhost@rpl:linux/1.0',
               'testcase=localhost@rpl:linux/1.2' ])
-        self.assertEquals(self.model.format(),
+        self.assertEqual(self.model.format(),
             'install testcase=localhost@rpl:linux/1.0'
                    ' testcase=localhost@rpl:linux/1.2\n')
         db = database.Database(self.rootDir, self.cfg.dbPath)
-        self.assertEquals(
+        self.assertEqual(
             db.trovesArePinned(sorted([x for x in db.iterAllTroves()])),
             [False, False, False, False])
         updatecmd.changePins(self.cfg, [ 'testcase' ])
-        self.assertEquals(
+        self.assertEqual(
             db.trovesArePinned(sorted([x for x in db.iterAllTroves()])),
             [True, True, True, True])
 
@@ -157,11 +157,11 @@ class UpdateCmdTest(rephelp.RepositoryHelper):
         updatecmd.changePins(self.cfg, [ 'testcase=1.0' ], pin = False,
             systemModel=self.model, systemModelFile=self.modelFile)
         # unpinned 1.0 went away, leaving 1.2...
-        self.assertEquals(
+        self.assertEqual(
             set([str(x[1].trailingRevision()) for x in db.iterAllTroves()]),
             set(['1.2-1-1']))
         # ... which is pinned
-        self.assertEquals(
+        self.assertEqual(
             db.trovesArePinned(sorted([x for x in db.iterAllTroves()])),
             [True, True])
 
@@ -169,11 +169,11 @@ class UpdateCmdTest(rephelp.RepositoryHelper):
         updatecmd.changePins(self.cfg, [ 'testcase=1.2' ], pin = False,
             systemModel=self.model, systemModelFile=self.modelFile)
         # nothing removed by the sync
-        self.assertEquals(
+        self.assertEqual(
             set([str(x[1].trailingRevision()) for x in db.iterAllTroves()]),
             set(['1.2-1-1']))
         # but troves are unpined
-        self.assertEquals(
+        self.assertEqual(
             db.trovesArePinned(sorted([x for x in db.iterAllTroves()])),
             [False, False])
 
@@ -182,7 +182,7 @@ class UpdateCmdTest(rephelp.RepositoryHelper):
         trv = self.addComponent('foo:runtime')
         csPath = self.workDir + '/foo.ccs'
         self.changeset(self.openRepository(), 'foo:runtime', csPath)
-        os.chmod(csPath, 0400)
+        os.chmod(csPath, 0o400)
         updatecmd.doUpdate(self.cfg, [ csPath ])
 
     @context('sysmodel')
@@ -193,11 +193,11 @@ class UpdateCmdTest(rephelp.RepositoryHelper):
         self.changeset(self.openRepository(), 'foo', csPath)
         # make sure that we don't go to the repo for only a changeset
         self.stopRepository()
-        os.chmod(csPath, 0400)
+        os.chmod(csPath, 0o400)
         self.getModel()
         updatecmd.doModelUpdate(self.cfg, self.model, self.modelFile,
             [ csPath ])
-        self.assertEquals(self.model.format(),
+        self.assertEqual(self.model.format(),
             'install foo=/localhost@rpl:linux/1.0-1-1[]\n')
         self.modelFile.closeSnapshot._mock.assertCalled()
 
@@ -262,13 +262,13 @@ class UpdateCmdTest(rephelp.RepositoryHelper):
         assert(os.path.exists(self.rootDir + '/foo-optional'))
 
         self.model = self.modelFile.model
-        self.assertEquals(self.model.format(),
+        self.assertEqual(self.model.format(),
             'update bar=localhost@rpl:linux/1.0-1-1'
                   ' foo=/local@local:COOK/1-1-1[]\n')
         rc, text = self.captureOutput(updatecmd.updateAll,
             self.cfg, systemModel=self.model,
             systemModelFile=self.modelFile, model=True)
-        self.assertEquals(text,
+        self.assertEqual(text,
             'update bar=localhost@rpl:linux/1.0-1-1'
                   ' foo=/local@local:COOK/1-1-1[]\n')
 
@@ -312,7 +312,7 @@ class UpdateCmdTest(rephelp.RepositoryHelper):
         e = self.assertRaises(errors.ConaryError,
             updatecmd.doModelUpdate, self.cfg, self.model, self.modelFile,
             [ csPath, csPathG ], keepExisting = False)
-        self.assertEquals(str(e),
+        self.assertEqual(str(e),
             '\n'.join(('group and redirect changesets on a local label'
                        ' cannot be installed:',
                        '    %s contains local redirect:'
@@ -328,25 +328,25 @@ class UpdateCmdTest(rephelp.RepositoryHelper):
 
         updatecmd.doModelUpdate(self.cfg, self.model, self.modelFile,
             [ csPath ], keepExisting = False)
-        self.assertEquals(self.model.format(),
+        self.assertEqual(self.model.format(),
             'update foo=/local@local:COOK/1-1-1[]\n')
         self.modelFile.closeSnapshot._mock.assertCalled()
         # now, make sure that a sync later still works
         rc, text = self.captureOutput(updatecmd.doModelUpdate,
             self.cfg, self.model, self.modelFile, [])
-        self.assertEquals(text, 'Update would not modify system\n')
+        self.assertEqual(text, 'Update would not modify system\n')
 
         updatecmd.doModelUpdate(self.cfg, self.model, self.modelFile,
                                 [ '-foo:lib' ])
         # do not find foo:lib in the modelcache, in order to be sure that
         # we are not depending on the modelcache
         os.remove(self.rootDir + '/var/lib/conarydb/modelcache')
-        self.assertEquals(self.model.format(),
+        self.assertEqual(self.model.format(),
             'update foo=/local@local:COOK/1-1-1[]\n'
             'erase foo:lib\n')
         rc, text = self.captureOutput(updatecmd.doModelUpdate,
             self.cfg, self.model, self.modelFile, [])
-        self.assertEquals(text, 'Update would not modify system\n')
+        self.assertEqual(text, 'Update would not modify system\n')
 
         # Now, test updating multiple times, that simplification deletes
         # the previous reference.
@@ -356,7 +356,7 @@ class UpdateCmdTest(rephelp.RepositoryHelper):
         self.getModel()
         updatecmd.doModelUpdate(self.cfg, self.model, self.modelFile,
             [ csPath ], keepExisting = False)
-        self.assertEquals(self.model.format(),
+        self.assertEqual(self.model.format(),
             'update foo=/local@local:COOK/1-1-1[]\n')
 
         updatecmd.doModelUpdate(self.cfg, self.model, self.modelFile,
@@ -365,7 +365,7 @@ class UpdateCmdTest(rephelp.RepositoryHelper):
         self.model = self.modelFile.model
         # ensure that simplification removed the reference to the
         # now-missing 1-1-1 version
-        self.assertEquals(self.model.format(),
+        self.assertEqual(self.model.format(),
             'update foo=/local@local:COOK/2-1-1[]\n')
 
         # install-update -> install
@@ -373,7 +373,7 @@ class UpdateCmdTest(rephelp.RepositoryHelper):
         self.getModel()
         updatecmd.doModelUpdate(self.cfg, self.model, self.modelFile,
             [ csPath ], keepExisting = True)
-        self.assertEquals(self.model.format(),
+        self.assertEqual(self.model.format(),
             'install foo=/local@local:COOK/1-1-1[]\n')
 
         updatecmd.doModelUpdate(self.cfg, self.model, self.modelFile,
@@ -382,7 +382,7 @@ class UpdateCmdTest(rephelp.RepositoryHelper):
         self.model = self.modelFile.model
         # ensure that simplification removed the reference to the
         # now-missing 1-1-1 version
-        self.assertEquals(self.model.format(),
+        self.assertEqual(self.model.format(),
             'install foo=/local@local:COOK/2-1-1[]\n')
 
     @testhelp.context('sysmodel')
@@ -398,7 +398,7 @@ class UpdateCmdTest(rephelp.RepositoryHelper):
             [ fooCS1, ignCS1 ], keepExisting = True)
         # parse the model to get the indices correct in the cml object
         self.getModel(fileData=self.modelFile.model.format().split("\n")[:-1])
-        self.assertEquals(self.model.format(),
+        self.assertEqual(self.model.format(),
             'install foo=/local@local:COOK/1-1-1[]'
                    ' ign=/local@local:COOK/1-1-1[]\n')
 
@@ -412,12 +412,12 @@ class UpdateCmdTest(rephelp.RepositoryHelper):
             keepExisting = False)
 
         # ensure that mocking out simplification resulted in a bad model
-        self.assertEquals(self.modelFile.model.format(),
+        self.assertEqual(self.modelFile.model.format(),
             'install foo=/local@local:COOK/1-1-1[]'
                    ' ign=/local@local:COOK/1-1-1[]\n'
             'update test1=localhost@rpl:linux/1.0-1-1'
                   ' foo=/local@local:COOK/2-1-1[]\n')
-        self.assertEquals(text,
+        self.assertEqual(text,
                 'Update would leave references to missing local troves:\n'
                     '\tfoo=/local@local:COOK/1-1-1[]\n')
 
@@ -451,7 +451,7 @@ class UpdateCmdTest(rephelp.RepositoryHelper):
             'install group-test'.split('\n'))
         updatecmd.doModelUpdate(self.cfg, self.model, self.modelFile,
             [ 'test2' ], keepExisting = False)
-        self.assertEquals(self.model.format(),
+        self.assertEqual(self.model.format(),
             'search localhost@rpl:linux\n'
             'install group-test\n'
             'update test2\n')
@@ -462,7 +462,7 @@ class UpdateCmdTest(rephelp.RepositoryHelper):
             'install group-test'.split('\n'))
         updatecmd.doModelUpdate(self.cfg, self.model, self.modelFile,
             [ 'test2=localhost@rpl:linux' ], keepExisting = False)
-        self.assertEquals(self.model.format(),
+        self.assertEqual(self.model.format(),
             'search localhost@rpl:linux\n'
             'install group-test\n'
             'update test2=localhost@rpl:linux/2.0-1-1\n')
@@ -473,7 +473,7 @@ class UpdateCmdTest(rephelp.RepositoryHelper):
             'install group-test'.split('\n'))
         updatecmd.doModelUpdate(self.cfg, self.model, self.modelFile,
             [ 'test2=localhost@rpl:linux/1.0-1-1' ], keepExisting = False)
-        self.assertEquals(self.model.format(),
+        self.assertEqual(self.model.format(),
             'search localhost@rpl:linux\n'
             'install group-test\n'
             'update test2=localhost@rpl:linux/1.0-1-1\n')
@@ -512,7 +512,7 @@ class UpdateCmdTest(rephelp.RepositoryHelper):
                 updateArgs, keepExisting = keepExisting)
             #self.assertEquals(self.model.format(), preSimplificationText)
             self.model = self.modelFile.model # get the saved model
-            self.assertEquals(self.model.format(), postSimplificationText)
+            self.assertEqual(self.model.format(), postSimplificationText)
 
         # update a=1 update a=2 -> update a=2
         runSimplification(
@@ -872,54 +872,54 @@ Job 3 of 3:
         self.getModel()
         self.mock(updatecmd, '_updateTroves', mock.MockObject())
 
-        self.assertEquals(self.model.modified(), False)
+        self.assertEqual(self.model.modified(), False)
         updatecmd.doModelUpdate(self.cfg, self.model, self.modelFile,
             [ '+test1:runtime' ], updateByDefault = False)
-        self.assertEquals(self.model.format(),
+        self.assertEqual(self.model.format(),
             'install test1:runtime\n')
-        self.assertEquals(self.model.modified(), True)
+        self.assertEqual(self.model.modified(), True)
 
         self.getModel()
         updatecmd.doModelUpdate(self.cfg, self.model, self.modelFile,
             [ '-test1:runtime' ], updateByDefault = False)
-        self.assertEquals(self.model.format(),
+        self.assertEqual(self.model.format(),
             'erase test1:runtime\n')
-        self.assertEquals(self.model.modified(), True)
+        self.assertEqual(self.model.modified(), True)
 
         self.getModel()
         updatecmd.doModelUpdate(self.cfg, self.model, self.modelFile,
             [ 'test1:runtime' ], updateByDefault = False)
-        self.assertEquals(self.model.format(),
+        self.assertEqual(self.model.format(),
             'erase test1:runtime\n')
-        self.assertEquals(self.model.modified(), True)
+        self.assertEqual(self.model.modified(), True)
 
         self.getModel()
         updatecmd.doModelUpdate(self.cfg, self.model, self.modelFile,
             [ '+test1:runtime' ])
-        self.assertEquals(self.model.format(),
+        self.assertEqual(self.model.format(),
             'install test1:runtime\n')
-        self.assertEquals(self.model.modified(), True)
+        self.assertEqual(self.model.modified(), True)
 
         self.getModel()
         updatecmd.doModelUpdate(self.cfg, self.model, self.modelFile,
             [ '-test1:runtime' ])
-        self.assertEquals(self.model.format(),
+        self.assertEqual(self.model.format(),
             'erase test1:runtime\n')
-        self.assertEquals(self.model.modified(), True)
+        self.assertEqual(self.model.modified(), True)
 
         self.getModel()
         updatecmd.doModelUpdate(self.cfg, self.model, self.modelFile,
             [ 'test1:runtime' ])
-        self.assertEquals(self.model.format(),
+        self.assertEqual(self.model.format(),
             'install test1:runtime\n')
-        self.assertEquals(self.model.modified(), True)
+        self.assertEqual(self.model.modified(), True)
 
         self.getModel()
         updatecmd.doModelUpdate(self.cfg, self.model, self.modelFile,
             [ 'test1:runtime' ], keepExisting = False)
-        self.assertEquals(self.model.format(),
+        self.assertEqual(self.model.format(),
             'update test1:runtime\n')
-        self.assertEquals(self.model.modified(), True)
+        self.assertEqual(self.model.modified(), True)
 
         # make sure directories don't trick cs file detection code into
         # raising an exception (CNY-3549)
@@ -928,9 +928,9 @@ Job 3 of 3:
         self.getModel()
         updatecmd.doModelUpdate(self.cfg, self.model, self.modelFile,
             [ 'test1:runtime' ])
-        self.assertEquals(self.model.format(),
+        self.assertEqual(self.model.format(),
             'install test1:runtime\n')
-        self.assertEquals(self.model.modified(), True)
+        self.assertEqual(self.model.modified(), True)
 
     @context('sysmodel')
     def testModelPatch(self):
@@ -939,13 +939,13 @@ Job 3 of 3:
         self.getModel()
         self.mock(updatecmd, '_updateTroves', mock.MockObject())
 
-        self.assertEquals(self.model.modified(), False)
+        self.assertEqual(self.model.modified(), False)
         updatecmd.doModelUpdate(self.cfg, self.model, self.modelFile, [],
             patchSpec=[ 'group-errata1', 'group-errata2' ],
             updateByDefault = False)
-        self.assertEquals(self.model.format(),
+        self.assertEqual(self.model.format(),
             'patch group-errata1 group-errata2\n')
-        self.assertEquals(self.model.modified(), True)
+        self.assertEqual(self.model.modified(), True)
 
     @context('sysmodel')
     def testModelUpdatePrintModel(self):
@@ -1018,7 +1018,7 @@ Job 3 of 3:
             self.cfg, self.model, self.modelFile,
             [ 'group-dist' ],
             info=True)
-        self.assertEquals(txt, '''\
+        self.assertEqual(txt, '''\
 Job 1 of 4:
     Install conary:data=1-1-1
     Install corecomp:runtime=1-1-1
@@ -1034,7 +1034,7 @@ Job 4 of 4:
 
 ** The update will restart itself after job 2 and continue updating
 ''')
-        self.assertEquals(self.model.format(),
+        self.assertEqual(self.model.format(),
             'search group-dist=/localhost@rpl:linux/1-1-1\n'
             'install group-dist\n')
 
@@ -1045,16 +1045,16 @@ Job 4 of 4:
                 self.cfg, self.model, self.modelFile,
                 [ 'group-dist' ])
             # Note: txt already tested in info case above, no need to retest
-        except errors.ReexecRequired, e:
+        except errors.ReexecRequired as e:
             db = self.openDatabase()
-            self.assertEquals(sorted(db.iterAllTroveNames()),
+            self.assertEqual(sorted(db.iterAllTroveNames()),
                 ['conary:data', 'conary:python', 'corecomp:runtime'])
             self.modelFile.closeSnapshot._mock.assertNotCalled()
             rc, txt = self.captureOutput(updatecmd.doModelUpdate,
                 self.cfg, self.model, self.modelFile,
                 [ ],
                 restartInfo=e.data)
-            self.assertEquals(txt, '')
+            self.assertEqual(txt, '')
             assert(sorted(db.iterAllTroveNames()) ==
                    ['conary', 'conary-build', 'conary-build:python',
                     'conary:data', 'conary:python',
@@ -1065,7 +1065,7 @@ Job 4 of 4:
             self.fail('did not get reexec request')
 
         # make sure that we haven't doubled the model
-        self.assertEquals(self.model.format(),
+        self.assertEqual(self.model.format(),
             'search group-dist=/localhost@rpl:linux/1-1-1\n'
             'install group-dist\n')
         self.modelFile.closeSnapshot._mock.assertCalled()
@@ -1074,9 +1074,9 @@ Job 4 of 4:
         try:
             rc, txt = self.captureOutput(updatecmd.updateAll, self.cfg,
                 systemModel=self.model, systemModelFile=self.modelFile)
-        except errors.ReexecRequired, e:
-            self.assertEquals(txt, '')
-            self.assertEquals(self.model.format(),
+        except errors.ReexecRequired as e:
+            self.assertEqual(txt, '')
+            self.assertEqual(self.model.format(),
                 'search group-dist=localhost@rpl:linux/2-1-1\n'
                 'install group-dist\n')
             self.modelFile.closeSnapshot._mock.assertNotCalled()
@@ -1084,12 +1084,12 @@ Job 4 of 4:
                 self.cfg, self.model, self.modelFile,
                 [ ],
                 restartInfo=e.data)
-            self.assertEquals(txt, '')
+            self.assertEqual(txt, '')
         else:
             self.fail('did not get reexec request')
 
         # make sure that we haven't doubled the model
-        self.assertEquals(self.model.format(),
+        self.assertEqual(self.model.format(),
             'search group-dist=localhost@rpl:linux/2-1-1\n'
             'install group-dist\n')
         self.modelFile.closeSnapshot._mock.assertCalled()
@@ -1153,7 +1153,7 @@ Job 4 of 4:
 ''')
         try:
             self.discardOutput(self.updatePkg, 'group-dist=1', raiseError=True)
-        except errors.ReexecRequired, e:
+        except errors.ReexecRequired as e:
             db = self.openDatabase()
             assert(sorted(db.iterAllTroveNames()) == ['conary:data', 'conary:python', 'corecomp:runtime'])
             self.discardOutput(self.updatePkg, 'group-dist=1', raiseError=True,
@@ -1189,7 +1189,7 @@ Job 4 of 4:
             try:
                 self.discardOutput(self.updatePkg, 'group-dist=2', 
                                    raiseError=True)
-            except errors.ReexecRequired, e:
+            except errors.ReexecRequired as e:
                 self.assertTrue(os.path.exists(myfile),
                     "preupdate script was not executed")
                 self.discardOutput(self.updatePkg, 'group-dist=2', 
@@ -1214,7 +1214,7 @@ The following dependencies could not be resolved:
         try:
             self.discardOutput(self.updatePkg, 'group-dist=3', 
                                raiseError=True, info=True)
-        except errors.ConaryError, e:
+        except errors.ConaryError as e:
             self.assertEqual(str(e), groupDist3Error)
 
         rc, txt = self.captureOutput(self.updatePkg, ['group-dist=3'],
@@ -1242,7 +1242,7 @@ The following dependencies could not be resolved:
         # once more, with updateAll
         try:
             self.captureOutput(self.updateAll, info=True)
-        except errors.ConaryError, e:
+        except errors.ConaryError as e:
             assert(str(e)  == groupDist3Error)
         else:
             assert 0, 'dep error expected'
@@ -1260,14 +1260,14 @@ The following dependencies could not be resolved:
 
         try:
             rc, txt = self.captureOutput(self.updateAll)
-        except errors.ReexecRequired, e:
+        except errors.ReexecRequired as e:
             self.captureOutput(self.updateAll, restartInfo=e.data)
             
         # instead we'll downgrade - not rollback because that doesn't
         # implement this functionality!
         try:
             self.discardOutput(self.updatePkg, 'group-dist=2', raiseError=True)
-        except errors.ReexecRequired, e:
+        except errors.ReexecRequired as e:
             jobSetPath = e.data + '/joblist'
             # muck with the list of jobs to apply - this will cause conary
             # to display a warning telling you the new conary resolved
@@ -1375,7 +1375,7 @@ Job 6 of 6:
 ''')
         try:
             self.discardOutput(self.updatePkg, groups0, raiseError=True)
-        except errors.ReexecRequired, e:
+        except errors.ReexecRequired as e:
             db = self.openDatabase()
             assert(sorted(db.iterAllTroveNames()) == ['conary:data', 'conary:python', 'corecomp:runtime'])
             self.discardOutput(self.updatePkg, groups0, raiseError=True,
@@ -1391,7 +1391,7 @@ Job 6 of 6:
             self.mimicRoot()
             try:
                 self.discardOutput(self.updatePkg, groups1, raiseError=True)
-            except errors.ReexecRequired, e:
+            except errors.ReexecRequired as e:
                 self.assertTrue(os.path.exists(myfileDist),
                     "preupdate script was not executed")
                 self.assertFalse(os.path.exists(myfileFoo),
@@ -1442,7 +1442,7 @@ touch %(root)s/%(package)s;
         try:
             self.discardOutput(self.updatePkg, groups0, raiseError=True,
                 criticalUpdateInfo = criticalUpdateInfo)
-        except errors.ReexecRequired, e:
+        except errors.ReexecRequired as e:
             self.discardOutput(self.updatePkg, groups0, raiseError=True,
                 restartInfo=e.data,
                 criticalUpdateInfo = criticalUpdateInfo)
@@ -1472,7 +1472,7 @@ touch %(root)s/%(package)s;
                             ['conary', 'conary-build', 'corecomp', 'extra'])
         try:
             self.discardOutput(self.updatePkg, 'group-dist=1', raiseError=True)
-        except errors.ReexecRequired, e:
+        except errors.ReexecRequired as e:
             self.discardOutput(self.updatePkg, 'group-dist=1', raiseError=True,
                                 restartInfo=e.data)
         else:
@@ -1482,7 +1482,7 @@ touch %(root)s/%(package)s;
         try:
             self.discardOutput(self.updatePkg, 'group-dist', syncChildren=True,
                                raiseError=True)
-        except errors.ReexecRequired, e:
+        except errors.ReexecRequired as e:
             self.discardOutput(self.updatePkg, 'group-dist', syncChildren=True,
                                raiseError=True, restartInfo=e.data)
 
@@ -1517,7 +1517,7 @@ touch %(root)s/%(package)s;
         try:
             self.discardOutput(self.updatePkg, 'group-dist=1', raiseError=True, 
                                fromFiles=[csPath])
-        except errors.ReexecRequired, e:
+        except errors.ReexecRequired as e:
             self.updatePkg('group-dist=1', raiseError=True, restartInfo=e.data,
                            fromFiles=[csPath])
         else:
@@ -1526,7 +1526,7 @@ touch %(root)s/%(package)s;
 
         try:
             self.discardOutput(self.updatePkg, [csPath], raiseError=True)
-        except errors.ReexecRequired, e:
+        except errors.ReexecRequired as e:
             self.updatePkg([csPath], raiseError=True, restartInfo=e.data)
         else:
             assert 0, 'did not get reeexec request'
@@ -1548,7 +1548,7 @@ touch %(root)s/%(package)s;
         vtrove = groupTroveName + "=1"
         try:
             self.discardOutput(self.updatePkg, vtrove, raiseError=True)
-        except errors.ReexecRequired, e:
+        except errors.ReexecRequired as e:
             # CNY-1034: a version file should be present
             miscdir = e.data + "misc"
             verfile = os.path.join(miscdir, '__version__')
@@ -1636,7 +1636,7 @@ touch %(root)s/%(package)s;
         vtrove = groupTroveName + "=1"
         try:
             self.discardOutput(self.updatePkg, vtrove, raiseError=True)
-        except errors.ReexecRequired, e:
+        except errors.ReexecRequired as e:
             self.updatePkg(vtrove, raiseError=True, restartInfo=e.data)
         else:
             assert 0, 'did not get reeexec request'
@@ -1651,7 +1651,7 @@ touch %(root)s/%(package)s;
                 self.discardOutput(self.updatePkg, vtrove, raiseError=True,
                                fromFiles=[changesets[1]], migrate=True)
                 assert(0)
-            except errors.ReexecRequired, e:
+            except errors.ReexecRequired as e:
                 pass
         finally:
             conaryclient.cmdline.askYn = oldaskYn
@@ -1684,7 +1684,7 @@ touch %(root)s/%(package)s;
         grp = groupTroveName + "=1"
         try:
             self.discardOutput(self.updatePkg, grp, raiseError=True)
-        except errors.ReexecRequired, e:
+        except errors.ReexecRequired as e:
             self.discardOutput(self.updatePkg, grp, raiseError=True,
                                restartInfo=e.data)
         else:
@@ -1703,7 +1703,7 @@ touch %(root)s/%(package)s;
         try:
             self.discardOutput(self.updatePkg, grp, raiseError=True,
                                migrate=True)
-        except errors.ReexecRequired, e:
+        except errors.ReexecRequired as e:
             # Should have changed from a migrate into a regular update
             self.assertEqual(e.execParams[1], 'update')
             try:
@@ -1735,7 +1735,7 @@ touch %(root)s/%(package)s;
         pkgset = ['foo', 'bar', 'conary']
         try:
             self.discardOutput(self.updatePkg, pkgset, raiseError=True)
-        except errors.ReexecRequired, e:
+        except errors.ReexecRequired as e:
             self.discardOutput(self.updatePkg, pkgset, raiseError=True,
                                restartInfo=e.data)
 
@@ -1775,7 +1775,7 @@ touch %(root)s/%(package)s;
             colls.append(c)
         try:
             self.discardOutput(self.updatePkg, 'group-dist=1', raiseError=True)
-        except errors.ReexecRequired, e:
+        except errors.ReexecRequired as e:
             self.discardOutput(self.updatePkg, 'group-dist=1', raiseError=True,
                                 restartInfo=e.data)
         else:
@@ -1882,7 +1882,7 @@ touch %(root)s/%(package)s;
         try:
             self.captureOutput(self.updatePkg, self.rootDir,
                                'conary=1', raiseError=True)
-        except errors.ReexecRequired, e:
+        except errors.ReexecRequired as e:
             self.captureOutput(self.updatePkg, self.rootDir,
                                'conary=1', raiseError=True, restartInfo=e.data)
         else:
@@ -1913,10 +1913,10 @@ touch %(root)s/%(package)s;
                 # Put the values in the queue
                 self.q.put((val1, val2))
 
-        import Queue
+        import queue
         from threading import Thread
 
-        q = Queue.Queue(2)
+        q = queue.Queue(2)
         cb = MyUpdateCallback()
         cb.csMsg("ORIGINAL")
         cb.q = q
@@ -1967,8 +1967,8 @@ touch %(root)s/%(package)s;
             updatecmd.doUpdate, self.cfg, ["test:runtime"])
         cmdlinefile = os.path.join(restartDir, 'cmdline')
         self.assertTrue(os.path.exists(cmdlinefile))
-        import xmlrpclib
-        params, _ = xmlrpclib.loads(open(cmdlinefile).read())
+        import xmlrpc.client
+        params, _ = xmlrpc.client.loads(open(cmdlinefile).read())
         self.assertEqual(params[0], argv)
 
     def test_UpdateTroves(self):
@@ -2100,10 +2100,10 @@ class JsonUpdateCallbackTest(testhelp.TestCase):
         if keywords:
             self.fail("got keywords in call")
 
-        for key, value in json.loads(args[0]).iteritems():
+        for key, value in json.loads(args[0]).items():
             self.assertTrue(key in self.json_fields)
             if key in kwargs:
-                self.assertEquals((key, value), (key, kwargs[key]))
+                self.assertEqual((key, value), (key, kwargs[key]))
 
     def setUp(self):
         testhelp.TestCase.setUp(self)

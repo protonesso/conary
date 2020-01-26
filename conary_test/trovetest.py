@@ -302,7 +302,7 @@ Some changes just are.
         
         troveRedirs = [x for x in redir.redirects.iter()]
         troveCopyRedirs = [x for x in redirCopy.redirects.iter()]
-        self.assertEquals(troveRedirs, troveCopyRedirs)
+        self.assertEqual(troveRedirs, troveCopyRedirs)
 
         assert(grp != redir)
 
@@ -502,7 +502,7 @@ Some changes just are.
         t.computeDigests()
         try:
             t.verifyDigitalSignatures()
-        except DigitalSignatureVerificationError, message:
+        except DigitalSignatureVerificationError as message:
             pass
 
         # add a file to the trove, which ensures that file
@@ -511,20 +511,20 @@ Some changes just are.
         t.computeDigests()
         try:
             t.verifyDigitalSignatures()
-        except DigitalSignatureVerificationError, message:
+        except DigitalSignatureVerificationError as message:
             pass
 
     def testBadName(self):
         try:
             t = Trove('foo:bar:baz', NewVersion(), Flavor(), None)
-        except TroveError, e:
+        except TroveError as e:
             assert(str(e) == 'More than one ":" is not allowed in a trove name')
         else:
             raise
 
         try:
             t = Trove(':component', NewVersion(), Flavor(), None)
-        except TroveError, e:
+        except TroveError as e:
             assert(str(e) == 'Trove and component names cannot be empty')
         else:
             raise
@@ -1129,21 +1129,21 @@ Some changes just are.
         mi.shortDesc.set('tainted shortDesc')
         try:
             t.troveInfo.metadata.verifyDigitalSignatures()
-        except DigitalSignatureVerificationError, e:
+        except DigitalSignatureVerificationError as e:
             self.assertEqual(str(e), 'metadata checksum does not match stored value')
         try:
             t.troveInfo.metadata.verifyDigests()
-        except DigitalSignatureVerificationError, e:
+        except DigitalSignatureVerificationError as e:
             self.assertEqual(str(e), 'metadata checksum does not match stored value')
         try:
             t.verifyDigests()
-        except DigitalSignatureVerificationError, e:
+        except DigitalSignatureVerificationError as e:
             self.assertEqual(str(e), 'metadata checksum does not match stored value')
 
         trvCs = t.diff(None, absolute = True)[0]
         try:
             trove.Trove(trvCs)
-        except DigitalSignatureVerificationError, e:
+        except DigitalSignatureVerificationError as e:
             self.assertEqual(str(e), 'metadata checksum does not match stored value')
 
         mi.shortDesc.set('This is the short description of trvname')
@@ -1189,19 +1189,19 @@ Some changes just are.
                          chr((ord(ds.signature()[-1]) + 1) %255))
         try:
             t.verifyDigitalSignatures(keyCache=keyCache)
-        except DigitalSignatureVerificationError, e:
+        except DigitalSignatureVerificationError as e:
             self.assertEqual(str(e), 'Trove signatures made by the following keys are bad: F7440D78FE813C882212C2BF8AC2828190B1E477')
         ds.signature.set(oldSig[:-1])
         try:
             t.verifyDigitalSignatures(keyCache=keyCache)
-        except DigitalSignatureVerificationError, e:
+        except DigitalSignatureVerificationError as e:
             self.assertEqual(str(e), 'Trove signatures made by the following keys are bad: F7440D78FE813C882212C2BF8AC2828190B1E477')
         ds.signature.set(oldSig)
         t.verifyDigitalSignatures(keyCache=keyCache)
         ds.timestamp.set(int(time.time() + 10000))
         try:
             t.verifyDigitalSignatures(keyCache=keyCache)
-        except DigitalSignatureVerificationError, e:
+        except DigitalSignatureVerificationError as e:
             self.assertEqual(str(e), 'Trove signatures made by the following keys are bad: F7440D78FE813C882212C2BF8AC2828190B1E477')
 
         # test the easy access methods
@@ -1324,8 +1324,8 @@ Some changes just are.
         frz = "\x00\x00\tgroup-foo\x02\x001/conary.rpath.com@test:trunk/1181891335.163:1-1-1\x04\x80\x00\x00\x0b4#group-foo\x07\x00\x04\x00\x00\x00\x01\x08\x80\x00\x00<foo\x00+\x00/conary.rpath.com@test:trunk/1181883231.115:1-1-1\x00-\x001\x00\r\x00\x01\x00\x0e\x80\x00\x00\xdb\x00\x00\x08\x00\x00\x00\x00\x00\x00\x00\x04\x01\x00\x10group-foo:source\x02\x00\x08\x00\x00\x00\x00Fr;\x07\x03\x00\x061.1.28\x07\x00\x01\x01\t\x80\x00\x00F\x00\x00\x14,\xf7\x03\x1e\xda\xab\xb0\xe4\xe5\x90\x91\x1e(\xa7Y\xfb\x8f.`\xbf\x02\x80\x00\x00*\x01\x00'\x00\x00\x01\x01\x01\x00 M\xf0,\xb4\xd0\xe0o:\xa4,\xaa\x08\x98j\x81\x11\xac\xe6\xdf\xc8\xab\x97V\x85X\xbaA\xe3\x04\x9a\xa2P\x0b\x00\x1bconary.rpath.com@test:trunk\r\x00\x04\x00\x00\x00\n\x0e\x00\x01\x00\x10\x00)\x03\x00&\x00\x00\x13#!/bin/bash\n\necho 1\x02\x00\r\x01\x00\n\x00\x00\x02\x00\x02\x01\x00\x02\x00\x01\x13\x00\x02\x00\x02\x10\x80\x00\x00\x17\x00\x00\x14,\xf7\x03\x1e\xda\xab\xb0\xe4\xe5\x90\x91\x1e(\xa7Y\xfb\x8f.`\xbf\x11\x80\x00\x00\x8bfoo:debuginfo\x00+\x00/conary.rpath.com@test:trunk/1181883231.115:1-1-1\x00-\x000\x00\x00foo:runtime\x00+\x00/conary.rpath.com@test:trunk/1181883231.115:1-1-1\x00-\x001\x00"
         tcs = ThawTroveChangeSet(frz)
         t = trove.Trove(tcs)
-        self.assertEquals(2, t.getCompatibilityClass())
-        self.assertEquals([1], t.getTroveInfo().scripts.postRollback.conversions.getItems().keys())
+        self.assertEqual(2, t.getCompatibilityClass())
+        self.assertEqual([1], list(t.getTroveInfo().scripts.postRollback.conversions.getItems().keys()))
 
         self.assertTrue(tcs.isRollbackFence(0))
         self.assertFalse(tcs.isRollbackFence(1))
@@ -1425,7 +1425,7 @@ Some changes just are.
 
     def testTroveInfoSize(self):
         # troveinfo elements added after BUILD_FLAVOR must be DYNAMIC
-        for tag in trove.TroveInfo.streamDict.keys():
+        for tag in list(trove.TroveInfo.streamDict.keys()):
             if tag > trove._TROVEINFO_TAG_BUILD_FLAVOR:
                 assert(trove.TroveInfo.streamDict[tag][0] == streams.DYNAMIC)
 
@@ -1446,7 +1446,7 @@ from conary_test import rephelp
 class TroveTest2(rephelp.RepositoryHelper):
 
     def _checkMetadata(self, d, **kw):
-        for key, value in d.items():
+        for key, value in list(d.items()):
             if value is None:
                 assert(key not in kw or kw[key] == None)
             else:
@@ -1504,11 +1504,11 @@ class TroveTest2(rephelp.RepositoryHelper):
 
     def testImageGroup(self):
         g = Trove('group-foo', NewVersion(), Flavor(), None)
-        self.assertEquals(g.troveInfo.imageGroup(), None)
+        self.assertEqual(g.troveInfo.imageGroup(), None)
         g.troveInfo.imageGroup.set(True)
-        self.assertEquals(g.troveInfo.imageGroup(), 1)
+        self.assertEqual(g.troveInfo.imageGroup(), 1)
         g.troveInfo.imageGroup.set(False)
-        self.assertEquals(g.troveInfo.imageGroup(), 0)
+        self.assertEqual(g.troveInfo.imageGroup(), 0)
 
     def testFlattenMetadata(self):
         m = trove.Metadata()
@@ -1535,7 +1535,7 @@ class TroveTest2(rephelp.RepositoryHelper):
         items = m.flatten(filteredKeyValues = ['a'])
         self.assertEqual(len(items), 1)
         self.assertEqual(items[0].licenses, ['l3'])
-        self.assertEqual(list(items[0].keyValue.iteritems()),
+        self.assertEqual(list(items[0].keyValue.items()),
             [('b', 'b')])
 
     def testKeyValueMetadata(self):
@@ -1553,7 +1553,7 @@ class TroveTest2(rephelp.RepositoryHelper):
         self.assertEqual(sorted(vis2.keys()), ['a', 'b'])
         self.assertEqual(sorted(vis2.items()),
             [('a', 'A binary string\000'), ('b', 'Another string')])
-        self.assertEqual(sorted(vis2.iteritems()),
+        self.assertEqual(sorted(vis2.items()),
             [('a', 'A binary string\000'), ('b', 'Another string')])
 
         # An empty VIS
@@ -1577,7 +1577,7 @@ class TroveTest2(rephelp.RepositoryHelper):
 
         nmi = trove.MetadataItem(frozen)
         self.assertEqual(sorted(mi.keyValue.items()),
-            sorted(ddata.iteritems()))
+            sorted(ddata.items()))
 
     def testExtendedMetadata(self):
         trv = Trove('test', NewVersion(), Flavor(), None)
@@ -1678,20 +1678,20 @@ class TroveTest2(rephelp.RepositoryHelper):
 
     def testTroveMtimes(self):
         l = trove.TroveMtimes()
-        self.assertEquals(l.freeze(), '')
+        self.assertEqual(l.freeze(), '')
         l.append(0x20)
         l.append(0x3000)
         l.append(0x400000)
         l.append(0x80000000)
-        self.assertEquals(l.freeze(), '\x00\x00\x00 \x00\x000\x00\x00@\x00\x00\x80\x00\x00\x00')
+        self.assertEqual(l.freeze(), '\x00\x00\x00 \x00\x000\x00\x00@\x00\x00\x80\x00\x00\x00')
 
         l2 = trove.TroveMtimes(l.freeze())
-        self.assertEquals(l, l2)
-        self.assertEquals(l.freeze(), l2.freeze())
-        self.assertEquals(l.diff(l2), l.freeze())
+        self.assertEqual(l, l2)
+        self.assertEqual(l.freeze(), l2.freeze())
+        self.assertEqual(l.diff(l2), l.freeze())
 
         l2 = trove.TroveMtimes()
-        self.assertEquals(l.diff(l2), l.freeze())
+        self.assertEqual(l.diff(l2), l.freeze())
         l2.twm(l.diff(l2), l2)
         assert(l == l2)
 
@@ -1702,12 +1702,12 @@ class TroveTest2(rephelp.RepositoryHelper):
         n = 'somename'
         t = trove.Trove(n, v, f)
         t.setSize(100)
-        self.assertEquals(t.getSize(), 100)
+        self.assertEqual(t.getSize(), 100)
 
         mi = trove.MetadataItem()
         mi.sizeOverride.set(105)
         t.troveInfo.metadata.addItem(mi)
-        self.assertEquals(t.getSize(), 105)
+        self.assertEqual(t.getSize(), 105)
 
     def testSizeOverrideMetadata(self):
         # override the size

@@ -171,12 +171,12 @@ class TestBadInterpreterPaths(PackageRecipe):
     def testSymlinkInterpreter(self):
         os.mkdir(self.workDir + '/dir1')
         open(self.workDir + '/dir1/bin1', 'w').close()
-        os.chmod(self.workDir + '/dir1/bin1', 0755)
+        os.chmod(self.workDir + '/dir1/bin1', 0o755)
         os.symlink('bin1', self.workDir + '/dir1/link1')
         os.symlink('dir1', self.workDir + '/dirlink1')
 
         open(self.workDir + '/bin2', 'w').close()
-        os.chmod(self.workDir + '/bin2', 0755)
+        os.chmod(self.workDir + '/bin2', 0o755)
         os.symlink('bin2', self.workDir + '/link2')
         recipestr1 = """
 class TestBadInterpreterPaths(PackageRecipe):
@@ -192,12 +192,12 @@ class TestBadInterpreterPaths(PackageRecipe):
         self.buildRecipe(recipestr1, 'TestBadInterpreterPaths')
         self.updatePkg('test:runtime', depCheck=False)
         # Dir symlink was rewritten
-        self.assertEquals(open(self.rootDir + '/bin/prog1').read(),
+        self.assertEqual(open(self.rootDir + '/bin/prog1').read(),
                 '#!%s/dir1/bin1\n' % self.workDir)
-        self.assertEquals(open(self.rootDir + '/bin/prog1b').read(),
+        self.assertEqual(open(self.rootDir + '/bin/prog1b').read(),
                 '#!%s/dir1/link1\n' % self.workDir)
         # File symlink was not
-        self.assertEquals(open(self.rootDir + '/bin/prog2').read(),
+        self.assertEqual(open(self.rootDir + '/bin/prog2').read(),
                 '#!%s/link2\n' % self.workDir)
 
 
@@ -409,7 +409,7 @@ class TestSymlinkTarget(PackageRecipe):
         nvf = repos.findTrove(None,
                 [x for x in built if 'debuginfo' not in x[0]][0])
         trv = repos.getTrove(*nvf[0])
-        self.assertEquals(trv.requires,
+        self.assertEqual(trv.requires,
                 deps.ThawDependencySet('4#bar::runtime|4#foo::runtime'))
         nvf = repos.findTrove(None,
                 [x for x in built if 'debuginfo' in x[0]][0])
@@ -441,7 +441,7 @@ class TestSymlinkTarget(PackageRecipe):
         repos = self.openRepository()
         nvf = repos.findTrove(None, built[0])
         trv = repos.getTrove(*nvf[0])
-        self.assertEquals(trv.requires, deps.ThawDependencySet(''))
+        self.assertEqual(trv.requires, deps.ThawDependencySet(''))
 
     def testSymlinkLocalTroveWithFile(self):
         recipestr = r"""
@@ -464,7 +464,7 @@ class TestSymlinkTarget(PackageRecipe):
         repos = self.openRepository()
         nvf = repos.findTrove(None, built[0])
         trv = repos.getTrove(*nvf[0])
-        self.assertEquals(trv.requires, deps.ThawDependencySet('3#/bin/foo'))
+        self.assertEqual(trv.requires, deps.ThawDependencySet('3#/bin/foo'))
 
     def testSymlinkExplicitTroveReq(self):
         recipestr = r"""
@@ -491,7 +491,7 @@ class TestSymlinkTarget(PackageRecipe):
 
         # even tho there was a trove requirement already, a file requirement
         # was added by SymlinkTargetRequires
-        self.assertEquals(trv.requires,
+        self.assertEqual(trv.requires,
                 deps.ThawDependencySet('3#/bin/foo|4#foo::runtime'))
 
     def testSymlinkExplicitTroveReq2(self):
@@ -521,7 +521,7 @@ class TestSymlinkTarget(PackageRecipe):
 
         # even tho there was a trove requirement already, a file requirement
         # was added by SymlinkTargetRequires
-        self.assertEquals(trv.requires,
+        self.assertEqual(trv.requires,
                 deps.ThawDependencySet('3#/bin/foo|4#foo::runtime'))
 
     def testSymlinkExplicitTroveReq3(self):
@@ -551,7 +551,7 @@ class TestSymlinkTarget(PackageRecipe):
 
         # even tho there was a trove requirement already, a file requirement
         # was added by SymlinkTargetRequires
-        self.assertEquals(trv.requires,
+        self.assertEqual(trv.requires,
                 deps.ThawDependencySet('3#/bin/foo|4#foo::runtime'))
 
     def testSymlinkRequiresException(self):
@@ -574,7 +574,7 @@ class TestSymlinkTarget(PackageRecipe):
         err = self.assertRaises(policy.PolicyError,
                 self.buildRecipe, recipestr, "TestSymlinkTarget")
 
-        self.assertEquals(str(err), 'Package Policy errors found:\n' \
+        self.assertEqual(str(err), 'Package Policy errors found:\n' \
                 'DanglingSymlinks: Dangling symlink: /bar/foo points ' \
                 'to non-existant ../bin/foo (/bin/foo)')
 
@@ -603,8 +603,8 @@ class TestWarnWriteable(PackageRecipe):
         ))
         for p in built:
             self.updatePkg(self.workDir, p[0], p[1])
-        assert(self.getmode('/foo') & 0777 == 0666)
-        assert(self.getmode('/blah') & 0777 == 0777)
+        assert(self.getmode('/foo') & 0o777 == 0o666)
+        assert(self.getmode('/blah') & 0o777 == 0o777)
         self.assertRaises(OSError, os.stat, self.workDir + os.sep + '/baz')
 
     def getmode(self, filename):
@@ -654,7 +654,7 @@ class TestExcludeDirectories(PackageRecipe):
                 'test:runtime', trv.getVersion(), trv.getFlavor(),
                 withFiles=True):
             paths.append(path)
-        self.assertEquals(len(paths), 6)
+        self.assertEqual(len(paths), 6)
 
     def testExcludeDirectoriesSubdirs(self):
         # CNY-1546
@@ -755,8 +755,8 @@ class BadObsoletePaths(PackageRecipe):
         self.Run('touch %(destdir)s/usr/info/blah/bar', package = 'foo')
 """
         (built, d) = self.buildRecipe(recipestr1, "BadObsoletePaths")
-        self.assertEquals(len(built), 1)
-        self.assertEquals(built[0][0], 'foo:doc')
+        self.assertEqual(len(built), 1)
+        self.assertEqual(built[0][0], 'foo:doc')
 
     def testObsoletePathsTest3(self):
         recipestr1 = """
@@ -775,7 +775,7 @@ class BadObsoletePaths(PackageRecipe):
         (built, d) = self.buildRecipe(recipestr1, "BadObsoletePaths")
 
         # first prove the package spec for Create worked.
-        self.assertEquals(built[0][0], 'foo:supdoc')
+        self.assertEqual(built[0][0], 'foo:supdoc')
 
         repos = self.openRepository()
         trvNVF = repos.findTrove(None, built[0])
@@ -783,12 +783,12 @@ class BadObsoletePaths(PackageRecipe):
         fileInfo = [x for x in trv.iterFileList()][0]
 
         # prove the name was changed
-        self.assertEquals(fileInfo[1], '/usr/share/doc/foo')
+        self.assertEqual(fileInfo[1], '/usr/share/doc/foo')
 
         fileObj = repos.getFileVersion(fileInfo[0], fileInfo[2], fileInfo[3])
         # if the SetModes failed to translate, the modeString will be
         # '-rw-r--r--'
-        self.assertEquals(fileObj.modeString(), '-rwxr-xr-x')
+        self.assertEqual(fileObj.modeString(), '-rwxr-xr-x')
 
     def testObsoletePathsTest4(self):
         recipestr1 = """
@@ -807,7 +807,7 @@ class BadObsoletePaths(PackageRecipe):
         (built, d) = self.buildRecipe(recipestr1, "BadObsoletePaths")
 
         # first prove the package spec for Create worked.
-        self.assertEquals(built[0][0], 'foo:supdoc')
+        self.assertEqual(built[0][0], 'foo:supdoc')
 
         repos = self.openRepository()
         trvNVF = repos.findTrove(None, built[0])
@@ -815,14 +815,14 @@ class BadObsoletePaths(PackageRecipe):
         fileInfo = [x for x in trv.iterFileList()][0]
 
         # prove the name was changed
-        self.assertEquals(fileInfo[1], '/usr/share/doc/foo')
+        self.assertEqual(fileInfo[1], '/usr/share/doc/foo')
 
         fileObj = repos.getFileVersion(fileInfo[0], fileInfo[2], fileInfo[3])
         # now compare the hash of the contents. we expected them to be changed
         # from 'foo' to 'bar'. this proves Replace honors PackageSpec
         hash = digestlib.sha1()
         hash.update('bar\n')
-        self.assertEquals(hash.digest(), fileObj.contents.sha1())
+        self.assertEqual(hash.digest(), fileObj.contents.sha1())
 
     def testObsoletePathsTest5(self):
         recipestr1 = """
@@ -840,8 +840,8 @@ class BadObsoletePaths(PackageRecipe):
         self.MakeDirs('/usr/info/blah', mode=0755)
 """
         (built, d) = self.buildRecipe(recipestr1, "BadObsoletePaths")
-        self.assertEquals(len(built), 1)
-        self.assertEquals(built[0][0], 'foo:doc')
+        self.assertEqual(len(built), 1)
+        self.assertEqual(built[0][0], 'foo:doc')
 
 
 class LinkTypeTest(rephelp.RepositoryHelper):
@@ -993,7 +993,7 @@ class TestConfig(PackageRecipe):
             withFiles=True):
             assert(fileObj.flags.isConfig())
             found += 1
-        self.assertEquals(found, 1)
+        self.assertEqual(found, 1)
         name = 'test:runtime'
         trv = repos.getTrove(name, version, flavor)
         found = 0
@@ -1003,7 +1003,7 @@ class TestConfig(PackageRecipe):
             # executable config file in :runtime (CNY-1260)
             assert(fileObj.flags.isConfig())
             found += 1
-        self.assertEquals(found, 1)
+        self.assertEqual(found, 1)
 
     def testConfigTest2(self):
         recipestr1 = """
@@ -1032,7 +1032,7 @@ class TestConfig(PackageRecipe):
             withFiles=True):
             assert(fileObj.flags.isConfig())
             found += 1
-        self.assertEquals(found, 3)
+        self.assertEqual(found, 3)
 
     def testConfigTest3(self):
         recipestr1 = """
@@ -1048,7 +1048,7 @@ class TestConfig(PackageRecipe):
         self.logFilter.add()
         self.buildRecipe(recipestr1, "TestConfig")
         self.logFilter.remove()
-        self.assertEquals(self.logFilter.records[0],
+        self.assertEqual(self.logFilter.records[0],
                 'warning: Config: Inclusion ^/foo$ for Config was not used')
 
         recipestr2 = """
@@ -1081,7 +1081,7 @@ class CorrectedConfig(PackageRecipe):
             withFiles=True):
             assert(fileObj.flags.isConfig())
             found += 1
-        self.assertEquals(found, 1)
+        self.assertEqual(found, 1)
 
     def testBinaryConfig(self):
         recipestr = """
@@ -1142,7 +1142,7 @@ class WinConfig(PackageRecipe):
         self.logFilter.add()
         self.buildRecipe(recipestr, "WinConfig")
         self.logFilter.remove()
-        self.assertEquals(len(self.logFilter.records), 1)
+        self.assertEqual(len(self.logFilter.records), 1)
         self.assertSubstringIn(
             "warning: Config: /etc/baz: 'utf8' codec can't decode byte 0x93",
             self.logFilter.records)
@@ -1386,11 +1386,11 @@ datasource      args
         fileObjs = [repos.getFileVersion(x[0], x[2], x[3]) \
                 for x in trv.iterFileList()]
         for fileObj in [x for x in fileObjs if x.tags != ['tagdescription']]:
-            self.assertEquals(fileObj.tags, ['foo'])
+            self.assertEqual(fileObj.tags, ['foo'])
         # if callCount is 2, it may be because the buildReq results were not
         # cached. it's also possible that iterTrovesByPath was used somewhere
         # other than TagSpec.doProcess
-        self.assertEquals(self.callCount, 1)
+        self.assertEqual(self.callCount, 1)
 
 
 
@@ -1447,7 +1447,7 @@ class TagLocaleTest(PackageRecipe):
         assert('locale(C)' not in localeTags)
         assert('locale(hh_HH)' in localeTags)
         assert('locale(ign)' not in localeTags)
-        self.assertEquals(localeTags, set(('locale(aa)', 'locale(aa_DJ)', 'locale(hh_HH)')))
+        self.assertEqual(localeTags, set(('locale(aa)', 'locale(aa_DJ)', 'locale(hh_HH)')))
 
     def testFullFilenameSet(self):
         sys.oldPath = sys.path
@@ -1464,7 +1464,7 @@ class TagLocaleTest(PackageRecipe):
         for filename in localefilenames:
             lp.doFile(filename)
         localeTags = set(x[0][1] for x in lp._tagLocale._mock.calls)
-        self.assertEquals(len(localeTags), 336)
+        self.assertEqual(len(localeTags), 336)
 
 
 
@@ -1723,7 +1723,7 @@ class BadRequireChkconfig(PackageRecipe):
         self.logFilter.add()
         self.buildRecipe(recipestr2, "BadRequireChkconfig")
         self.logFilter.remove()
-        self.assertEquals(self.logFilter.records,
+        self.assertEqual(self.logFilter.records,
                 ['warning: RequireChkconfig: initscript /etc/init.d/foo '
                     'must contain chkconfig information before any '
                     'uncommented lines'])
@@ -1748,7 +1748,7 @@ class TestRequireChkconfig(PackageRecipe):
         self.logFilter.add()
         (built, d) = self.buildRecipe(recipestr1, "TestRequireChkconfig")
         self.logFilter.remove()
-        self.assertEquals(self.logFilter.records, [])
+        self.assertEqual(self.logFilter.records, [])
 
 
     def testNewlineInChkconfigHeader(self):
@@ -1901,20 +1901,20 @@ class TestComponent(PackageRecipe):
             'foo:cml' : [ '/usr/share/conary/cml/foo.cml' ],
             'foo:recipe' : ['/usr/share/conary/baseclasses/foo.recipe']
         }
-        for trovename in troveMap.keys():
+        for trovename in list(troveMap.keys()):
             for pathId, path, fileId, version, fileObj in repos.iterFilesInTrove(
                 trovename, trv.getVersion(), trv.getFlavor(),
                 withFiles=True):
                 if trovename not in pathMap:
                     pathMap[trovename] = []
                 pathMap[trovename].append(path)
-        for trovename in troveMap.keys():
+        for trovename in list(troveMap.keys()):
             for path in troveMap[trovename]:
                 # make sure we find them all
                 assert path in pathMap[trovename], '%s missing from %s'%(
                     path, trovename)
             # make sure no extras
-            self.assertEquals(len(pathMap[trovename]), len(troveMap[trovename]))
+            self.assertEqual(len(pathMap[trovename]), len(troveMap[trovename]))
         self.cfg.configComponent = False
         self.resetRepository()
 
@@ -2033,7 +2033,7 @@ class TestFilesInMandir(PackageRecipe):
 """
         self.reset()
         (built, d) = self.buildRecipe(recipestr0, "TestFilesInMandir")
-        self.assertEquals(built[0][0], 'manpage:doc')
+        self.assertEqual(built[0][0], 'manpage:doc')
 
     def testMandirRename2(self):
         recipestr0 = """
@@ -2049,7 +2049,7 @@ class TestFilesInMandir(PackageRecipe):
 """
         self.reset()
         (built, d) = self.buildRecipe(recipestr0, "TestFilesInMandir")
-        self.assertEquals(built[0][0], 'test:doc')
+        self.assertEqual(built[0][0], 'test:doc')
 
     def testMandirRename3(self):
         recipestr0 = """
@@ -2063,7 +2063,7 @@ class TestFilesInMandir(PackageRecipe):
 """
         self.reset()
         (built, d) = self.buildRecipe(recipestr0, "TestFilesInMandir")
-        self.assertEquals(built[0][0], 'manpage:doc')
+        self.assertEqual(built[0][0], 'manpage:doc')
 
 
 class ComponentRequiresTest(rephelp.RepositoryHelper):
@@ -2145,7 +2145,7 @@ class TestRequires(PackageRecipe):
         for nvf in built:
             nvf = repos.findTrove(None, nvf)
             trv = repos.getTrove(*nvf[0])
-            self.assertEquals(trv.getRequires(), deps.ThawDependencySet(''))
+            self.assertEqual(trv.getRequires(), deps.ThawDependencySet(''))
 
     def testLibLikeComponents(self):
         recipeStr = """class TestRequires(PackageRecipe):
@@ -2166,7 +2166,7 @@ class TestRequires(PackageRecipe):
                 ref = '4#foo::data'
             nvf = repos.findTrove(None, nvf)
             trv = repos.getTrove(*nvf[0])
-            self.assertEquals(trv.getRequires(),
+            self.assertEqual(trv.getRequires(),
                     deps.ThawDependencySet(ref))
 
 
@@ -2595,7 +2595,7 @@ class TestRequires(PackageRecipe):
         self.logFilter.remove()
         assert([x for x in self.logFilter.records
                 if 'The following dependencies' in x])
-        self.assertEquals(reportedBuildReqs, set(('mono:devel', 'glibc:runtime')))
+        self.assertEqual(reportedBuildReqs, set(('mono:devel', 'glibc:runtime')))
         troveName = trv.getName().split(':')[0]+':cil'
         repos = self.openRepository()
         foundPaths = []
@@ -3840,12 +3840,12 @@ class TestRequires(PackageRecipe):
                 for pathId, path, fileId, version, fileObj in repos.iterFilesInTrove(
             trv.getName(), trv.getVersion(), trv.getFlavor(),
             withFiles=True)]
-        self.assertEquals(len(data), 1)
+        self.assertEqual(len(data), 1)
         data = data[0]
-        self.assertEquals(data[0], '/usr/bin/foo')
+        self.assertEqual(data[0], '/usr/bin/foo')
         self.assertIn('perl: CGI::Util', data[1])
         self.assertNotIn('perl: DFSJFSD::FDSJFK', data[1])
-        self.assertEquals(data[2], '')
+        self.assertEqual(data[2], '')
 
     def testRequiresPerlWithPerl(self):
         """
@@ -3900,7 +3900,7 @@ class TestRequires(PackageRecipe):
                 '#!/bin/sh',
                 'kill -9 $$',
                 '',
-                )), perms=0755)),
+                )), perms=0o755)),
         ])
         self.updatePkg('perl:runtime')
         recipestr = r"""
@@ -3937,7 +3937,7 @@ class TestProvides(PackageRecipe):
                 prov = str(fileObj.provides())
                 assert('perl: bar' in prov)
                 found += 1
-        self.assertEquals(found, 2)
+        self.assertEqual(found, 2)
 
     def testProvidesPerlWithIncompatibleLibraryPerl(self):
         """
@@ -3985,7 +3985,7 @@ class TestProvides(PackageRecipe):
                 prov = str(fileObj.provides())
                 assert('perl: bar' in prov)
                 found += 1
-        self.assertEquals(found, 2)
+        self.assertEqual(found, 2)
 
     def testDroppedPerlRequires(self):
         """
@@ -4285,7 +4285,7 @@ class TestRequires(PackageRecipe):
         self.logFilter.compare([
             'warning: Requires: library file libdoesnotexist not found',
         ])
-        self.assertEquals(reportedBuildReqs, set(('gcc-java:devel', 'glibc:runtime')))
+        self.assertEqual(reportedBuildReqs, set(('gcc-java:devel', 'glibc:runtime')))
         repos = self.openRepository()
         req = None
         for pathId, path, fileId, version, fileObj in repos.iterFilesInTrove(
@@ -4412,7 +4412,7 @@ class TestRequires(PackageRecipe):
                 returnTrove='req:devellib')
 
         #prove that both include and lib requirements were found
-        self.assertEquals(trv.getRequires(),
+        self.assertEqual(trv.getRequires(),
                 deps.ThawDependencySet('4#test1::lib|4#test2::lib'))
 
     def testRequiresHttpdConfig(self):
@@ -4521,7 +4521,7 @@ class UnusedPkgConfig(PackageRecipe):
         self.logFilter.add()
         self.build(recipeStr, 'UnusedPkgConfig')
         self.logFilter.remove()
-        self.assertEquals(self.logFilter.records,
+        self.assertEqual(self.logFilter.records,
                 ['warning: Requires: Exception ^/bar$ for '
                         'PkgConfigRequires was not used',
                  'warning: Requires: Exception ^/baz$ for '
@@ -5123,7 +5123,7 @@ class TestProvides(PackageRecipe):
             'file: /usr/share/gnome-screensaver/lock-dialog-system.glade',
             'file: /usr/share/magic.mime',
             'file: /usr/share/openldap/migration/migrate_common.ph']
-        self.assertEquals(prov, expectedList)
+        self.assertEqual(prov, expectedList)
 
 
 class OwnershipTest(rephelp.RepositoryHelper):
@@ -5211,7 +5211,7 @@ class TestFlavoredLibdirs(PackageRecipe):
             # XXX this might not be the correct behavior...
             flavor = deps.Flavor()
         else:
-            raise NotImplementedError, 'edit test for this arch'
+            raise NotImplementedError('edit test for this arch')
         assert(trv.getFlavor() == flavor)
 
     def testFlavoredLibdirsTest2(self):
@@ -5387,8 +5387,8 @@ configure:1236: found /bin/blah''')
 """
         self.resetRoot()
         self.addComponent("testprov:runtime", "1", fileContents = [
-            ('/bin/foo',     rephelp.RegularFile(contents="", perms=0755)),
-            ('/usr/bin/g77', rephelp.RegularFile(contents="", perms=0755)),
+            ('/bin/foo',     rephelp.RegularFile(contents="", perms=0o755)),
+            ('/usr/bin/g77', rephelp.RegularFile(contents="", perms=0o755)),
         ])
         self.updatePkg('testprov:runtime')
         self.logFilter.add()
@@ -5494,8 +5494,8 @@ configure:3478: result:
 """
         self.resetRoot()
         self.addComponent("testprov:runtime", "1", fileContents = [
-            ('/bin/foo',     rephelp.RegularFile(contents="", perms=0755)),
-            ('/usr/bin/g77', rephelp.RegularFile(contents="", perms=0755)),
+            ('/bin/foo',     rephelp.RegularFile(contents="", perms=0o755)),
+            ('/usr/bin/g77', rephelp.RegularFile(contents="", perms=0o755)),
         ])
         if use.Arch.x86_64:
             lib = 'lib64'
@@ -5520,13 +5520,13 @@ configure:3478: result:
             ('/usr/include/broken.h', rephelp.RegularFile(contents="")),
         ])
         self.addComponent("sought:runtime", "1", fileContents = [
-            ('/bin/sought', rephelp.RegularFile(contents="", perms=0755)),
+            ('/bin/sought', rephelp.RegularFile(contents="", perms=0o755)),
         ])
         self.addComponent("grep:runtime", "1", fileContents = [
-            ('/bin/grep', rephelp.RegularFile(contents="", perms=0755)),
+            ('/bin/grep', rephelp.RegularFile(contents="", perms=0o755)),
         ])
         self.addComponent("ld:runtime", "1", fileContents = [
-            ('/usr/bin/ld', rephelp.RegularFile(contents="", perms=0755)),
+            ('/usr/bin/ld', rephelp.RegularFile(contents="", perms=0o755)),
         ])
         self.updatePkg([
             'testprov:runtime', 'testprov:devel', 'testprov:devellib',
@@ -5541,7 +5541,7 @@ configure:3478: result:
                     mockedSaveArgSet(args[0], realUA, reportedRealReqs, *args[1:]))
         self.buildRecipe(recipestr, "TestReq")
 
-        self.assertEquals(reportedRealReqs,
+        self.assertEqual(reportedRealReqs,
                           set(['testprov:runtime', 'testprov:devel',
                                'types:devel', 'assert:devel',
                                'sought:runtime', 'grep:runtime', 'ld:runtime',
@@ -5566,7 +5566,7 @@ class TestRPATH(PackageRecipe):
 """
         try:
             self.buildRecipe(recipeRPATH, "TestRPATH")
-        except Exception, err:
+        except Exception as err:
             # foo4 is okay
             assert('/usr/bin/foo4' not in str(err))
 
@@ -6154,7 +6154,7 @@ int main(void) {return printf("Hello, world."); }
         r.Requires('foo:runtime(foo)', '/asdf/foo')
         r.Requires('bar:runtime(target-%(target)s)', '/asdf/foo')
 """
-        thisArch = [x[0] for x in use.Arch.items() if x[1]]
+        thisArch = [x[0] for x in list(use.Arch.items()) if x[1]]
         self.assertEqual(len(thisArch), 1)
         thisArch = thisArch[0]
         archMap = dict(x86=('x86', 'x86_64', '32'), x86_64=('x86 x86_64', 'x86', '64'))
@@ -6224,7 +6224,7 @@ class ConfigDrop(PackageRecipe):
         self.logFilter.add()
         self.buildRecipe(recipeStr, "ConfigDrop")
         self.logFilter.remove()
-        self.assertEquals(self.logFilter.records[0],
+        self.assertEqual(self.logFilter.records[0],
             'warning: Config: Exception ^/etc/foo$ for Config was not used')
 
 class StandaloneElfABI(rephelp.RepositoryHelper):
@@ -6327,7 +6327,7 @@ class RecordMoveTest(rephelp.RepositoryHelper):
         dest = os.path.join(self.destdir, 'b')
         r = self.getRecipe()
         r.recordMove(src, dest)
-        self.assertEquals(r._pathTranslations, [('/a', '/b')])
+        self.assertEqual(r._pathTranslations, [('/a', '/b')])
 
     def testRecordFile1(self):
         src = os.path.join(self.destdir, 'a')
@@ -6335,7 +6335,7 @@ class RecordMoveTest(rephelp.RepositoryHelper):
         self.touch(src)
         r = self.getRecipe()
         r.recordMove(src, dest)
-        self.assertEquals(r._pathTranslations, [('/a', '/b')])
+        self.assertEqual(r._pathTranslations, [('/a', '/b')])
 
     def testRecordFile2(self):
         src = os.path.join(self.destdir, 'a')
@@ -6343,7 +6343,7 @@ class RecordMoveTest(rephelp.RepositoryHelper):
         r = self.getRecipe()
         self.touch(dest)
         r.recordMove(src, dest)
-        self.assertEquals(r._pathTranslations, [('/a', '/b')])
+        self.assertEqual(r._pathTranslations, [('/a', '/b')])
 
     def testRecordExtraSep(self):
         src = os.path.sep + os.path.join(self.destdir, 'a')
@@ -6351,7 +6351,7 @@ class RecordMoveTest(rephelp.RepositoryHelper):
         self.touch(src)
         r = self.getRecipe()
         r.recordMove(src, dest)
-        self.assertEquals(r._pathTranslations, [('/a', '/b')])
+        self.assertEqual(r._pathTranslations, [('/a', '/b')])
 
     def testRecordDirSrc(self):
         # test that a directory that hasn't been moved yet gets recorded
@@ -6362,7 +6362,7 @@ class RecordMoveTest(rephelp.RepositoryHelper):
         self.touch(fn)
         r = self.getRecipe()
         r.recordMove(src, dest)
-        self.assertEquals(r._pathTranslations,
+        self.assertEqual(r._pathTranslations,
                 [('/srcdir', '/destdir'),
                     ('/srcdir/subdir', '/destdir/subdir'),
                     ('/srcdir/subdir/a', '/destdir/subdir/a')])
@@ -6376,7 +6376,7 @@ class RecordMoveTest(rephelp.RepositoryHelper):
         self.touch(fn)
         r = self.getRecipe()
         r.recordMove(src, dest)
-        self.assertEquals(r._pathTranslations,
+        self.assertEqual(r._pathTranslations,
                 [('/srcdir', '/destdir'),
                     ('/srcdir/subdir', '/destdir/subdir'),
                     ('/srcdir/subdir/a', '/destdir/subdir/a')])
@@ -6394,7 +6394,7 @@ class SuperClass(PackageRecipe):
         r.Create('%(datadir)s/conary/baseclasses/super.recipe')
 """
         (built, d) = self.buildRecipe(recipestr, "SuperClass")
-        self.assertEquals(built, [('super:recipe', '/localhost@rpl:linux/0-1-1', deps.parseFlavor(''))])
+        self.assertEqual(built, [('super:recipe', '/localhost@rpl:linux/0-1-1', deps.parseFlavor(''))])
 
 class TroveScriptsTest(rephelp.RepositoryHelper):
     def testTroveScripts(self):
@@ -6421,7 +6421,7 @@ class TroveScriptsRecipe(PackageRecipe):
             returnTrove=['test', 'testpkgspec', 'test:data',
                            'testpkgspec:data'])
         scriptTypes = [ y[2] for (x, y) in
-                        trove.TroveScripts.streamDict.items() ]
+                        list(trove.TroveScripts.streamDict.items()) ]
         for trv in retTroves[:3]:
             for scriptType in scriptTypes:
                 scriptCont = getattr(trv.troveInfo.scripts, scriptType).script()
@@ -6541,17 +6541,17 @@ class SubEmpty(SuperRecipe):
                     mockedSaveArgSet(args[0], None, reportedSuperExcess, *args[1:]))
         repos = self.openRepository()
         self.buildRecipe(subClassRecipeStr, "Sub", repos=repos, logBuild=True)
-        self.assertEquals(reportedRealReqs,
+        self.assertEqual(reportedRealReqs,
                           set(['super-necessary:explicit',
                                'necessary:explicit',
                                'implicit:runtime']))
-        self.assertEquals(reportedExcess,
+        self.assertEqual(reportedExcess,
                           set(['unnecessary:explicit',
                                'duplicate:devel',
                                'unused:devel']))
 
         # Note that 'implicit:runtime' is not in the next set
-        self.assertEquals(reportedSuperExcess,
+        self.assertEqual(reportedSuperExcess,
                           set(['super-unnecessary:explicit',
                                'duplicate:devel',
                                'explicit:runtime',]))
@@ -6560,7 +6560,7 @@ class SubEmpty(SuperRecipe):
         self.buildRecipe(subClassRecipeStrEmpty, "SubEmpty", repos=repos, logBuild=True)
         # make sure superclass buildRequires are not reported as
         # subclass buildRequires
-        self.assertEquals(reportedExcess, set([]))
+        self.assertEqual(reportedExcess, set([]))
 
 
     def _testPythonSetupRequires(self, importLine):
@@ -6616,7 +6616,7 @@ class SetupBuildReq(PackageRecipe):
         line = lines[0]
         self.assertFalse('python-setuptools:python' not in self.savedArgs)
 
-        self.assertEquals(line, \
+        self.assertEqual(line, \
                 "info: Possible excessive buildRequires: ['bogus:devel']")
 
     def testEzSetupRequires(self):
@@ -6678,7 +6678,7 @@ class TestRecipe(PackageRecipe):
                 metadata = comp.troveInfo.metadata
                 # Default language should be present
                 self.assertEqual(len(metadata.getItems()), 1)
-                self.assertEqual(metadata.getItems().values()[0], [])
+                self.assertEqual(list(metadata.getItems().values())[0], [])
             metadata = mainTrv.troveInfo.metadata
             self.assertEqual(len(metadata.getItems()), 1)
             mi = metadata.get(language)
@@ -6713,7 +6713,7 @@ class TestRecipe(PackageRecipe):
                     self.assertEqual(mi['longDesc'], longDesc2)
                     self.assertEqual(mi['licenses'], licenses2)
                 else:
-                    self.assertEqual(metadata.getItems().values()[0], [])
+                    self.assertEqual(list(metadata.getItems().values())[0], [])
             metadata = mainTrv.troveInfo.metadata
             self.assertEqual(len(metadata.getItems()), 1)
             mi = metadata.get(language)
@@ -6822,7 +6822,7 @@ class TestAutoUser(PackageRecipe):
 """
         built, d = self.buildRecipe(recipestr1, "TestAutoUser")
         self.openRepository()
-        self.assertEquals(built[0][0], 'info-apache:user')
+        self.assertEqual(built[0][0], 'info-apache:user')
         for p in built:
             self.updatePkg(self.workDir, p[0], p[1])
         self.assertFalse(not os.path.exists(os.path.join(self.workDir,
@@ -6840,7 +6840,7 @@ class TestAutoGroup(PackageRecipe):
 """
         built, d = self.buildRecipe(recipestr1, "TestAutoGroup")
         self.openRepository()
-        self.assertEquals(built[0][0], 'info-wheel:group')
+        self.assertEqual(built[0][0], 'info-wheel:group')
         for p in built:
             self.updatePkg(self.workDir, p[0], p[1])
         self.assertFalse(not os.path.exists(os.path.join(self.workDir,
@@ -6860,7 +6860,7 @@ class TestOverloadedGroup(PackageRecipe):
 """
         err = self.assertRaises(policy.PolicyError, self.buildRecipe,
                 recipestr1, "TestOverloadedGroup")
-        self.assertEquals(str(err),
+        self.assertEqual(str(err),
                 "Package Policy errors found:\nProcessGroupInfoPackage: "
                 "The following files are not allowed in 'info-wheel:group': "
                 "'/not/legal/info1', '/not/legal/info2'")
@@ -6883,7 +6883,7 @@ class TestOverloadedGroup(PackageRecipe):
 """
         err = self.assertRaises(policy.PolicyError, self.buildRecipe,
                 recipestr1, "TestOverloadedGroup")
-        self.assertEquals(str(err),
+        self.assertEqual(str(err),
                 "Package Policy errors found:\nProcessUserInfoPackage: "
                 "The following files are not allowed in 'info-apache:user': "
                 "'/not/legal/info'")
@@ -6905,7 +6905,7 @@ class TestBadUserName(PackageRecipe):
                 package = "not-info:config")
 """
         built, d = self.buildRecipe(recipestr1, "TestBadUserName")
-        self.assertEquals(built[0][0], 'info-apache:user')
+        self.assertEqual(built[0][0], 'info-apache:user')
 
     def testGroupInfoPackageBadName(self):
         recipestr1 = r"""
@@ -6919,7 +6919,7 @@ class TestBadGroupName(PackageRecipe):
                 package = "not-info:config")
 """
         built, d = self.buildRecipe(recipestr1, "TestBadGroupName")
-        self.assertEquals(built[0][0], 'info-wheel:group')
+        self.assertEqual(built[0][0], 'info-wheel:group')
 
     def testPackageSupplementalGroup(self):
         recipestr1 = r"""
@@ -6933,7 +6933,7 @@ class TestSupplementalGroup(PackageRecipe):
         r.SupplementalGroup('user', 'group', 5)
 """
         built, d = self.buildRecipe(recipestr1, "TestSupplementalGroup")
-        self.assertEquals(sorted([x[0] for x in built]),
+        self.assertEqual(sorted([x[0] for x in built]),
                 ['info-group:group', 'test:runtime'])
         client = self.getConaryClient()
         nvf = [x for x in built if x[0] == 'info-group:group'][0]
@@ -6943,14 +6943,14 @@ class TestSupplementalGroup(PackageRecipe):
         res = fileDict[fn].read()
         ref = '\n'.join(('PREFERRED_GID=5', 'USER=user', ''))
 
-        self.assertEquals(res, ref)
+        self.assertEqual(res, ref)
 
         repos = self.openRepository()
         trv = repos.getTrove(*nvf)
-        self.assertEquals(trv.provides(),
+        self.assertEqual(trv.provides(),
                 deps.ThawDependencySet('4#info-group::group|8#group'))
 
-        self.assertEquals(trv.requires(), deps.ThawDependencySet('7#user'))
+        self.assertEqual(trv.requires(), deps.ThawDependencySet('7#user'))
 
     def testPackageGroup(self):
         recipestr1 = r"""
@@ -6964,7 +6964,7 @@ class TestGroup(PackageRecipe):
         r.Group('group', 5)
 """
         built, d = self.buildRecipe(recipestr1, "TestGroup")
-        self.assertEquals(sorted([x[0] for x in built]),
+        self.assertEqual(sorted([x[0] for x in built]),
                 ['info-group:group', 'test:runtime'])
         client = self.getConaryClient()
         nvf = [x for x in built if x[0] == 'info-group:group'][0]
@@ -6974,14 +6974,14 @@ class TestGroup(PackageRecipe):
         res = fileDict[fn].read()
         ref = 'PREFERRED_GID=5\n'
 
-        self.assertEquals(res, ref)
+        self.assertEqual(res, ref)
 
         repos = self.openRepository()
         trv = repos.getTrove(*nvf)
-        self.assertEquals(trv.provides(),
+        self.assertEqual(trv.provides(),
                 deps.ThawDependencySet('4#info-group::group|8#group'))
 
-        self.assertEquals(trv.requires(), deps.ThawDependencySet(''))
+        self.assertEqual(trv.requires(), deps.ThawDependencySet(''))
 
     def testPackageUser(self):
         recipestr1 = r"""
@@ -6996,7 +6996,7 @@ class TestUser(PackageRecipe):
                 groupid = 5, homedir = '/home/foo', comment = 'random comment')
 """
         built, d = self.buildRecipe(recipestr1, "TestUser")
-        self.assertEquals(sorted([x[0] for x in built]),
+        self.assertEqual(sorted([x[0] for x in built]),
                 ['info-group:group', 'info-user:user', 'test:runtime'])
         client = self.getConaryClient()
         nvf = [x for x in built if x[0] == 'info-user:user'][0]
@@ -7008,23 +7008,23 @@ class TestUser(PackageRecipe):
                 'HOMEDIR=/home/foo', 'COMMENT=random comment',
                 'SHELL=/sbin/nologin', ''))
 
-        self.assertEquals(res, ref)
+        self.assertEqual(res, ref)
 
         repos = self.openRepository()
         trv = repos.getTrove(*nvf)
-        self.assertEquals(trv.provides(),
+        self.assertEqual(trv.provides(),
                 deps.ThawDependencySet('4#info-user::user|7#user'))
-        self.failUnlessEqual(trv.requires,
+        self.assertEqual(trv.requires,
                 deps.ThawDependencySet('8#group'))
 
         specs = [ x for x in built if x[0] == 'info-group:group' ]
-        self.failUnless(specs)
+        self.assertTrue(specs)
         nvf = repos.findTrove(None, specs[0])[0]
         trv = repos.getTrove(*nvf)
-        self.failUnlessEqual(trv.provides,
+        self.assertEqual(trv.provides,
             deps.ThawDependencySet('4#info-group::group|8#group'))
 
-        self.assertEquals(trv.requires(), deps.ThawDependencySet(''))
+        self.assertEqual(trv.requires(), deps.ThawDependencySet(''))
 
     def testBadUserRequires(self):
         recipestr1 = r"""
@@ -7040,7 +7040,7 @@ class TestUserRequires(PackageRecipe):
 """
         err = self.assertRaises(policy.PolicyError, self.buildRecipe,
                 recipestr1, "TestUserRequires")
-        self.assertEquals(str(err),
+        self.assertEqual(str(err),
                 "Package Policy errors found:\n"
                 "ProcessGroupInfoPackage: Illegal requirement on "
                 "'info-group:group': 'trove: foo:runtime'\n"
@@ -7060,7 +7060,7 @@ class TestGroupRequires(PackageRecipe):
 """
         err = self.assertRaises(policy.PolicyError, self.buildRecipe,
                 recipestr1, "TestGroupRequires")
-        self.assertEquals(str(err),
+        self.assertEqual(str(err),
                 "Package Policy errors found:\n"
                 "ProcessGroupInfoPackage: Illegal requirement on "
                 "'info-bar:group': 'trove: foo:runtime'")
@@ -7079,7 +7079,7 @@ class TestUserProvides(PackageRecipe):
 """
         err = self.assertRaises(policy.PolicyError, self.buildRecipe,
                 recipestr1, "TestUserProvides")
-        self.assertEquals(str(err),
+        self.assertEqual(str(err),
                 "Package Policy errors found:\n"
                 "ProcessGroupInfoPackage: Illegal provision for "
                 "'info-crunchy:group': 'abi: (crunchy)'\n"
@@ -7099,7 +7099,7 @@ class TestGroupProvides(PackageRecipe):
 """
         err = self.assertRaises(policy.PolicyError, self.buildRecipe,
                 recipestr1, "TestGroupProvides")
-        self.assertEquals(str(err),
+        self.assertEqual(str(err),
                 "Package Policy errors found:\n"
                 "ProcessGroupInfoPackage: Illegal provision for "
                 "'info-splat:group': 'abi: (splat)'")
@@ -7117,7 +7117,7 @@ class TestGroupProvides(PackageRecipe):
         err = self.assertRaises(cook.CookError, self.buildRecipe,
                 recipestr1, "TestGroupProvides")
         msg = str(err)
-        self.assertEquals(msg[msg.index('UserGroupError'):],
+        self.assertEqual(msg[msg.index('UserGroupError'):],
                 "UserGroupError: ambiguous defintion of 'name' "
                 "positional arg: crunch and keyword arg: splat")
 
@@ -7134,7 +7134,7 @@ class TestGroupProvides(PackageRecipe):
         err = self.assertRaises(cook.CookError, self.buildRecipe,
                 recipestr1, "TestGroupProvides")
         msg = str(err)
-        self.assertEquals(msg[msg.index('UserGroupError'):],
+        self.assertEqual(msg[msg.index('UserGroupError'):],
                 "UserGroupError: ambiguous defintion of 'name' "
                 "positional arg: crunch and keyword arg: splat")
 
@@ -7152,7 +7152,7 @@ class TestGroupProvides(PackageRecipe):
         err = self.assertRaises(cook.CookError, self.buildRecipe,
                 recipestr1, "TestGroupProvides")
         msg = str(err)
-        self.assertEquals(msg[msg.index('UserGroupError'):],
+        self.assertEqual(msg[msg.index('UserGroupError'):],
                 "UserGroupError: ambiguous defintion of 'user' positional arg: "
                 "crunch and keyword arg: conflict")
 
@@ -7170,7 +7170,7 @@ class TestUser(PackageRecipe):
                 supplemental = ['grp1', 'grp2', 'grp3'])
 """
         built, d = self.buildRecipe(recipestr1, "TestUser")
-        self.assertEquals([x[0] for x in built], ['info-stuff:user'])
+        self.assertEqual([x[0] for x in built], ['info-stuff:user'])
         client = self.getConaryClient()
         nvf = [x for x in built if x[0] == 'info-stuff:user'][0]
         nvf = nvf[0], versions.VersionFromString(nvf[1]), nvf[2]
@@ -7181,14 +7181,14 @@ class TestUser(PackageRecipe):
                 'HOMEDIR=/opt/foo', 'SHELL=/sbin/nologin',
                 'SUPPLEMENTAL=grp1,grp2,grp3', ''))
 
-        self.assertEquals(res, ref)
+        self.assertEqual(res, ref)
 
         repos = self.openRepository()
         trv = repos.getTrove(*nvf)
-        self.assertEquals(trv.provides(),
+        self.assertEqual(trv.provides(),
                 deps.ThawDependencySet('4#info-stuff::user|7#stuff'))
 
-        self.assertEquals(trv.requires(),
+        self.assertEqual(trv.requires(),
                 deps.ThawDependencySet('8#group|8#grp1|8#grp2|8#grp3'))
 
     def testUserInfoFlavor(self):
@@ -7211,9 +7211,9 @@ class TestUser(PackageRecipe):
         repos = self.openRepository()
         trv = repos.getTrove(*nvf)
         flv = deps.parseFlavor('is: x86')
-        self.assertEquals(trv.flavor(), flv)
+        self.assertEqual(trv.flavor(), flv)
         for nvf in built:
-            self.assertEquals(nvf[2], flv)
+            self.assertEqual(nvf[2], flv)
 
     def testGroupInfoFlavor(self):
         recipestr1 = r"""
@@ -7233,9 +7233,9 @@ class TestGroup(PackageRecipe):
         repos = self.openRepository()
         trv = repos.getTrove(*nvf)
         flv = deps.parseFlavor('is: x86')
-        self.assertEquals(trv.flavor(), flv)
+        self.assertEqual(trv.flavor(), flv)
         for nvf in built:
-            self.assertEquals(nvf[2], flv)
+            self.assertEqual(nvf[2], flv)
 
     def testUserInfoTags(self):
         recipestr1 = r"""
@@ -7252,7 +7252,7 @@ class TestUser(PackageRecipe):
 """
         err = self.assertRaises(policy.PolicyError, self.buildRecipe,
                 recipestr1, "TestUser")
-        self.assertEquals(str(err),
+        self.assertEqual(str(err),
                 "Package Policy errors found:\n"
                 "ProcessUserInfoPackage: TagSpec 'bad-tag' "
                 "is not allowed for info-stuff:user")
@@ -7270,7 +7270,7 @@ class TestGroup(PackageRecipe):
 """
         err = self.assertRaises(policy.PolicyError, self.buildRecipe,
                 recipestr1, "TestGroup")
-        self.assertEquals(str(err),
+        self.assertEqual(str(err),
                 "Package Policy errors found:\n"
                 "ProcessGroupInfoPackage: TagSpec 'bad-tag' "
                 "is not allowed for info-one:group")
@@ -7293,7 +7293,7 @@ class TestAutoUser(PackageRecipe):
 """
         err = self.assertRaises(policy.PolicyError, self.buildRecipe,
                 recipestr1, "TestAutoUser")
-        self.assertEquals(str(err),
+        self.assertEqual(str(err),
                 "Package Policy errors found:\n"
                 "ProcessUserInfoPackage: UNKNOWN is not is not a valid "
                 "value for info-apache:user")
@@ -7314,7 +7314,7 @@ class TestAutoGroup(PackageRecipe):
 """
         err = self.assertRaises(policy.PolicyError, self.buildRecipe,
                 recipestr1, "TestAutoGroup")
-        self.assertEquals(str(err),
+        self.assertEqual(str(err),
                 "Package Policy errors found:\n"
                 "ProcessGroupInfoPackage: PREFERRED_UID is not is not a "
                 "valid value for info-broken:group\n"
@@ -7335,7 +7335,7 @@ class TestAutoUser(PackageRecipe):
 """
         err = self.assertRaises(policy.PolicyError, self.buildRecipe,
                 recipestr1, "TestAutoUser")
-        self.assertEquals(str(err),
+        self.assertEqual(str(err),
                 "Package Policy errors found:\n"
                 "ProcessUserInfoPackage: Unable to parse info file "
                 "for 'info-apache:user'")
@@ -7352,7 +7352,7 @@ class TestAutoGroup(PackageRecipe):
 """
         err = self.assertRaises(policy.PolicyError, self.buildRecipe,
                 recipestr1, "TestAutoGroup")
-        self.assertEquals(str(err),
+        self.assertEqual(str(err),
                 "Package Policy errors found:\n"
                 "ProcessGroupInfoPackage: Unable to parse info file "
                 "for 'info-broken:group'")
@@ -7369,7 +7369,7 @@ class TestMultiUser(PackageRecipe):
         r.User('bar', 2)
 """
         built, d = self.buildRecipe(recipestr1, "TestMultiUser")
-        self.assertEquals(sorted([x[0] for x in built]),
+        self.assertEqual(sorted([x[0] for x in built]),
                 ['info-bar:group', 'info-bar:user', 'info-foo:group',
                  'info-foo:user'])
 
@@ -7380,7 +7380,7 @@ class TestMultiUser(PackageRecipe):
                 def __init__(x):
                     pass
                 def error(x, msg):
-                    self.assertEquals(msg,
+                    self.assertEqual(msg,
                             "DummyPolicy does not honor exceptions")
             dummyPol = DummyPolicy()
             dummyPol.exceptions = 'test'
@@ -7407,7 +7407,7 @@ class ConfigUser(PackageRecipe):
         pathId, path, fileId, ver = [x for x in trv.iterFileList()][0]
         repos.getFileVersion(pathId, fileId, ver)
         fileObj = repos.getFileVersion(pathId, fileId, ver)
-        self.assertEquals(fileObj.flags(), files._FILE_FLAG_TRANSIENT)
+        self.assertEqual(fileObj.flags(), files._FILE_FLAG_TRANSIENT)
 
     def testAllInfoTypes(self):
         recipeStr = """
@@ -7424,7 +7424,7 @@ class InfoUser(PackageRecipe):
         r.Group('rocky', 502)
 """
         built, d = self.buildRecipe(recipeStr, 'InfoUser')
-        self.assertEquals(sorted([x[0] for x in built]),
+        self.assertEqual(sorted([x[0] for x in built]),
                 ['info-group:group', 'info-random:group', 'info-rocky:group',
                     'info-rocky:user', 'info-squirrel:group', 'info-user:user'])
 
@@ -7440,7 +7440,7 @@ class InfoUser(PackageRecipe):
 """
         err = self.assertRaises(policy.PolicyError, self.buildRecipe,
                 recipeStr, 'InfoUser')
-        self.assertEquals(str(err), "Package Policy errors found:\n"
+        self.assertEqual(str(err), "Package Policy errors found:\n"
                 "ProcessUserInfoPackage: Only regular files may appear in "
                 "'info-foo:user'")
 
@@ -7513,7 +7513,7 @@ class PHPRequiresRecipe(PackageRecipe):
         repos = client.getRepos()
         nvf = repos.findTrove(None, nvf)[0]
         trv = repos.getTrove(*nvf)
-        self.assertEquals(trv.getRequires(),
+        self.assertEqual(trv.getRequires(),
                 deps.ThawDependencySet('4#php::runtime'))
         recipeStr += "        r.Requires(exceptions = '.*')\n"
         (built, d) = self.buildRecipe(recipeStr, 'PHPRequiresRecipe')
@@ -7522,7 +7522,7 @@ class PHPRequiresRecipe(PackageRecipe):
         repos = client.getRepos()
         nvf = repos.findTrove(None, nvf)[0]
         trv = repos.getTrove(*nvf)
-        self.assertEquals(trv.getRequires(),
+        self.assertEqual(trv.getRequires(),
                 deps.ThawDependencySet(''))
 
     def testBuildReqPHPRequires(self):
@@ -7555,7 +7555,7 @@ class PHPRequiresRecipe(PackageRecipe):
         repos = client.getRepos()
         nvf = repos.findTrove(None, nvf)[0]
         trv = repos.getTrove(*nvf)
-        self.assertEquals(trv.getRequires(),
+        self.assertEqual(trv.getRequires(),
                 deps.ThawDependencySet('4#php5::devel'))
         recipeStr += "        r.Requires(exceptions = '.*')\n"
         (built, d) = self.buildRecipe(recipeStr, 'PHPRequiresRecipe')
@@ -7564,7 +7564,7 @@ class PHPRequiresRecipe(PackageRecipe):
         repos = client.getRepos()
         nvf = repos.findTrove(None, nvf)[0]
         trv = repos.getTrove(*nvf)
-        self.assertEquals(trv.getRequires(),
+        self.assertEqual(trv.getRequires(),
                 deps.ThawDependencySet(''))
 
     def testBuildReqPackageMissing(self):
@@ -7606,7 +7606,7 @@ class PHPRequiresRecipe(PackageRecipe):
         repos = client.getRepos()
         nvf = repos.findTrove(None, nvf)[0]
         trv = repos.getTrove(*nvf)
-        self.assertEquals(trv.getRequires(),
+        self.assertEqual(trv.getRequires(),
                 deps.ThawDependencySet('4#php5::devel'))
 
     def testOnlyPHP5Binary(self):
@@ -7632,7 +7632,7 @@ class PHPRequiresRecipe(PackageRecipe):
         repos = client.getRepos()
         nvf = repos.findTrove(None, nvf)[0]
         trv = repos.getTrove(*nvf)
-        self.assertEquals(trv.getRequires(),
+        self.assertEqual(trv.getRequires(),
                 deps.ThawDependencySet('4#php5::runtime'))
 
     def testRepoPHPRequires(self):
@@ -7659,7 +7659,7 @@ class PHPRequiresRecipe(PackageRecipe):
         repos = client.getRepos()
         nvf = repos.findTrove(None, nvf)[0]
         trv = repos.getTrove(*nvf)
-        self.assertEquals(trv.getRequires(),
+        self.assertEqual(trv.getRequires(),
                 deps.ThawDependencySet('4#php::runtime'))
         recipeStr += "        r.Requires(exceptions = '.*')\n"
         (built, d) = self.buildRecipe(recipeStr, 'PHPRequiresRecipe')
@@ -7668,7 +7668,7 @@ class PHPRequiresRecipe(PackageRecipe):
         repos = client.getRepos()
         nvf = repos.findTrove(None, nvf)[0]
         trv = repos.getTrove(*nvf)
-        self.assertEquals(trv.getRequires(),
+        self.assertEqual(trv.getRequires(),
                 deps.ThawDependencySet(''))
 
 
@@ -7745,7 +7745,7 @@ class PHPRequiresRecipe(PackageRecipe):
         repos = client.getRepos()
         nvf = repos.findTrove(None, nvf)[0]
         trv = repos.getTrove(*nvf)
-        self.assertEquals(trv.getRequires(),
+        self.assertEqual(trv.getRequires(),
                 deps.ThawDependencySet(''))
 
     def testPhpCaching(self):
@@ -7777,9 +7777,9 @@ class PHPRequiresRecipe(PackageRecipe):
         repos = client.getRepos()
         nvf = repos.findTrove(None, nvf)[0]
         trv = repos.getTrove(*nvf)
-        self.assertEquals(trv.getRequires(),
+        self.assertEqual(trv.getRequires(),
                 deps.ThawDependencySet('4#php::runtime'))
-        self.assertEquals(self.phpPathCount, 1)
+        self.assertEqual(self.phpPathCount, 1)
 
 
 class NormalizePythonInterpreterVersionTest(rephelp.RepositoryHelper):
@@ -7881,7 +7881,7 @@ class testTrove(PackageRecipe):
         nvf3 = nvf3[0], versions.VersionFromString(nvf3[1]), nvf3[2]
         trv3 = repos.getTrove(*nvf3)
 
-        self.assertEquals(str(trv3.requires),'\n'.join((
+        self.assertEqual(str(trv3.requires),'\n'.join((
                     'file: /usr/bin/monodis',
                     'file: /usr/bin/smbunmount',
                     'file: /usr/share/dontResolve1',
@@ -7930,12 +7930,12 @@ class TestFilter(PackageRecipe):
                 trv.getName(), trv.getVersion(), trv.getFlavor(),
                 withFiles=True):
             if path == '/foo':
-                self.assertEquals(fileObj.flags.isConfig(), True)
+                self.assertEqual(fileObj.flags.isConfig(), True)
                 checked += 1
             elif path == '/etc/bar':
-                self.assertEquals(fileObj.flags.isConfig(), False)
+                self.assertEqual(fileObj.flags.isConfig(), False)
                 checked += 1
-        self.assertEquals(checked, 2)
+        self.assertEqual(checked, 2)
 
 class Properties(rephelp.RepositoryHelper):
     def testProperties(self):
@@ -8003,14 +8003,14 @@ class TestProperties(PackageRecipe):
             props.update([ (x.find('name').text, x)
                 for x in et.find('dataFields').findall('field') ])
 
-        self.assertEquals(sorted(props.keys()), ['proxy', 'username'])
-        self.assertEquals(props['proxy'].find('default').text, 'foo.example.com')
-        self.assertEquals(props['username'].find('default'), None)
+        self.assertEqual(sorted(props.keys()), ['proxy', 'username'])
+        self.assertEqual(props['proxy'].find('default').text, 'foo.example.com')
+        self.assertEqual(props['username'].find('default'), None)
 
         # now make sure that it got into the repository
         repos = self.openRepository()
         trv2 = repos.getTrove(trv.getName(), trv.getVersion(), trv.getFlavor())
-        self.assertEquals(
+        self.assertEqual(
             trv2.troveInfo.properties.freeze(),
             trv.troveInfo.properties.freeze())
 
@@ -8042,20 +8042,20 @@ class TestProperties(PackageRecipe):
 
         props = {}
         for prop in trv.troveInfo.properties.iter():
-            self.failUnlessEqual(prop.type(), 'sf')
+            self.assertEqual(prop.type(), 'sf')
 
             et = etree.fromstring(prop.definition())
             props.update([ (x.find('name').text, x)
                 for x in et.find('dataFields').findall('field') ])
 
-        self.assertEquals(sorted(props.keys()), ['george', 'username'])
-        self.assertEquals(props['username'].find('default'), None)
-        self.assertEquals(props['george'].find('default').text, 'monkey')
+        self.assertEqual(sorted(props.keys()), ['george', 'username'])
+        self.assertEqual(props['username'].find('default'), None)
+        self.assertEqual(props['george'].find('default').text, 'monkey')
 
         # now make sure that it got into the repository
         repos = self.openRepository()
         trv2 = repos.getTrove(trv.getName(), trv.getVersion(), trv.getFlavor())
-        self.assertEquals(
+        self.assertEqual(
             trv2.troveInfo.properties.freeze(),
             trv.troveInfo.properties.freeze())
 
@@ -8080,19 +8080,19 @@ class TestProperties(PackageRecipe):
 
         props = {}
         for prop in trv.troveInfo.properties.iter():
-            self.failUnlessEqual(prop.type(), 'sf')
+            self.assertEqual(prop.type(), 'sf')
 
             et = etree.fromstring(prop.definition())
             props.update([ (x.find('name').text, x)
                 for x in et.find('dataFields').findall('field') ])
 
-        self.assertEquals(sorted(props.keys()), ['username'])
-        self.assertEquals(props['username'].find('default'), None)
+        self.assertEqual(sorted(props.keys()), ['username'])
+        self.assertEqual(props['username'].find('default'), None)
 
         # now make sure that it got into the repository
         repos = self.openRepository()
         trv2 = repos.getTrove(trv.getName(), trv.getVersion(), trv.getFlavor())
-        self.assertEquals(
+        self.assertEqual(
             trv2.troveInfo.properties.freeze(),
             trv.troveInfo.properties.freeze())
 

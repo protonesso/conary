@@ -16,7 +16,7 @@
 
 
 import base64
-import urlparse
+import urllib.parse
 import zlib
 
 from conary.lib import networking
@@ -44,7 +44,7 @@ class URL(namedtuple('URL', 'scheme userpass hostport path')):
             else:
                 port = 80
         hostport = networking.HostPort(host, port)
-        path = urlparse.urlunsplit(('', '', path, query, fragment))
+        path = urllib.parse.urlunsplit(('', '', path, query, fragment))
         return cls(scheme, (username, password), hostport, path)
 
     def unsplit(self):
@@ -106,7 +106,7 @@ class HTTPHeaders(object):
         self._headers = {}
         if headers:
             if isinstance(headers, dict):
-                headers = headers.iteritems()
+                headers = iter(headers.items())
             for key, value in headers:
                 self[key] = value
 
@@ -135,7 +135,7 @@ class HTTPHeaders(object):
         return self._headers.get(key)
 
     def iteritems(self):
-        return self._headers.iteritems()
+        return iter(self._headers.items())
 
     def setdefault(self, key, default):
         key = self.canonical(key)
@@ -145,7 +145,7 @@ class HTTPHeaders(object):
 class Request(object):
 
     def __init__(self, url, method='GET', headers=()):
-        if isinstance(url, basestring):
+        if isinstance(url, str):
             url = URL.parse(url)
         self.url = url
         self.method = method
@@ -194,14 +194,14 @@ class Request(object):
             path = self.url.path
         conn.putrequest(self.method, path, skip_host=1, skip_accept_encoding=1)
         self.headers.setdefault('Accept-Encoding', 'identity')
-        for key, value in self.headers.iteritems():
+        for key, value in self.headers.items():
             conn.putheader(key, value)
         if 'Host' not in self.headers:
             hostport = self.url.hostport
             if hostport.port in (80, 443):
                 hostport = hostport._replace(port=None)
             host = str(hostport)
-            if isinstance(host, unicode):
+            if isinstance(host, str):
                 host = host.encode('idna')
             conn.putheader("Host", host)
         if 'Authorization' not in self.headers and self.url.userpass[0]:

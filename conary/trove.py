@@ -42,6 +42,7 @@ from conary.streams import SMALL, LARGE, DYNAMIC
 from conary.streams import OptionalFlavorStream
 from conary.streams import StringVersionStream
 from conary.streams import StringOrderedStreamCollection
+import sys
 
 TROVE_VERSION=10
 # the difference between 10 and 11 is that the REMOVED type appeared,
@@ -342,7 +343,7 @@ class DigitalSignature(streams.StreamSet):
 
         frontSize = length & ~3
 
-        r = 0L
+        r = 0
         ints = struct.unpack("!" + "I" * (frontSize / 4), data[2:2 + frontSize])
         for i in ints:
             r <<= 32;
@@ -388,7 +389,7 @@ class DigitalSignature(streams.StreamSet):
                 mpiList.append(self._mpiToLong(data[index:index + lengthMPI]))
             except IndexError:
                 # handle truncated signature data by setting this MPI to 0
-                mpiList.append(0L)
+                mpiList.append(0)
             index += lengthMPI
         return (self.fingerprint(), self.timestamp(), tuple(mpiList))
 
@@ -689,12 +690,12 @@ class KeyValueItemsStream(streams.OrderedStreamCollection):
     def keys(self):
         if self._data is not None:
             self._thaw()
-        return self._map.keys()
+        return list(self._map.keys())
 
     def items(self):
         if self._data is not None:
             self._thaw()
-        return self._map.items()
+        return list(self._map.items())
 
     def update(self, ddata):
         self._map.update(ddata)
@@ -702,12 +703,12 @@ class KeyValueItemsStream(streams.OrderedStreamCollection):
     def iteritems(self):
         if self._data is not None:
             self._thaw()
-        return self._map.iteritems()
+        return iter(self._map.items())
 
     def freeze(self, skipSet = None):
         self._reset()
 
-        for key, val in sorted(self._map.iteritems()):
+        for key, val in sorted(self._map.items()):
             self.addStream(1, streams.StringStream(key))
             self.addStream(2, streams.StringStream(val))
 
@@ -722,7 +723,7 @@ class KeyValueItemsStream(streams.OrderedStreamCollection):
         self._reset()
 
     def _reset(self):
-        for k, v in self.getItems().iteritems():
+        for k, v in self.getItems().items():
             del v[:]
 
 OBSS = streams.OrderedBinaryStringsStream
@@ -763,7 +764,7 @@ class MetadataItem(streams.StreamSet):
     _zeroIsValidSet = set(('sizeOverride',))
 
     _skipSet = { 'id' : True, 'signatures': True, 'oldSignatures' : True }
-    _keys = [ x[2] for x in streamDict.itervalues() if x[2] not in _skipSet ]
+    _keys = [ x[2] for x in streamDict.values() if x[2] not in _skipSet ]
 
     def _digest(self, version=0):
         # version 0 is stored in old signatures, and doesn't include any
@@ -777,7 +778,7 @@ class MetadataItem(streams.StreamSet):
         if version == 0:
             # version 0 of the digest
             skip = self._skipSet.copy()
-            skip.update((x[1][2], True) for x in self.streamDict.items() if
+            skip.update((x[1][2], True) for x in list(self.streamDict.items()) if
                             x[0] > _METADATA_ITEM_ORIG_ITEMS)
             frz = streams.StreamSet.freeze(self, skipSet = skip,
                                            freezeUnknown = False)
@@ -795,7 +796,7 @@ class MetadataItem(streams.StreamSet):
     def _updateDigests(self):
         self._updateId()
         skip = dict(
-            (x[1][2], True) for x in self.streamDict.items() if
+            (x[1][2], True) for x in list(self.streamDict.items()) if
                         x[0] <= _METADATA_ITEM_ORIG_ITEMS)
         newFrz = self.freeze(skipSet = skip)
 
@@ -874,7 +875,7 @@ class MetadataItem(streams.StreamSet):
         for x in self._keys:
             attr = getattr(self, x)
             if hasattr(attr, 'keys'):
-                if attr.keys():
+                if list(attr.keys()):
                     ret.append(x)
             elif hasattr(attr, '__call__') and (attr() or
                                                 (x in self._zeroIsValidSet and
@@ -930,13 +931,13 @@ class Metadata(streams.OrderedStreamCollection):
         for item in self.getStreams(1):
             language = item.language()
             newItem = items.setdefault(language, MetadataItem())
-            for key in item.keys():
+            for key in list(item.keys()):
                 if key in skipSet:
                     continue
                 newItemStream = getattr(newItem, key)
                 if key == 'keyValue':
                     # Key-value metadata
-                    for k, v in item.keyValue.items():
+                    for k, v in list(item.keyValue.items()):
                         if k not in filteredKeyValues:
                             newItemStream[k] = v
                     continue
@@ -950,7 +951,7 @@ class Metadata(streams.OrderedStreamCollection):
                     values = [values]
                 for value in values:
                     newItemStream.set(value)
-        return items.values()
+        return list(items.values())
 
     def verifyDigitalSignatures(self, label=None):
         missingKeys = []
@@ -1083,7 +1084,7 @@ class RpmObsoletes(streams.StreamCollection):
             return
 
         for (name, flags, version) in \
-                    itertools.izip(h[rpmhelper.OBSOLETENAME],
+                    zip(h[rpmhelper.OBSOLETENAME],
                                    h[rpmhelper.OBSOLETEFLAGS],
                                    h[rpmhelper.OBSOLETEVERSION]):
             single = SingleRpmObsolete()
@@ -1201,7 +1202,7 @@ class TroveCapsule(streams.StreamSet):
         self.wim.reset()
 
 def _getTroveInfoSigExclusions(streamDict):
-    return [ streamDef[2] for tag, streamDef in streamDict.items()
+    return [ streamDef[2] for tag, streamDef in list(streamDict.items())
              if tag > _TROVEINFO_ORIGINAL_SIG ]
 
 _TROVESCRIPTS_COMPAT_OLD      = 0
@@ -1347,10 +1348,10 @@ class TroveInfo(streams.StreamSet):
 
     v0SignatureExclusions = _getTroveInfoSigExclusions(streamDict)
     _oldMetadataItems = dict([ (x[1][2], True) for x in
-                               MetadataItem.streamDict.items() if
+                               list(MetadataItem.streamDict.items()) if
                                x[0] <= _METADATA_ITEM_ORIG_ITEMS ])
     _newMetadataItems = dict([ (x[1][2], True) for x in
-                               MetadataItem.streamDict.items() if
+                               list(MetadataItem.streamDict.items()) if
                                x[0] > _METADATA_ITEM_ORIG_ITEMS ])
     _eqSkipSet = { 'installTime': True }
 
@@ -1394,7 +1395,7 @@ class TroveRefsTrovesStream(dict, streams.InfoStream):
         this way is a bit odd, but it's simple and well-defined.
         """
         l = []
-        for ((name, version, flavor), byDefault) in self.iteritems():
+        for ((name, version, flavor), byDefault) in self.items():
             v = version.asString()
             f = flavor.freeze()
             s = (struct.pack("!H", len(name)) + name +
@@ -1409,7 +1410,7 @@ class TroveRefsTrovesStream(dict, streams.InfoStream):
 
     def copy(self):
         new = TroveRefsTrovesStream()
-        for key, val in self.iteritems():
+        for key, val in self.items():
             new[key] = val
 
         return new
@@ -1443,7 +1444,7 @@ class TroveRefsFilesStream(dict, streams.InfoStream):
         this way is a bit odd, but it's simple and well-defined.
         """
         l = []
-        for (pathId, (dirName, baseName, fileId, version)) in self.iteritems():
+        for (pathId, (dirName, baseName, fileId, version)) in self.items():
             v = version.asString()
             s = pack.pack("!S16S20SHSH", pathId, fileId,
                           os.path.join(dirName, baseName), v);
@@ -1455,7 +1456,7 @@ class TroveRefsFilesStream(dict, streams.InfoStream):
 
     def copy(self):
         new = TroveRefsFilesStream()
-        for key, val in self.iteritems():
+        for key, val in self.items():
             new[key] = val
 
         return new
@@ -1723,7 +1724,7 @@ class Trove(streams.StreamSet):
         # go through all the trove scripts for this trove.  If any
         # of them have more than one conversion, we need to use
         # the TROVESIG_VER_NEW2
-        for script in [ x[2] for x in TroveScripts.streamDict.values() ]:
+        for script in [ x[2] for x in list(TroveScripts.streamDict.values()) ]:
             conversions = getattr(self.troveInfo.scripts, script).conversions
             if len(conversions.getStreams(1)) > 1:
                 return True
@@ -1851,7 +1852,7 @@ class Trove(streams.StreamSet):
         items = metadata.flatten(skipSet=skipSet,
                                  filteredKeyValues=filteredKeyValues)
         # we only copy the metadata if acutally has some data in it
-        if [x for x in items if x.keys()]:
+        if [x for x in items if list(x.keys())]:
             self.troveInfo.metadata = Metadata()
             self.troveInfo.metadata.addItems(items)
 
@@ -1938,7 +1939,7 @@ class Trove(streams.StreamSet):
     def computePathHashes(self):
         self.troveInfo.pathHashes.clear()
         self.troveInfo.dirHashes.clear()
-        for dirName, base, fileId, version in self.idMap.itervalues():
+        for dirName, base, fileId, version in self.idMap.values():
             self.troveInfo.dirHashes.addPath(dirName)
             self.troveInfo.pathHashes.addPath(os.path.join(dirName, base))
 
@@ -1988,7 +1989,7 @@ class Trove(streams.StreamSet):
             # capsule, so return everything
             members = True
 
-        for (theId, (path, base, fileId, version)) in self.idMap.iteritems():
+        for (theId, (path, base, fileId, version)) in self.idMap.items():
             if ( (theId != CAPSULE_PATHID and members) or
                  (theId == CAPSULE_PATHID and capsules) ):
                 yield (theId, os.path.join(path, base), fileId, version)
@@ -2001,7 +2002,7 @@ class Trove(streams.StreamSet):
         return (os.path.join(x[0], x[1]), x[2], x[3])
 
     def hasFile(self, pathId):
-        return self.idMap.has_key(pathId)
+        return pathId in self.idMap
 
     def hasFiles(self):
         return len(self.idMap) != 0
@@ -2029,7 +2030,7 @@ class Trove(streams.StreamSet):
             troveGroup = self.strongTroves
         key = trovetup.TroveTuple(name, version, flavor)
         if not presentOkay and key in troveGroup:
-            raise TroveError, "duplicate trove included in %s" % self.name()
+            raise TroveError("duplicate trove included in %s" % self.name())
 
         troveGroup[key] = byDefault
 
@@ -2068,11 +2069,11 @@ class Trove(streams.StreamSet):
         """
         assert(strongRefs or weakRefs)
         if strongRefs:
-            for key in self.strongTroves.iterkeys():
+            for key in self.strongTroves.keys():
                 yield key
 
         if weakRefs:
-            for key in self.weakTroves.iterkeys():
+            for key in self.weakTroves.keys():
                 yield key
 
     def iterTroveListInfo(self):
@@ -2082,10 +2083,10 @@ class Trove(streams.StreamSet):
         @rtype: list
         """
 
-        for item, byDefault in self.strongTroves.iteritems():
+        for item, byDefault in self.strongTroves.items():
             yield item, byDefault, True
 
-        for item, byDefault in self.weakTroves.iteritems():
+        for item, byDefault in self.weakTroves.items():
             yield item, byDefault, False
 
     def isStrongReference(self, name, version, flavor):
@@ -2336,7 +2337,7 @@ class Trove(streams.StreamSet):
         """
 
         def _iterInfo(d, name):
-            for flavor, verList in d[name].iteritems():
+            for flavor, verList in d[name].items():
                 for ver in verList:
                     yield (name, ver, flavor)
 
@@ -2424,10 +2425,10 @@ class Trove(streams.StreamSet):
 
         if not self.type():
             # we just ignore file information for nonnormal troves
-            allIds = self.idMap.keys() + themMap.keys()
+            allIds = list(self.idMap.keys()) + list(themMap.keys())
             for pathId in allIds:
-                inSelf = self.idMap.has_key(pathId)
-                inThem = themMap.has_key(pathId)
+                inSelf = pathId in self.idMap
+                inThem = pathId in themMap
                 if inSelf and inThem:
                     sameIds[pathId] = None
                 elif inSelf:
@@ -2446,7 +2447,7 @@ class Trove(streams.StreamSet):
                 chgSet.newFile(pathId, os.path.join(selfDir, selfBase),
                                selfFileId, selfVersion)
 
-            for pathId in sameIds.keys():
+            for pathId in list(sameIds.keys()):
                 (selfDir, selfBase, selfFileId,
                                     selfVersion) = self.idMap[pathId]
                 (themDir, themBase, themFileId,
@@ -2493,7 +2494,7 @@ class Trove(streams.StreamSet):
         trvList = []
         if added or removed:
             if absolute:
-                for name in added.keys():
+                for name in list(added.keys()):
                     for version, flavor in added[name]:
                         trvList.append((name, (None, None), (version, flavor),
                                         True))
@@ -2579,9 +2580,9 @@ class Trove(streams.StreamSet):
                 oldTroves = [ (name, x[0], x[1]) for x in allRemoved ]
 
             oldHashes = getPathHashesFn(oldTroves, old = True)
-            oldHashes = dict(itertools.izip(oldTroves, oldHashes))
+            oldHashes = dict(zip(oldTroves, oldHashes))
             newHashes = getPathHashesFn(newTroves)
-            newHashes = dict(itertools.izip(newTroves, newHashes))
+            newHashes = dict(zip(newTroves, newHashes))
 
             overlaps = {}
             if troveIsCollection(name):
@@ -2796,7 +2797,7 @@ class Trove(streams.StreamSet):
                         l.append(((oldInfo[0].trailingRevision(), oldInfo)))
 
             # pass 1, find things on the same branch
-            for newInfo, oldInfoList in sorted(byLabel.items(), reverse=True):
+            for newInfo, oldInfoList in sorted(list(byLabel.items()), reverse=True):
                 # take the newest (by timestamp) item from oldInfoList which
                 # hasn't been matched to anything else
                 oldInfoList.sort(reverse=True)
@@ -2844,7 +2845,7 @@ class Trove(streams.StreamSet):
             oldList.sort(reverse=True)
 
             for ((oldTs, oldInfo), (newTs, newInfo)) in \
-                                            itertools.izip(oldList, newList):
+                                            zip(oldList, newList):
                 matches.append((oldInfo, newInfo))
 
             return matches
@@ -2983,7 +2984,7 @@ class Trove(streams.StreamSet):
 
         trvList = []
 
-        for name in addedDict.keys():
+        for name in list(addedDict.keys()):
             if not name in removedDict:
                 # there isn't anything which disappeared that has the same
                 # name; this must be a new addition
@@ -3003,7 +3004,7 @@ class Trove(streams.StreamSet):
                 del addedDict[name]
                 del removedDict[name]
 
-        for name in removedDict.keys():
+        for name in list(removedDict.keys()):
             if not name in addedDict:
                 # there isn't anything which disappeared that has the same
                 # name; this must be a new addition
@@ -3047,7 +3048,7 @@ class Trove(streams.StreamSet):
             for version, flavor in removedDict[name]:
                 removedByLabel.setdefault(version.trailingLabel(), []).append(
                                                             (version, flavor))
-            for label, labelAdded in addedByLabel.iteritems():
+            for label, labelAdded in addedByLabel.items():
                 labelRemoved = removedByLabel.get(label, [])
                 if not labelRemoved:
                     continue
@@ -3069,7 +3070,7 @@ class Trove(streams.StreamSet):
                 removedByLabel.setdefault(version.trailingLabel(), []).append(
                                                (version, flavor))
 
-            for label, labelAdded in addedByLabel.iteritems():
+            for label, labelAdded in addedByLabel.items():
                 labelRemoved = removedByLabel.get(label, [])
                 if not labelRemoved:
                     continue
@@ -3268,7 +3269,7 @@ class Trove(streams.StreamSet):
             self.troveInfo.subPackages.set(name)
 
     def setProductDefinitionVersion(self, version):
-        if isinstance(version, basestring):
+        if isinstance(version, str):
             version = str(version)
             version = versions.VersionFromString(version)
         self.troveInfo.productDefinitionVersion.set(version)
@@ -3289,16 +3290,13 @@ class Trove(streams.StreamSet):
                                             skipIntegrityChecks)
         else:
             if name.count(':') > 1:
-                raise TroveError, \
-                            'More than one ":" is not allowed in a trove name'
+                raise TroveError('More than one ":" is not allowed in a trove name')
 
             if not re.match('^[_A-Za-z0-9+\.\-:@]+$', name):
-                raise TroveError, \
-                            "Illegal characters in trove name '%s'" % name
+                raise TroveError("Illegal characters in trove name '%s'" % name)
 
             if 0 in [ len(x) for x in name.split(":") ]:
-                raise TroveError, \
-                            'Trove and component names cannot be empty'
+                raise TroveError('Trove and component names cannot be empty')
 
             assert(flavor is not None)
             self.name.set(name)
@@ -3336,7 +3334,7 @@ class ReferencedTroveSet(dict, streams.InfoStream):
 
     def freeze(self, skipSet = {}):
         l = []
-        for name, troveList in sorted(self.iteritems()):
+        for name, troveList in sorted(self.items()):
             subL = []
             for (change, version, flavor, byDefault) in sorted(troveList):
                 version = version.freeze()
@@ -3367,7 +3365,7 @@ class ReferencedTroveSet(dict, streams.InfoStream):
         i = 0
 
         while i < len(l):
-            name = intern(l[i])
+            name = sys.intern(l[i])
             self[name] = []
 
             i += 1
@@ -3463,13 +3461,13 @@ class ReferencedFileList(list, streams.InfoStream):
                 baseName = None
             else:
                 dirName, baseName = os.path.split(path)
-                dirName = intern(dirName)
-                baseName = intern(baseName)
+                dirName = sys.intern(dirName)
+                baseName = sys.intern(baseName)
 
             if not fileId:
                 fileId = None
             else:
-                fileId = intern(fileId)
+                fileId = sys.intern(fileId)
 
             if verStr == lastVerStr:
                 version = lastVer
@@ -3544,7 +3542,7 @@ class AbstractTroveChangeSet(streams.StreamSet):
                                 : (LARGE, streams.StringStream,
                                                         "extendedMetadata"   ),
     }
-    __slots__ = [ x[2] for x in streamDict.values() ]
+    __slots__ = [ x[2] for x in list(streamDict.values()) ]
     ignoreUnknown = True
 
     """
@@ -3703,7 +3701,7 @@ class AbstractTroveChangeSet(streams.StreamSet):
         # backwards-compatibility?
         if oldCompatibilityClass is None:
             return False
-        assert isinstance(oldCompatibilityClass, (int, long))
+        assert isinstance(oldCompatibilityClass, int)
 
         thisCompatClass = self.getNewCompatibilityClass()
 
@@ -3738,7 +3736,7 @@ class AbstractTroveChangeSet(streams.StreamSet):
             trvInfo = klass(self.absoluteTroveInfo())
             if self.extendedMetadata():
                 extMetadata = Metadata(self.extendedMetadata())
-                for old, ext in itertools.izip(trvInfo.metadata, extMetadata):
+                for old, ext in zip(trvInfo.metadata, extMetadata):
                     for attrName in trvInfo._oldMetadataItems:
                         setattr(ext, attrName, getattr(old, attrName))
                 trvInfo.metadata._replaceAll(extMetadata)
@@ -3831,11 +3829,11 @@ class AbstractTroveChangeSet(streams.StreamSet):
 
     def iterChangedTroves(self, strongRefs = True, weakRefs = False):
         if strongRefs:
-            for x in self.strongTroves.iteritems():
+            for x in self.strongTroves.items():
                 yield x
 
         if weakRefs:
-            for x in self.weakTroves.iteritems():
+            for x in self.weakTroves.items():
                 yield x
 
     def newTroveVersion(self, name, version, flavor, byDefault,
@@ -3937,7 +3935,7 @@ class AbstractTroveChangeSet(streams.StreamSet):
             depformat('New Flavor', self.getNewFlavor(), f)
 
         for redirect in self.redirects.iter():
-            print '\t-> %s=%s' % (redirect.name(), redirect.branch())
+            print('\t-> %s=%s' % (redirect.name(), redirect.branch()))
 
         for (pathId, path, fileId, version) in self.getNewFileList():
             #f.write("\tadded (%s(.*)%s)\n" % (pathId[:6], pathId[-6:]))
@@ -3968,7 +3966,7 @@ class AbstractTroveChangeSet(streams.StreamSet):
             pathIdStr = sha1helper.md5ToString(pathId)
             f.write("\tremoved %s(.*)%s\n" % (pathIdStr[:6], pathIdStr[-6:]))
 
-        for name in self.strongTroves.keys():
+        for name in list(self.strongTroves.keys()):
             l = []
             for x in self.strongTroves[name]:
                 l.append(x[0] + x[1].asString())
@@ -4070,7 +4068,7 @@ class FlavorScoreCache(object):
     def matches(self, oldFlavor, newFlavor):
         return (self[oldFlavor, newFlavor] > self.NEG_INF)
 
-    def __getitem__(self, (oldFlavor, newFlavor)):
+    def __getitem__(self, xxx_todo_changeme):
         # check for superset matching and subset
         # matching.  Currently we don't consider
         # a superset flavor match "better" than
@@ -4080,6 +4078,7 @@ class FlavorScoreCache(object):
         # If we do that, we should consider adding
         # heuristic to prefer strongly satisfied
         # flavors most of all.
+        (oldFlavor, newFlavor) = xxx_todo_changeme
         if not (oldFlavor, newFlavor) in self.cache:
             if oldFlavor.isEmpty() and newFlavor.isEmpty():
                 myMax = self.POS_INF

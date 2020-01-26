@@ -21,7 +21,7 @@ import os
 import itertools
 import sys
 import threading
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 
 from conary import callbacks
 from conary import conaryclient
@@ -62,7 +62,7 @@ def locked(method):
             self.lock.release()
 
     wrapper.__doc__ = method.__doc__
-    wrapper.func_name = method.func_name
+    wrapper.__name__ = method.__name__
     return wrapper
 
 class UpdateCallback(callbacks.LineOutput, callbacks.UpdateCallback):
@@ -685,13 +685,13 @@ def displayChangedJobs(addedJobs, removedJobs, cfg):
     formatter.prepareJobLists([removedJobs | addedJobs])
 
     if removedJobs:
-        print 'No longer part of job:'
+        print('No longer part of job:')
         for line in formatter.formatJobTups(removedJobs, indent='    '):
-            print line
+            print(line)
     if addedJobs:
-        print 'Added to job:'
+        print('Added to job:')
         for line in formatter.formatJobTups(addedJobs, indent='    '):
-            print line
+            print(line)
 
 def displayUpdateInfo(updJob, cfg, noRestart=False):
     jobLists = updJob.getJobs()
@@ -710,10 +710,10 @@ def displayUpdateInfo(updJob, cfg, noRestart=False):
     for num, job in enumerate(jobLists):
         if totalJobs > 1:
             if num in updJob.getCriticalJobs():
-                print '** ',
-            print 'Job %d of %d:' % (num + 1, totalJobs)
+                print('** ', end=' ')
+            print('Job %d of %d:' % (num + 1, totalJobs))
         for line in formatter.formatJobTups(job, indent='    '):
-            print line
+            print(line)
     if updJob.getCriticalJobs() and not noRestart:
         criticalJobs = updJob.getCriticalJobs()
         if len(criticalJobs) > 1:
@@ -721,8 +721,8 @@ def displayUpdateInfo(updJob, cfg, noRestart=False):
         else:
             jobPlural = ''
         jobList = ', '.join([str(x + 1) for x in criticalJobs])
-        print
-        print '** The update will restart itself after job%s %s and continue updating' % (jobPlural, jobList)
+        print()
+        print('** The update will restart itself after job%s %s and continue updating' % (jobPlural, jobList))
     return
 
 @api.developerApi
@@ -844,7 +844,7 @@ def doModelUpdate(cfg, sysmodel, modelFile, otherArgs, **kwargs):
             client = conaryclient.ConaryClient(cfg)
             repos = client.getRepos()
             foundTroves = repos.findTroves(cfg.installLabelPath,
-                                           branchArgs.keys(),
+                                           list(branchArgs.keys()),
                                            defaultFlavor = cfg.flavor)
             for troveSpec in foundTroves:
                 index = branchArgs[troveSpec]
@@ -1054,9 +1054,9 @@ def _updateTroves(cfg, applyList, **kwargs):
             addedJobs = newJobs - oldJobs
             removedJobs = oldJobs - newJobs
             if addedJobs or removedJobs:
-                print
-                print 'NOTE: after critical updates were applied, the contents of the update were recalculated:'
-                print
+                print()
+                print('NOTE: after critical updates were applied, the contents of the update were recalculated:')
+                print()
                 displayChangedJobs(addedJobs, removedJobs, cfg)
         updJob.close()
         client.close()
@@ -1065,11 +1065,11 @@ def _updateTroves(cfg, applyList, **kwargs):
     if model:
         missingLocalTroves = model.getMissingLocalTroves(tc, ts)
         if missingLocalTroves:
-            print 'Update would leave references to missing local troves:'
+            print('Update would leave references to missing local troves:')
             for troveTup in missingLocalTroves:
                 if not isinstance(troveTup, trovetup.TroveTuple):
                     troveTup = trovetup.TroveTuple(troveTup)
-                print "\t" + str(troveTup)
+                print("\t" + str(troveTup))
             client.close()
             return
 
@@ -1081,12 +1081,12 @@ def _updateTroves(cfg, applyList, **kwargs):
                              showLabels = cfg.showLabels)
         formatter = display.TroveTupFormatter(dcfg)
 
-        print "Including extra troves to resolve dependencies:"
-        print "   ",
+        print("Including extra troves to resolve dependencies:")
+        print("   ", end=' ')
 
         items = sorted(set(formatter.formatNVF(*x)
-                       for x in itertools.chain(*suggMap.itervalues())))
-        print " ".join(items)
+                       for x in itertools.chain(*iter(suggMap.values()))))
+        print(" ".join(items))
 
     askInteractive = cfg.interactive
     if restartInfo:
@@ -1097,14 +1097,14 @@ def _updateTroves(cfg, applyList, **kwargs):
         removedJobs = oldJobs - newJobs
 
         if not model and addedJobs or removedJobs:
-            print 'NOTE: after critical updates were applied, the contents of the update were recalculated:'
+            print('NOTE: after critical updates were applied, the contents of the update were recalculated:')
             displayChangedJobs(addedJobs, removedJobs, cfg)
         else:
             askInteractive = False
 
     if not updJob.jobs:
         # Nothing to do
-        print 'Update would not modify system'
+        print('Update would not modify system')
         if model and not kwargs.get('test'):
             # Make sure 'conary sync' clears model.next even if nothing needs
             # to be done.
@@ -1114,7 +1114,7 @@ def _updateTroves(cfg, applyList, **kwargs):
         return
 
     elif askInteractive:
-        print 'The following updates will be performed:'
+        print('The following updates will be performed:')
         displayUpdateInfo(updJob, cfg, noRestart=noRestart)
 
     if migrate and cfg.interactive:
@@ -1133,7 +1133,7 @@ def _updateTroves(cfg, applyList, **kwargs):
             return
 
     if not noRestart and updJob.getCriticalJobs():
-        print "Performing critical system updates, will then restart update."
+        print("Performing critical system updates, will then restart update.")
     try:
         restartDir = client.applyUpdateJob(updJob, **applyKwargs)
     finally:
@@ -1144,9 +1144,9 @@ def _updateTroves(cfg, applyList, **kwargs):
         params = sys.argv
 
         # Write command line to disk
-        import xmlrpclib
+        import xmlrpc.client
         cmdlinefile = open(os.path.join(restartDir, 'cmdline'), "w")
-        cmdlinefile.write(xmlrpclib.dumps((params, ), methodresponse = True))
+        cmdlinefile.write(xmlrpc.client.dumps((params, ), methodresponse = True))
         cmdlinefile.close()
 
         # CNY-980: we should have the whole script of changes to perform in
@@ -1219,7 +1219,7 @@ def updateAll(cfg, **kwargs):
 
     if showItems:
         for (name, version, flavor) in sorted(updateItems, key=lambda x:x[0]):
-            print formatter.formatNVF(name, version, flavor)
+            print(formatter.formatNVF(name, version, flavor))
         return
 
     _updateTroves(cfg, applyList, **kwargs)

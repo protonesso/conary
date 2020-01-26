@@ -97,17 +97,17 @@ class DBStoreCodeTest(unittest.TestCase):
             d.update({"teSt" : "value"})
             assert(len(d) == 1)
             assert(d == {"test" : "value"})
-            assert(d.items() == [("teSt", "value")])
-            assert(d.keys() == ["teSt"])
-            assert(d.values() == ["value"])
-            assert([x for x in d.iterkeys()] == d.keys())
-            assert([x for x in d.itervalues()] == d.values())
-            assert([x for x in d.iteritems()] == d.items())
+            assert(list(d.items()) == [("teSt", "value")])
+            assert(list(d.keys()) == ["teSt"])
+            assert(list(d.values()) == ["value"])
+            assert([x for x in d.keys()] == list(d.keys()))
+            assert([x for x in d.values()] == list(d.values()))
+            assert([x for x in d.items()] == list(d.items()))
             del d["test"]
             assert(len(d) == 0)
             d.setdefault("Test", []).append("value")
             assert(len(d) == 1)
-            assert(d.items() == [("Test", ["value"])])
+            assert(list(d.items()) == [("Test", ["value"])])
         d = sqllib.CaselessDict()
         d["TEST"] = "value0"
         __testCD(d)
@@ -118,9 +118,9 @@ class DBStoreCodeTest(unittest.TestCase):
         d = sqllib.CaselessDict({"TEST0": "value0", "TEST1": "value1"})
         self.assertEqual(d["test0"], "value0")
         self.assertEqual(d["test1"], "value1")
-        assert (d.has_key("test1"))
+        assert ("test1" in d)
         del d["test1"]
-        assert (not d.has_key("test1") )
+        assert ("test1" not in d )
 
     def testDBversion(self):
         dbv = sqllib.DBversion
@@ -155,14 +155,14 @@ class DBStoreTest(DBStoreTestBase):
                 db = dbstore.Database(uri)
                 try:
                     d = db._connectData(fields)
-                    assert(False not in [ val in [values[key], None] for (key, val) in d.items()])
+                    assert(False not in [ val in [values[key], None] for (key, val) in list(d.items())])
                 except AssertionError:
-                    print "\nFailed testing for", uri
-                    print "Expecting:", values
-                    print "Obtained: ", d
+                    print("\nFailed testing for", uri)
+                    print("Expecting:", values)
+                    print("Obtained: ", d)
                     raise
                 except:
-                    print "\nERROR: Failed testing for", uri
+                    print("\nERROR: Failed testing for", uri)
                     raise
             # for these tests we have to use values from the fields
             _test("%(username)s:%(password)s@%(hostname)s:%(port)s/%(database)s" % values)
@@ -228,8 +228,8 @@ class DBStoreTest(DBStoreTestBase):
         assert('abcd' in d)
         assert('EFGH' in d)
 
-        assert(['abcd', 'efgh'] == d.keys())
-        assert([100, 200] == d.values())
+        assert(['abcd', 'efgh'] == list(d.keys()))
+        assert([100, 200] == list(d.values()))
 
         assert([x for x in d] == ['abcd', 'efgh'])
 
@@ -439,7 +439,7 @@ class DBStoreTest(DBStoreTestBase):
         cu.execute("create table foo (a %(PRIMARYKEY)s, val1 integer, val2 integer)" % db.keywords)
         stmt = cu.compile("insert into foo(val1, val2) values (?, ?)")
         ret = []
-        for x in xrange(100,200):
+        for x in range(100,200):
             cu.execstmt(stmt, x, 2*x)
             ret.append((x, 2*x))
         assert(cu.execute("select val1, val2 from foo order by a").fetchall() == ret)
@@ -449,7 +449,7 @@ class DBStoreTest(DBStoreTestBase):
         cu = db.cursor()
         cu.execute("create table foo(id %(PRIMARYKEY)s, val integer)" % db.keywords)
         cu.execute("insert into foo(id, val) values (0,0)")
-        for x in xrange(101,200):
+        for x in range(101,200):
             cu.execute("insert into foo(val) values (?)", x)
             assert(cu.lastrowid == x-100)
 
@@ -650,13 +650,13 @@ class DBStoreSchemaTest(DBStoreTestBase):
 
         # verify results
         def _check(cu, sets):
-            counter = len(range(101,200))*sets + 1
+            counter = len(list(range(101,200)))*sets + 1
             cu.execute("SELECT COUNT(*) FROM foo")
             assert(cu.fetchall()[0][0] == counter)
 
             cu.execute("SELECT id, no FROM foo")
             set1 = [(x[0],x[1]) for x in cu]
-            set2 = zip(range(0,counter+1), [0]+range(101,200)*sets)
+            set2 = list(zip(list(range(0,counter+1)), [0]+list(range(101,200))*sets))
             assert(set1 == set2)
 
         cu.executemany("INSERT INTO foo (no) VALUES (?)", [(x,) for x in range(101,200)])
@@ -665,7 +665,7 @@ class DBStoreSchemaTest(DBStoreTestBase):
         _check(cu, 2)
         cu.executemany("INSERT INTO foo (no) VALUES (:id)", [{"id":x} for x in range(101,200)])
         _check(cu, 3)
-        cu.executemany("INSERT INTO foo (no) VALUES (:id)", ({"id":x} for x in xrange(101,200)))
+        cu.executemany("INSERT INTO foo (no) VALUES (:id)", ({"id":x} for x in range(101,200)))
         _check(cu, 4)
 
     def testBulkload(self):
@@ -673,11 +673,11 @@ class DBStoreSchemaTest(DBStoreTestBase):
         cu = db.cursor()
 
         cu.execute("CREATE TABLE foo(id %(PRIMARYKEY)s, no INTEGER)" % db.keywords)
-        db.bulkload("foo", itertools.izip(xrange(100,200), xrange(500,600)), ["id", "no"])
+        db.bulkload("foo", zip(range(100,200), range(500,600)), ["id", "no"])
         cu.execute("select id, no from foo order by id")
-        for x, y in itertools.izip (cu, itertools.izip(xrange(100,200), xrange(500,600))):
+        for x, y in zip (cu, zip(range(100,200), range(500,600))):
             self.assertEqual(x, y)
-        db.bulkload("foo", itertools.izip(xrange(200,300), xrange(500,600)), ["id", "no"])
+        db.bulkload("foo", zip(range(200,300), range(500,600)), ["id", "no"])
         cu.execute("select count(*) from foo")
         self.assertEqual(cu.fetchone()[0], 200)
 
@@ -685,7 +685,7 @@ class DBStoreSchemaTest(DBStoreTestBase):
         testData = []
         def _iterBlobs(cu, testData, count=100, size=20):
             fd = os.open("/dev/urandom", os.O_RDONLY)
-            for i in xrange(count):
+            for i in range(count):
                 data = os.read(fd, size)
                 testData.append(data)
                 yield (i, cu.binary(data))
@@ -695,7 +695,7 @@ class DBStoreSchemaTest(DBStoreTestBase):
         cu = db.cursor()
         db.bulkload("bar", _iterBlobs(cu, testData, 100), ["id", "data"])
         cu.execute("select data from bar")
-        for a,b in itertools.izip(cu, testData):
+        for a,b in zip(cu, testData):
             self.assertEqual(cu.frombinary(a[0]), b)
         # test bulkload rollback-ability
         cu.execute("select count(*) from foo")
@@ -805,7 +805,7 @@ class DbShellTestCase(testhelp.TestCase):
         db = shell.DbShell(path=sqlitePath, driver='sqlite')
         try:
             output = self.captureOutput(db.do__show, 'tables')
-        except AttributeError, e:
+        except AttributeError as e:
             if e.args[0] == "Database instance has no attribute 'tables'":
                 self.fail("do__show still doesn't call loadSchema")
             raise

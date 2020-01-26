@@ -53,11 +53,11 @@ def displayKeys(cfg, server, user, showFingerprints = False):
         i = -8
 
     if not fingerPrints:
-        print 'No keys found for user %s on server %s.' % (user, server)
+        print('No keys found for user %s on server %s.' % (user, server))
     else:
-        print 'Public key fingerprints for user %s on server %s:' \
-                % (user, server)
-        print "\n".join("    %s" % fp[i:] for fp in fingerPrints)
+        print('Public key fingerprints for user %s on server %s:' \
+                % (user, server))
+        print("\n".join("    %s" % fp[i:] for fp in fingerPrints))
 
 def showKey(cfg, server, fingerprint):
     client = conaryclient.ConaryClient(cfg)
@@ -67,4 +67,4 @@ def showKey(cfg, server, fingerprint):
         server = cfg.buildLabel.getHost()
 
     key = repos.getAsciiOpenPGPKey(server, fingerprint)
-    print key
+    print(key)

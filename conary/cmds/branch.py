@@ -29,7 +29,7 @@ from conary.conarycfg import selectSignatureKey
 
 def _getBranchType(binaryOnly, sourceOnly):
     if binaryOnly and sourceOnly:
-        raise errors.ParseError, ('Can only specify one of --binary-only and'
+        raise errors.ParseError('Can only specify one of --binary-only and'
                                   ' --source-only')
     if binaryOnly:
         return conaryclient.ConaryClient.BRANCH_BINARY
@@ -52,8 +52,8 @@ def displayBranchJob(cs, shadow=False):
         if flavor is not None:
             newInfo += '[%s]' % flavor
 
-        print "%s%s  %-20s (%s)" % (indent, branchOp, csTrove.getName(),
-                                        newInfo)
+        print("%s%s  %-20s (%s)" % (indent, branchOp, csTrove.getName(),
+                                        newInfo))
 
 
 def branch(repos, cfg, newLabel, troveSpecs, makeShadow=False,
@@ -72,7 +72,7 @@ def branch(repos, cfg, newLabel, troveSpecs, makeShadow=False,
         raise errors.ParseError('Cannot branch or shadow individual components: %s' % ', '.join(componentSpecs))
 
     result = repos.findTroves(cfg.buildLabel, troveSpecs, cfg.buildFlavor)
-    troveList = [ x for x in itertools.chain(*result.itervalues())]
+    troveList = [ x for x in itertools.chain(*iter(result.values()))]
 
     sigKey = selectSignatureKey(cfg, newLabel)
 
@@ -105,23 +105,23 @@ def branch(repos, cfg, newLabel, troveSpecs, makeShadow=False,
             break
 
     if cfg.interactive or info:
-        print 'The following %s will be created:' % branchOps
+        print('The following %s will be created:' % branchOps)
         displayBranchJob(cs, shadow=makeShadow)
 
     if cfg.interactive:
-        print
+        print()
         if hasBinary and branchType & client.BRANCH_BINARY:
-            print 'WARNING: You have chosen to create binary %s. ' \
+            print('WARNING: You have chosen to create binary %s. ' \
                   'This is not recommended\nwith this version of cvc.' \
-                    % branchOps
-            print
+                    % branchOps)
+            print()
         okay = cmdline.askYn('Continue with %s? [y/N]' % branchOps.lower(),
                              default=False)
         if not okay:
             return
     elif (not forceBinary) and hasBinary and branchType & client.BRANCH_BINARY:
-        print 'Creating binary %s is only allowed in interactive mode. ' \
-              'Rerun cvc\nwith --interactive.' % branchOps
+        print('Creating binary %s is only allowed in interactive mode. ' \
+              'Rerun cvc\nwith --interactive.' % branchOps)
         return 1
 
     if not info:

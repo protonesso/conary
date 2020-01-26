@@ -159,7 +159,7 @@ class ConaryClientTest(rephelp.RepositoryHelper):
 
                 assert(matched)
 
-            assert(not sum([ len(x) for x in checkDict.values() ]))
+            assert(not sum([ len(x) for x in list(checkDict.values()) ]))
 
         self.addQuickTestComponent('test1:runtime', '1.0-1-1',
                                    fileContents = [ ('/file1', 'hello') ] )
@@ -678,17 +678,17 @@ The following dependencies would not be met after this update:
         modelPath = util.joinPaths(self.cfg.root, self.cfg.modelPath)
         util.removeIfExists(modelPath)
         client = conaryclient.ConaryClient(self.cfg)
-        self.assertEquals(client.hasSystemModel(), False)
-        self.assertEquals(client.getSystemModel(), None)
+        self.assertEqual(client.hasSystemModel(), False)
+        self.assertEqual(client.getSystemModel(), None)
 
         # Create file now
         util.mkdirChain(os.path.dirname(modelPath))
         file(modelPath, "w").write("install group-me\n")
-        self.assertEquals(client.hasSystemModel(), True)
+        self.assertEqual(client.hasSystemModel(), True)
         sysmodel = client.getSystemModel()
-        self.assertEquals(sysmodel.model.filedata, ["install group-me\n"])
-        self.assertEquals(sysmodel.fileFullName, modelPath)
-        self.assertEquals(sysmodel.mtime, os.stat(modelPath).st_mtime)
+        self.assertEqual(sysmodel.model.filedata, ["install group-me\n"])
+        self.assertEqual(sysmodel.fileFullName, modelPath)
+        self.assertEqual(sysmodel.mtime, os.stat(modelPath).st_mtime)
 
     def testSystemIdScript(self):
         systemId = 'foobar'
@@ -701,9 +701,9 @@ exit 0
 """ % systemId)
         fh.flush()
         fh.close()
-        os.chmod(script, 0755)
+        os.chmod(script, 0o755)
 
         self.cfg.systemIdScript = script
         client = conaryclient.ConaryClient(self.cfg)
 
-        self.assertEquals(base64.b64encode(systemId), client.repos.c.systemId)
+        self.assertEqual(base64.b64encode(systemId), client.repos.c.systemId)

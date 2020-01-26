@@ -34,7 +34,7 @@ class Tags(idtable.CachedIdTable):
 class VersionCache(dict):
     def get(self, vs, ts):
         key = vs, ts
-        if self.has_key(key):
+        if key in self:
             return self[key]
         ts = [ float(x) for x in ts.split(":") ]
         v = versions.VersionFromString(vs, timeStamps = ts)
@@ -43,7 +43,7 @@ class VersionCache(dict):
 
 class FlavorCache(dict):
     def get(self, frozen):
-        if self.has_key(frozen):
+        if frozen in self:
             return self[frozen]
         if frozen is None:
             f = deps.deps.Flavor()
@@ -103,10 +103,10 @@ class DBTroveFiles:
                        "WHERE fileId=?", fileId)
         # there could be multiple matches, but they should all be redundant
         try:
-            path, stream = cu.next()
+            path, stream = next(cu)
             return (path, stream)
         except StopIteration:
-            raise KeyError, fileId
+            raise KeyError(fileId)
 
     def addItem(self, cu, pathId, versionId, path, fileId, instanceId,
                 stream, tags, addItemSql = None):
@@ -234,9 +234,9 @@ class DBInstanceTable:
         cu.execute("SELECT troveName, versionId, flavorId, isPresent "
                    "FROM Instances WHERE instanceId=? %s" % pres, theId)
         try:
-            return cu.next()
+            return next(cu)
         except StopIteration:
-            raise KeyError, theId
+            raise KeyError(theId)
 
     def isPresent(self, item):
         cu = self.db.cursor()
@@ -281,7 +281,7 @@ class DBInstanceTable:
         try:
             return cu.next()[0]
         except StopIteration:
-            raise KeyError, item
+            raise KeyError(item)
 
     def get(self, item, defValue, justPresent = True):
         cu = self.db.cursor()
@@ -306,12 +306,12 @@ class DBInstanceTable:
                             Instances.versionId = Versions.versionId
                       WHERE instanceId=?""", instanceId)
         try:
-            (s, t) = cu.next()
+            (s, t) = next(cu)
             ts = [ float(x) for x in t.split(":") ]
             v = versions.VersionFromString(s, timeStamps=ts)
             return v
         except StopIteration:
-            raise KeyError, instanceId
+            raise KeyError(instanceId)
 
 class Flavors(idtable.IdTable):
 
@@ -320,7 +320,7 @@ class Flavors(idtable.IdTable):
 
     def __getitem__(self, flavor):
         if flavor is None:
-            raise KeyError, "Can not lookup deps.Flavor(None)"
+            raise KeyError("Can not lookup deps.Flavor(None)")
         # XXX: We really should be testing for a deps.deps.Flavor
         # instance, but the split of Flavor from DependencySet would
         # cause too much code breakage right now....
@@ -490,7 +490,7 @@ class Database:
         cu = self.db.cursor()
         versionCache = VersionCache()
         flavorCache = FlavorCache()
-        for name, versionList in troveDict.iteritems():
+        for name, versionList in troveDict.items():
             d = {}.fromkeys(versionList)
             outD[name] = d
             for key in d:
@@ -503,7 +503,7 @@ class Database:
                 WHERE troveName=? AND isPresent=1""", name)
             for (match, timeStamps, flavor) in cu:
                 version = versionCache.get(match, timeStamps)
-                if outD[name].has_key(version):
+                if version in outD[name]:
                     outD[name][version].append(flavorCache.get(flavor))
         return outD
 
@@ -676,7 +676,7 @@ order by
                 empty INTEGER,
                 flavor %(STRING)s
             )""" % self.db.keywords)
-            for flavor in self.flavorsNeeded.keys():
+            for flavor in list(self.flavorsNeeded.keys()):
                 cu.execute("INSERT INTO flavorsNeeded VALUES(?, ?)",
                            None, flavor.freeze())
             cu.execute("""
@@ -702,7 +702,7 @@ order by
             if not flavor.isEmpty():
                 flavors[flavor] = True
 
-        flavorMap = self.flavors.getItemDict(flavors.iterkeys())
+        flavorMap = self.flavors.getItemDict(iter(flavors.keys()))
         del flavors
 
         if troveFlavor.isEmpty():
@@ -935,7 +935,7 @@ order by
 
             if tags:
                 cu.executemany("INSERT INTO NewFileTags VALUES (?, ?)",
-                               itertools.izip(itertools.repeat(pathId), tags))
+                               zip(itertools.repeat(pathId), tags))
         else:
             cu.execute("""
               UPDATE DBTroveFiles
@@ -976,7 +976,7 @@ order by
         cu.execute("""CREATE TEMPORARY TABLE UserReplaced(
                         name STRING, version STRING, flavor STRING,
                         pathId BLOB)""")
-        for (name, version, flavor), fileList in userReplaced.iteritems():
+        for (name, version, flavor), fileList in userReplaced.items():
             for pathId, content, fileObj in fileList:
                 flavorStr = flavor.freeze()
                 if not flavorStr:
@@ -1207,7 +1207,7 @@ order by
                                           withFiles = withFiles,
                                           withDeps = withDeps,
                                           withFileObjects = withFileObjects))
-        for instanceId, instance in itertools.izip(toFind, instances):
+        for instanceId, instance in zip(toFind, instances):
             for slot in toFind[instanceId]:
                 results[slot] = instance
         return results
@@ -1218,9 +1218,9 @@ order by
             raise KeyError
 
         trvByInstanceId = dict([ (instId, trvInfo) for
-                instId, trvInfo in itertools.izip(instanceIds, troveList)
+                instId, trvInfo in zip(instanceIds, troveList)
                 if instId is not None ])
-        instanceIds = trvByInstanceId.keys()
+        instanceIds = list(trvByInstanceId.keys())
 
         cu = self.db.cursor()
 
@@ -2315,7 +2315,7 @@ order by
         cu.execute("SELECT value FROM DatabaseAttributes WHERE name = ?",
                    field)
         try:
-            row = cu.next()
+            row = next(cu)
             counter = row[0]
         except StopIteration:
             return False, 0

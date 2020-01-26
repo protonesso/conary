@@ -80,7 +80,7 @@ class ValidUser(object):
             return '<User %swith all roles>' % (user_fmt,)
         else:
             return '<User %swith roles %s>' % (user_fmt,
-                    ', '.join(unicode(x) for x in self.roles))
+                    ', '.join(str(x) for x in self.roles))
 
     def __repr__(self):
         return '%s(%r)' % (self.__class__.__name__, sorted(self.roles))
@@ -114,7 +114,7 @@ class _Accessor(object):
 
 class AuthToken(list):
     __slots__ = ('flags',)
-    _user, _password, _entitlements, _remote_ip, _forwarded_for = range(5)
+    _user, _password, _entitlements, _remote_ip, _forwarded_for = list(range(5))
 
     def __init__(self, user='anonymous', password='anonymous',
             entitlements=None, remote_ip=None, forwarded_for=None):

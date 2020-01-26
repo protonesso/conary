@@ -44,6 +44,6 @@ class CopyTest(testhelp.TestCase):
            sha1 = digestlib.sha1()
            sha1.update(buf)
            ref = sha1.hexdigest()
-           self.assertEquals(ref, res)
+           self.assertEqual(ref, res)
        finally:
            util.rmtree(tmpDir)

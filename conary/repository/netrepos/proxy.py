@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-import cPickle
+import pickle
 import errno
 import itertools
 import os
@@ -103,9 +103,9 @@ class ProxyCaller:
         rawRequest = request.toWire()
         try:
             rawResponse = self.proxy._request(methodname, rawRequest)
-        except IOError, e:
+        except IOError as e:
             raise errors.ProxyError(e.strerror)
-        except http_error.ResponseError, e:
+        except http_error.ResponseError as e:
             if e.errcode == 403:
                 raise errors.InsufficientPermission
 
@@ -226,7 +226,7 @@ class RepositoryCaller(xmlshims.NetworkConvertors):
             result = self.callByName(methodname, request.version,
                     *request.args, **request.kwargs)
             return xmlshims.ResponseArgs.newResult(result)
-        except Exception, err:
+        except Exception as err:
             if hasattr(err, 'marshall'):
                 args, kwArgs = err.marshall(self)
                 return self.responseFilter.newException(
@@ -377,10 +377,10 @@ class BaseProxy(xmlshims.NetworkConvertors):
 
             response = self.responseFilter.newResult(r)
             extraInfo = caller.getExtraInfo()
-        except ProxyRepositoryError, e:
+        except ProxyRepositoryError as e:
             response = self.responseFilter.newException(e.name, e.args,
                     e.kwArgs)
-        except Exception, e:
+        except Exception as e:
             if hasattr(e, 'marshall'):
                 args, kwArgs = e.marshall(self)
                 response = self.responseFilter.newException(
@@ -408,7 +408,7 @@ class BaseProxy(xmlshims.NetworkConvertors):
                     from conary.lib import debugger
                     excInfo = sys.exc_info()
                     lines = traceback.format_exception(*excInfo)
-                    print "".join(lines)
+                    print("".join(lines))
                     if 1 or sys.stdout.isatty() and sys.stdin.isatty():
                         debugger.post_mortem(excInfo[2])
                     raise
@@ -495,7 +495,7 @@ class ChangeSetInfo(object):
         )
 
     def pickle(self):
-        return cPickle.dumps(((self.trovesNeeded, self.filesNeeded,
+        return pickle.dumps(((self.trovesNeeded, self.filesNeeded,
                                self.removedTroves), self.size))
 
     def open(self):
@@ -519,7 +519,7 @@ class ChangeSetInfo(object):
             self.offset = 4 + infoSize
         if pickled is not None:
             ((self.trovesNeeded, self.filesNeeded, self.removedTroves),
-                    self.size) = cPickle.loads(pickled)
+                    self.size) = pickle.loads(pickled)
 
 class ChangesetFilter(BaseProxy):
 
@@ -852,7 +852,7 @@ class ChangesetFilter(BaseProxy):
         # This prevents deadlocks from occurring - as long as different
         # processes acquire locks in the same order, we should be fine
         orderedData = sorted(
-            enumerate(itertools.izip(chgSetList, fingerprints)),
+            enumerate(zip(chgSetList, fingerprints)),
             key = lambda x: x[1][1])
 
         for jobIdx, (rawJob, fingerprint) in orderedData:
@@ -891,7 +891,7 @@ class ChangesetFilter(BaseProxy):
 
         changeSetsNeeded = \
             [ x for x in
-                    enumerate(itertools.izip(chgSetList, fingerprints))
+                    enumerate(zip(chgSetList, fingerprints))
                     if changeSetList[x[0]] is None ]
         self.pokeCounter('cscache_misses', len(changeSetsNeeded))
         self.pokeCounter('cscache_hits', len(chgSetList) - len(changeSetsNeeded))
@@ -981,11 +981,11 @@ class ChangesetFilter(BaseProxy):
             try:
                 inF = transport.ConaryURLOpener(proxyMap=self.proxyMap
                         ).open(url, forceProxy=forceProxy, headers=headers)
-            except transport.TransportError, e:
+            except transport.TransportError as e:
                 raise errors.RepositoryError(str(e))
 
         for (jobIdx, (rawJob, fingerprint)), csInfo in \
-                        itertools.izip(neededHere, csInfoList):
+                        zip(neededHere, csInfoList):
             cachable = bool(fingerprint and self.csCache)
 
             if cachable:
@@ -1119,11 +1119,11 @@ class Memcache(object):
         if needed:
             others = callable([x[1] for x in needed], *extraArgs, **kwargs)
 
-            for (i, x), result in itertools.izip(needed, others):
+            for (i, x), result in zip(needed, others):
                 finalResults[i] = result
 
             updates = dict( (keys[i], result) for
-                            (i, x), result in itertools.izip(needed, others) )
+                            (i, x), result in zip(needed, others) )
             self.memCache.set_multi(updates,
                             key_prefix = key_prefix,
                             time = self.memCacheTimeout)
@@ -1266,7 +1266,7 @@ class FileCachingChangesetFilter(BaseCachingChangesetFilter):
         # We skip the integrity check here because (1) the hash we're using
         # has '-c' applied and (2) the hash is a fileId sha1, not a file
         # contents sha1
-        for (encFileId, envVersion), size in itertools.izip(fileList,
+        for (encFileId, envVersion), size in zip(fileList,
                                                             sizes):
             nestedF = util.SeekableNestedFile(dest, size, start)
             self._cacheFileContents(encFileId, nestedF)
@@ -1322,7 +1322,7 @@ class ProxyRepositoryServer(Memcache, FileCachingChangesetFilter):
     # class for proxy servers used by standalone and apache implementations
     # adds a proxy specific version of getFileContentsFromTrove()
 
-    SERVER_VERSIONS = range(42, netserver.SERVER_VERSIONS[-1] + 1)
+    SERVER_VERSIONS = list(range(42, netserver.SERVER_VERSIONS[-1] + 1))
     forceSingleCsJob = False
 
     def __init__(self, cfg, basicUrl):
@@ -1505,8 +1505,8 @@ class ChangesetCache(object):
         if self.logPath is None:
             return
         now = time.time()
-        msecs = (now - long(now)) * 1000
-        extra = ''.join(' %s=%r' % (x, y) for (x, y) in kwargs.items())
+        msecs = (now - int(now)) * 1000
+        extra = ''.join(' %s=%r' % (x, y) for (x, y) in list(kwargs.items()))
         rec = '%s,%03d %s-%d %s%s\n' % (
                 time.strftime('%F %T', time.localtime(now)), msecs,
                 key[0], key[1], status, extra)
@@ -1576,7 +1576,7 @@ class ChangesetProducer(object):
                     continue
                 (path, expandedSize, isChangeset, preserveFile, offset,
                         ) = line
-                expandedSize = long(expandedSize)
+                expandedSize = int(expandedSize)
                 self.items.append((path, expandedSize, int(isChangeset),
                     int(preserveFile), int(offset)))
                 self.totalSize += expandedSize

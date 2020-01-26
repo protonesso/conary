@@ -99,7 +99,7 @@ def main(argv):
     grpMap = {}
 
     # [1,2,3,4,5,6,...] -> [(1,2,3), (4,5,6), ...]
-    commitList = zip(data, data[1:], data[2:])[::3]
+    commitList = list(zip(data, data[1:], data[2:]))[::3]
 
     for name, version, flavor in commitList:
         if name[-7:] == ':source':

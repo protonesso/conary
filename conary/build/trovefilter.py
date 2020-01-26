@@ -171,7 +171,7 @@ class TroveFilter(AbstractFilter):
         # just the ones that can reasonably co-exist
         a_arches = []
         b_arches = []
-        for prefArch in set(itertools.chain(*arch.FlavorPreferences.flavorPreferences.values())):
+        for prefArch in set(itertools.chain(*list(arch.FlavorPreferences.flavorPreferences.values()))):
             prefArch = deps.parseFlavor(prefArch)
             a_arches.append(a.satisfies(prefArch))
             b_arches.append(b.satisfies(prefArch))

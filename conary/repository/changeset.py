@@ -20,12 +20,13 @@ import errno
 import gzip
 import itertools
 import os
+import sys
 
 try:
-    from cStringIO import StringIO as _StringIO
+    from io import StringIO as _StringIO
     StringIO = _StringIO
 except ImportError:
-    from StringIO import StringIO
+    from io import StringIO
 
 from conary import files, rpmhelper, streams, trove, versions
 from conary.lib import base85, enum, log, patch, sha1helper, util, api
@@ -123,7 +124,7 @@ class ChangeSetFileDict(dict, streams.InfoStream):
 
     def freeze(self, skipSet = None):
         fileList = []
-        for ((oldFileId, newFileId), (csInfo)) in sorted(self.iteritems()):
+        for ((oldFileId, newFileId), (csInfo)) in sorted(self.items()):
             if not oldFileId:
                 oldFileId = ""
 
@@ -160,7 +161,7 @@ class ChangeSetFileDict(dict, streams.InfoStream):
                 yield (None, item[0]), item[1]
 
     def items(self):
-        return list(self.iteritems())
+        return list(self.items())
 
     def thaw(self ,data):
         i = 0
@@ -171,9 +172,9 @@ class ChangeSetFileDict(dict, streams.InfoStream):
             newFileId = info.newFileId()
             oldFileId = info.oldFileId()
             if oldFileId == "":
-                self[intern(newFileId)] = info.csInfo()
+                self[sys.intern(newFileId)] = info.csInfo()
             else:
-                self[(intern(oldFileId), intern(newFileId))] = info.csInfo()
+                self[(sys.intern(oldFileId), sys.intern(newFileId))] = info.csInfo()
 
     def __init__(self, data = None):
         if data:
@@ -266,19 +267,19 @@ class ChangeSet(streams.StreamSet):
         """
         @return: dictionary-valueiterator object
         """
-        return self.newTroves.itervalues()
+        return iter(self.newTroves.values())
 
     def iterNewPackageList(self):
         import warnings
         warnings.warn("iterNewPackageList is deprecated", DeprecationWarning)
-        return self.newTroves.itervalues()
+        return iter(self.newTroves.values())
 
     @api.publicApi
     def getNewTroveVersion(self, name, version, flavor):
         return self.newTroves[(name, version, flavor)]
 
     def hasNewTrove(self, name, version, flavor):
-        return self.newTroves.has_key((name, version, flavor))
+        return (name, version, flavor) in self.newTroves
 
     def getOldTroveList(self):
         return self.oldTroves
@@ -316,7 +317,7 @@ class ChangeSet(streams.StreamSet):
 
     def getFileContents(self, pathId, fileId, compressed = False):
         key = makeKey(pathId, fileId)
-        if self.fileContents.has_key(key):
+        if key in self.fileContents:
             (tag, contentObj, isCompressed) = self.fileContents[key]
         else:
             (tag, contentObj, isCompressed) = self.configCache[key]
@@ -359,7 +360,7 @@ class ChangeSet(streams.StreamSet):
                     troveName, version.asString(), flavor.freeze()))
         f.write("\n")
 
-        for trv in self.newTroves.itervalues():
+        for trv in self.newTroves.values():
             trv.formatToFile(self, f)
         for (troveName, version, flavor) in self.oldTroves:
             f.write("remove %s %s\n" % (troveName, version.asString()))
@@ -370,13 +371,13 @@ class ChangeSet(streams.StreamSet):
     def _findFileChange(self, fileId):
         # XXX this is a linear search - do not use this method!
         # this only exists for AbstractTroveChangeSet.formatToFile()
-        for oldFileId, newFileId in self.files.iterkeys():
+        for oldFileId, newFileId in self.files.keys():
             if newFileId == fileId:
                 return oldFileId, self.files[(oldFileId, newFileId)]
 
     def writeContents(self, csf, contents, early, withReferences):
         # these are kept sorted so we know which one comes next
-        idList = contents.keys()
+        idList = list(contents.keys())
         idList.sort()
 
         sizeCorrection = 0
@@ -437,7 +438,7 @@ class ChangeSet(streams.StreamSet):
                                            withReferences = withReferences)
         return (outFile.tell() - start) + correction
 
-    def writeToFile(self, outFileName, withReferences = False, mode = 0666,
+    def writeToFile(self, outFileName, withReferences = False, mode = 0o666,
                     versionOverride = None):
         # 0666 is right for mode because of umask
         try:
@@ -588,7 +589,7 @@ class ChangeSet(streams.StreamSet):
                     try:
                         fsFile = files.FileFromFilesystem(fullPath, pathId,
                                     possibleMatch = origFile)
-                    except OSError, e:
+                    except OSError as e:
                         if e.errno != errno.ENOENT:
                             raise
                         fsFile = None
@@ -683,7 +684,7 @@ class ChangeSet(streams.StreamSet):
                     try:
                         fsFile = files.FileFromFilesystem(fullPath, pathId,
                                     possibleMatch = origFile)
-                    except OSError, err:
+                    except OSError as err:
                         if err.errno == errno.ENOENT:
                             # the file doesn't exist - the user removed
                             # it manually.  This will make us store
@@ -812,18 +813,18 @@ class ChangeSet(streams.StreamSet):
             allFileContents = repos.getFileContents(
                     contentsNeeded + sorted(capsContentsNeeded.keys()))
             for (trv, pathId, fileId, version, isConfig), fileContents in \
-                            itertools.izip(hldrContents, allFileContents):
+                            zip(hldrContents, allFileContents):
                 rollback.addFileContents(pathId, fileId, ChangedFileTypes.file,
                                          fileContents, isConfig)
 
-            for ((fileId, version), l), fileContents in itertools.izip(
-                        sorted(capsContentsNeeded.iteritems()),
+            for ((fileId, version), l), fileContents in zip(
+                        sorted(capsContentsNeeded.items()),
                         allFileContents[len(contentsNeeded):]):
                 payload = rpmhelper.UncompressedRpmPayload(fileContents.get())
                 filePaths = [ x[0] for x in l ]
                 fileObjs = rpmhelper.extractFilesFromCpio(payload, filePaths)
                 for (path, pathId, fileId, isConfig), f in \
-                        itertools.izip(l, fileObjs):
+                        zip(l, fileObjs):
                     rollback.addFileContents(pathId, fileId,
                                              ChangedFileTypes.file,
                                              filecontents.FromFile(f),
@@ -863,7 +864,7 @@ class ChangeSet(streams.StreamSet):
         # XXX this is busted for groups
 
         for (name, troveCs), oldTrv in \
-                                itertools.izip(troveCsList, origTroveList):
+                                zip(troveCsList, origTroveList):
             origVer = troveCs.getNewVersion()
 
             oldVer = troveCs.getOldVersion()
@@ -882,7 +883,7 @@ class ChangeSet(streams.StreamSet):
             newTrv.invalidateDigests()
             newTrv.computeDigests()
 
-            assert(not troveVersions.has_key(name))
+            assert(name not in troveVersions)
             troveVersions[(name, troveCs.getNewFlavor())] = \
                                 [ (origVer, newVer) ]
 
@@ -893,7 +894,7 @@ class ChangeSet(streams.StreamSet):
 
             subTroves = [ x for x in newTrv.iterTroveListInfo() ]
             for (name, subVersion, flavor), byDefault, isStrong in subTroves:
-                if not troveVersions.has_key((name, flavor)): continue
+                if (name, flavor) not in troveVersions: continue
 
                 newTrv.delTrove(name, subVersion, flavor, missingOkay = False)
                 newTrv.addTrove(name, newVer, flavor, byDefault = byDefault,
@@ -918,7 +919,7 @@ class ChangeSet(streams.StreamSet):
         """
         jobSet = set()
 
-        for trvCs in self.newTroves.values():
+        for trvCs in list(self.newTroves.values()):
             if trvCs.getOldVersion():
                 job = (trvCs.getName(),
                        (trvCs.getOldVersion(), trvCs.getOldFlavor()),
@@ -966,7 +967,7 @@ class ChangeSet(streams.StreamSet):
                                 is not None ]
         present = repos.hasTroves(newTroveInfoList)
 
-        for (newTroveInfo, isPresent) in present.iteritems():
+        for (newTroveInfo, isPresent) in present.items():
             if isPresent:
                 self.delNewTrove(*newTroveInfo)
 
@@ -975,9 +976,9 @@ class ChangeSet(streams.StreamSet):
 
         return False
 
-    def _makeFileGitDiffCapsule(self, troveSource, pathId,
-                         (oldPath, oldFileId, oldFileVersion, oldFileObj),
-                         (newPath, newFileId, newFileObj), diffBinaries):
+    def _makeFileGitDiffCapsule(self, troveSource, pathId, xxx_todo_changeme, xxx_todo_changeme1, diffBinaries):
+        (oldPath, oldFileId, oldFileVersion, oldFileObj) = xxx_todo_changeme
+        (newPath, newFileId, newFileObj) = xxx_todo_changeme1
         if pathId == trove.CAPSULE_PATHID:
             return
 
@@ -1012,10 +1013,10 @@ class ChangeSet(streams.StreamSet):
             return
         yield "Encapsulated files differ\n"
 
-    def _makeFileGitDiff(self, troveSource, pathId,
-                         (oldPath, oldFileId, oldFileVersion, oldFileObj),
-                         (newPath, newFileId, newFileObj),
+    def _makeFileGitDiff(self, troveSource, pathId, xxx_todo_changeme2, xxx_todo_changeme3,
                          diffBinaries):
+        (oldPath, oldFileId, oldFileVersion, oldFileObj) = xxx_todo_changeme2
+        (newPath, newFileId, newFileObj) = xxx_todo_changeme3
         if oldFileId == newFileId:
             return
 
@@ -1097,8 +1098,8 @@ class ChangeSet(streams.StreamSet):
                     unified = fixeddifflib.unified_diff([],
                                  newContents.get().readlines())
                 # skip ---/+++ lines
-                unified.next()
-                unified.next()
+                next(unified)
+                next(unified)
                 for x in unified:
                     yield x
             else:
@@ -1221,7 +1222,7 @@ class ChangeSet(streams.StreamSet):
                     removeList.append((oldPath, oldFileObj))
             else:
                 for (pathId, fileId, version, path), fileObj in \
-                        itertools.izip(filesNeeded, fileObjects):
+                        zip(filesNeeded, fileObjects):
                     removeList.append((path, fileObj))
 
         for path, fileObj in removeList:
@@ -1400,12 +1401,12 @@ class ReadOnlyChangeSet(ChangeSet):
     def getFileContents(self, pathId, fileId, compressed = False):
         name = None
         key = makeKey(pathId, fileId)
-        if self.configCache.has_key(pathId):
+        if pathId in self.configCache:
             assert(not compressed)
             name = pathId
             (tag, contents, alreadyCompressed) = self.configCache[pathId]
             cont = contents
-        elif self.configCache.has_key(key):
+        elif key in self.configCache:
             name = key
             (tag, contents, alreadyCompressed) = self.configCache[key]
 
@@ -1447,7 +1448,7 @@ class ReadOnlyChangeSet(ChangeSet):
         if name != key and name != pathId:
             if len(pathId) == 16:
                 pathId = sha1helper.md5ToString(pathId)
-            raise KeyError, 'pathId %s is not in the changeset' % pathId
+            raise KeyError('pathId %s is not in the changeset' % pathId)
         else:
             return (tag, cont)
 
@@ -1466,13 +1467,13 @@ class ReadOnlyChangeSet(ChangeSet):
         neededFiles = []
 
         oldTroveList = [ (x.getName(), x.getOldVersion(),
-                          x.getOldFlavor()) for x in self.newTroves.values() ]
+                          x.getOldFlavor()) for x in list(self.newTroves.values()) ]
         oldTroves = repos.getTroves(oldTroveList)
 
         # for each file find the old fileId for it so we can assemble the
         # proper stream and contents
-        for trv, troveCs in itertools.izip(oldTroves,
-                                           self.newTroves.itervalues()):
+        for trv, troveCs in zip(oldTroves,
+                                           iter(self.newTroves.values())):
             if trv.troveInfo.incomplete():
                 raise errors.TroveError('''\
 Cannot apply a relative changeset to an incomplete trove.  Please upgrade conary and/or reinstall %s=%s[%s].''' % (trv.getName(), trv.getVersion(),
@@ -1508,7 +1509,7 @@ Cannot apply a relative changeset to an incomplete trove.  Please upgrade conary
         # XXX this would be markedly more efficient if we batched up getting
         # file contents
         for ((pathId, oldFileId, newFileId, oldVersion, newVersion, filecs),
-                        fileObj) in itertools.izip(neededFiles, fileObjs):
+                        fileObj) in zip(neededFiles, fileObjs):
             fileObj.twm(filecs, fileObj)
             (absFileCs, hash) = fileChangeSet(pathId, None, fileObj)
             absCs.addFile(None, newFileId, absFileCs)
@@ -1577,7 +1578,7 @@ Cannot apply a relative changeset to an incomplete trove.  Please upgrade conary
         newFiles = []
         newTroves = []
 
-        for (key, troveCs) in self.newTroves.items():
+        for (key, troveCs) in list(self.newTroves.items()):
             troveName = troveCs.getName()
             newVersion = troveCs.getNewVersion()
             newFlavor = troveCs.getNewFlavor()
@@ -1636,7 +1637,7 @@ Cannot apply a relative changeset to an incomplete trove.  Please upgrade conary
         assert(not withReferences)
         self.filesRead = True
 
-        keyList = self.configCache.keys()
+        keyList = list(self.configCache.keys())
         keyList.sort()
 
         # write out the diffs. these are always in the cache
@@ -1699,8 +1700,8 @@ Cannot apply a relative changeset to an incomplete trove.  Please upgrade conary
         return correction
 
     def _mergeConfigs(self, otherCs):
-        for key, f in otherCs.configCache.iteritems():
-            if not self.configCache.has_key(key):
+        for key, f in otherCs.configCache.items():
+            if key not in self.configCache:
                 self.configCache[key] = f
             elif len(key) == 16:
                 raise PathIdsConflictError(key)
@@ -1756,7 +1757,7 @@ Cannot apply a relative changeset to an incomplete trove.  Please upgrade conary
         # entries and extend the existing oldTroves object because it
         # is a streams.ReferencedTroveList, not a regular list
         if otherCs.oldTroves:
-            l = dict.fromkeys(self.oldTroves + otherCs.oldTroves).keys()
+            l = list(dict.fromkeys(self.oldTroves + otherCs.oldTroves).keys())
             del self.oldTroves[:]
             self.oldTroves.extend(l)
 
@@ -1766,7 +1767,7 @@ Cannot apply a relative changeset to an incomplete trove.  Please upgrade conary
                 self._mergeReadOnly(otherCs)
             else:
                 self._mergeCs(otherCs)
-        except ChangeSetKeyConflictError, err:
+        except ChangeSetKeyConflictError as err:
             pathId = err.pathId
 
             # look up the trove and file that caused the pathId
@@ -1818,7 +1819,7 @@ Cannot apply a relative changeset to an incomplete trove.  Please upgrade conary
         file content item in the changeset.
         """
         unpack = {}
-        for (oldFileId, newFileId), stream in self.files.iteritems():
+        for (oldFileId, newFileId), stream in self.files.items():
             if not files.frozenFileHasContents(stream):
                 continue
             if files.frozenFileFlags(stream).isEncapsulatedContent():
@@ -1858,13 +1859,13 @@ class ChangeSetFromFile(ReadOnlyChangeSet):
             if type(fileName) is str:
                 try:
                     f = util.ExtendedFile(fileName, "r", buffering = False)
-                except IOError, err:
+                except IOError as err:
                     raise errors.ConaryError(
                                 "Error opening changeset '%s': %s" %
                                     (fileName, err.strerror))
                 try:
                     csf = filecontainer.FileContainer(f)
-                except IOError, err:
+                except IOError as err:
                     raise filecontainer.BadContainer(
                                 "File %s is not a valid conary changeset: %s" % (fileName, err))
                 self.fileName = fileName
@@ -1888,7 +1889,7 @@ class ChangeSetFromFile(ReadOnlyChangeSet):
         empty = True
         self.fileContainers = [ csf ]
 
-        for trvCs in self.newTroves.itervalues():
+        for trvCs in self.newTroves.values():
             if not trvCs.isAbsolute():
                 self.absolute = False
             empty = False
@@ -1963,8 +1964,8 @@ def fileContentsDiff(oldFile, oldCont, newFile, newCont, mirrorMode = False):
 
         if first or second:
             diff = patch.unifiedDiff(first, second, "old", "new")
-            diff.next()
-            diff.next()
+            next(diff)
+            next(diff)
             cont = filecontents.FromString("".join(diff))
             contType = ChangedFileTypes.diff
         else:
@@ -2004,10 +2005,10 @@ class DictAsCsf:
     maxMemSize = 16384
 
     def getNextFile(self):
-        if self.next >= len(self.items):
+        if self.__next__ >= len(self.items):
             return None
 
-        (name, contType, contObj, compressed) = self.items[self.next]
+        (name, contType, contObj, compressed) = self.items[self.__next__]
         self.next += 1
 
         if compressed:
@@ -2034,7 +2035,7 @@ class DictAsCsf:
         # this is like __init__, but it knows things are config files so
         # it tags them with a "1" and puts them at the front
         l = [ (x[0], "1 " + x[1][0][4:], x[1][1], x[1][2])
-                        for x in contents.iteritems() ]
+                        for x in contents.items() ]
         l.sort()
         self.items = l + self.items
 
@@ -2046,7 +2047,7 @@ class DictAsCsf:
         # (name, contTag, contObj, compressed) list, where contTag is the same
         # kind of tag we use in csf files "[0|1] [file|diff]"
         self.items = [ (x[0], "0 " + x[1][0][4:], x[1][1], x[1][2]) for x in
-                            contents.iteritems() ]
+                            contents.items() ]
         self.items.sort()
         self.next = 0
 
@@ -2231,7 +2232,7 @@ class AbstractChangesetExploder:
         raise NotImplementedException
 
     def fileMissing(self, trv, pathId, fileId, path):
-        raise KeyError, pathId + fileId
+        raise KeyError(pathId + fileId)
 
 class ChangesetExploder(AbstractChangesetExploder):
 

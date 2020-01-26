@@ -3015,7 +3015,7 @@ conary erase 'test:runtime=/localhost@rpl:linux/2.0-1-1[]'
         self.updatePkg('foo:run=1')
         try:
             self.checkUpdate(['foo:run'], [], migrate=True)
-        except conaryclient.UpdateError, err:
+        except conaryclient.UpdateError as err:
             assert(str(err) == 'Cannot migrate to redirect(s), as they are all erases - \nfoo:run=/localhost@rpl:linux/2-1-1[]')
 
         self.checkUpdate(['foo:run', 'bar:run'], ['bar:run', 'foo:run=--'], 
@@ -3041,19 +3041,19 @@ conary erase 'test:runtime=/localhost@rpl:linux/2.0-1-1[]'
 
         try:
             self.checkUpdate(['foo:run'], ['foo:run=1--'], migrate=True)
-        except conaryclient.UpdateError, err:
+        except conaryclient.UpdateError as err:
             assert(str(err) == 'Redirect Loop detected - includes foo:run=/localhost@rpl:linux/2-1-1[] and bar:run=/localhost@rpl:linux/1-1-1[]')
 
         self.addComponent('baz:run', '4', redirect=['bar:run'])
         try:
             self.checkUpdate(['foo:run'], ['foo:run=1--'], migrate=True)
-        except conaryclient.UpdateError, err:
+        except conaryclient.UpdateError as err:
             assert(str(err) == 'Redirect Loop detected - includes bar:run=/localhost@rpl:linux/1-1-1[] and baz:run=/localhost@rpl:linux/4-1-1[]')
 
         self.addComponent('foo:run', '3', redirect=['foo:run'])
         try:
             self.checkUpdate(['foo:run'], ['foo:run=1--'], migrate=True)
-        except conaryclient.UpdateError, err:
+        except conaryclient.UpdateError as err:
             assert(str(err) == 'Redirect Loop detected - trove foo:run=/localhost@rpl:linux/3-1-1[] redirects to itself')
 
     @context('migrate')
@@ -3217,7 +3217,7 @@ conary erase 'test:runtime=/localhost@rpl:linux/2.0-1-1[]'
                           'glib=--:gnome1',
                           'glib:runtime=:linux--:gnome1',],
                           recurse=False, apply=True)
-        raise testhelp.SkipTestException, 'Should leave old glib around'
+        raise testhelp.SkipTestException('Should leave old glib around')
 
     @context('pathhashmatch')
     def testPathHashDiffPackagesRemain2(self):
@@ -3249,7 +3249,7 @@ conary erase 'test:runtime=/localhost@rpl:linux/2.0-1-1[]'
                           'glib:runtime=:linux--:gnome1',
                           'glib=--:gnome1' ],
                          recurse=False)
-        raise testhelp.SkipTestException, 'Should leave old glib around'
+        raise testhelp.SkipTestException('Should leave old glib around')
 
     @context('pathhashmatch')
     def testBranchAffinityAndPathHash(self):
@@ -3393,7 +3393,7 @@ conary erase 'test:runtime=/localhost@rpl:linux/2.0-1-1[]'
         try:
             self.updatePkg([ 'foo:run', 'bar:run' ],
                        callback = FailureUpdateCallback('restoreFiles'))
-        except Exception, e:
+        except Exception as e:
             self.assertEqual(e.args[0], 'restoreFiles')
         else:
             self.fail("Exception expected but not raised")
@@ -3411,7 +3411,7 @@ conary erase 'test:runtime=/localhost@rpl:linux/2.0-1-1[]'
         try:
             self.updatePkg([ 'foo:run', 'bar:run' ],
                        callback = FailureUpdateCallback('downloadingChangeSet'))
-        except Exception, e:
+        except Exception as e:
             self.assertEqual(e.args[0], 'downloadingChangeSet')
         else:
             self.fail("Exception expected but not raised")
@@ -3435,7 +3435,7 @@ conary erase 'test:runtime=/localhost@rpl:linux/2.0-1-1[]'
             database.sqldb.Database.timeout = 2000
             try:
                 self.updatePkg('bar:run', raiseError=True)
-            except errors.ConaryError, e:
+            except errors.ConaryError as e:
                 self.assertEqual(str(e), "Database error: database is locked")
             else:
                 self.fail("ConaryError not raised")
@@ -3500,9 +3500,9 @@ conary erase 'test:runtime=/localhost@rpl:linux/2.0-1-1[]'
                                 rephelp.RollbackScript(script= 'postrollback',
                                                        conversions = [ 2 ] ) )
         grpCs = grp.diff(None, absolute=True)[0]
-        self.assertEquals(False, grpCs.isRollbackFence(3))
-        self.assertEquals(False, grpCs.isRollbackFence(2))
-        self.assertEquals(True, grpCs.isRollbackFence(1))
+        self.assertEqual(False, grpCs.isRollbackFence(3))
+        self.assertEqual(False, grpCs.isRollbackFence(2))
+        self.assertEqual(True, grpCs.isRollbackFence(1))
 
     def testJobSizes(self):
         self.addComponent('first:run', '1')
@@ -3644,7 +3644,7 @@ conary erase 'test:runtime=/localhost@rpl:linux/2.0-1-1[]'
         self.assertEqual(updJob.getPreviousVersion(), None)
 
         # Readable file, junk at the beginning
-        os.chmod(vFilePath, 0644)
+        os.chmod(vFilePath, 0o644)
         file(vFilePath, "w").write("junk 1\nversion -1\n")
         updJob = database.UpdateJob(client.db)
         update._loadRestartInfo(restartDir, updJob)
@@ -3686,8 +3686,8 @@ conary erase 'test:runtime=/localhost@rpl:linux/2.0-1-1[]'
         # And some trailing whitespaces after the closing ]
         data = data.replace("group-foo", " group-foo").replace(']', '] ')
 
-        import StringIO
-        io = StringIO.StringIO(data)
+        import io
+        io = io.StringIO(data)
         io.seek(0)
         ret = update._unserializePreScripts(io)
         def _cvtJob(job):

@@ -24,9 +24,9 @@ from conary.lib import digestlib
 def sha1FileBin(path):
     oldmode = None
     mode = os.lstat(path)[stat.ST_MODE]
-    if (mode & 0400) != 0400:
+    if (mode & 0o400) != 0o400:
         oldmode = mode
-        os.chmod(path, mode | 0400)
+        os.chmod(path, mode | 0o400)
 
     fd = os.open(path, os.O_RDONLY)
     if oldmode is not None:

@@ -95,16 +95,16 @@ class CpioStreamTest(testcase.TestCaseWithWorkDir):
     def testOutOfOrderRead(self):
         cpioPath = self._createCpio()
         src = cpiostream.CpioStream(file(cpioPath))
-        ent = src.next()
+        ent = next(src)
         # Advance to the next entry, the first one should no longer be able to
         # read
-        src.next()
+        next(src)
         self.assertRaises(cpiostream.OutOfOrderRead, ent.payload.read)
 
     def testOutOfOrderRead2(self):
         cpioPath = self._createCpio()
         src = cpiostream.CpioStream(file(cpioPath))
-        ent = src.next()
+        ent = next(src)
         # The cpio stream advances one byte. This should be enough to kill the
         # reads for the entry
         src.read(1)
@@ -125,7 +125,7 @@ class CpioStreamTest(testcase.TestCaseWithWorkDir):
         expander.explode(target)
         sha1sum = digestlib.sha1(file(
             target + '/usr/lib/perl5/5.10.0/Archive/Tar.pm').read()).hexdigest()
-        self.assertEquals(sha1sum, 'cbe78d8a0d26a86436e4fc56f8581ffd3db4bd83')
+        self.assertEqual(sha1sum, 'cbe78d8a0d26a86436e4fc56f8581ffd3db4bd83')
 
         shutil.rmtree(self.workDir)
         os.mkdir(self.workDir)
@@ -135,4 +135,4 @@ class CpioStreamTest(testcase.TestCaseWithWorkDir):
         expander.explode(target)
         assert(os.path.isdir(target + '/dir'))
         sha1sum = digestlib.sha1(file(target + '/normal').read()).hexdigest()
-        self.assertEquals(sha1sum, '5662cdf7d378e7505362c59239f73107b6edf1d3')
+        self.assertEqual(sha1sum, '5662cdf7d378e7505362c59239f73107b6edf1d3')

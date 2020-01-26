@@ -30,20 +30,20 @@ class RepairTest(rephelp.RepositoryHelper):
     @testhelp.context('repair')
     def testRegularFiles(self):
         self.addComponent('foo:run', fileContents = [
-            ( '/f', rephelp.RegularFile(contents = 'orig\n', mode = 0600) ),
-            ( '/c', rephelp.RegularFile(contents = 'ocfg\n', mode = 0660,
+            ( '/f', rephelp.RegularFile(contents = 'orig\n', mode = 0o600) ),
+            ( '/c', rephelp.RegularFile(contents = 'ocfg\n', mode = 0o660,
                                         config = True) ) ] )
 
         self.updatePkg('foo:run')
         for p in 'f', 'c':
             path = self.rootDir + '/' + p
             self.writeFile(path, "new contents\n")
-            os.chmod(path, 0400)
+            os.chmod(path, 0o400)
 
         self.repairTroves([ 'foo:run' ])
 
-        self.assertEquals(os.stat(self.rootDir + '/f').st_mode & 0777, 0600)
-        self.assertEquals(os.stat(self.rootDir + '/c').st_mode & 0777, 0660)
+        self.assertEqual(os.stat(self.rootDir + '/f').st_mode & 0o777, 0o600)
+        self.assertEqual(os.stat(self.rootDir + '/c').st_mode & 0o777, 0o660)
         self.verifyFile(self.rootDir + '/f', 'orig\n')
         self.verifyFile(self.rootDir + '/c', 'ocfg\n')
 
@@ -52,15 +52,15 @@ class RepairTest(rephelp.RepositoryHelper):
         os.unlink(self.rootDir + '/c')
         os.unlink(self.rootDir + '/f')
         rc, s = self.captureOutput(self.repairTroves, [ 'foo:run' ])
-        self.assertEquals(s, '')
+        self.assertEqual(s, '')
         self.verifyFile(self.rootDir + '/f', 'orig\n')
         self.verifyFile(self.rootDir + '/c', 'ocfg\n')
 
     @testhelp.context('repair')
     def testFileTypeChange(self):
         self.addComponent('foo:run=1', fileContents = [
-            ( '/c', rephelp.RegularFile(contents = 'orig\n', mode = 0600, config=True) ),
-            ( '/f', rephelp.RegularFile(contents = 'orig\n', mode = 0600) ) ])
+            ( '/c', rephelp.RegularFile(contents = 'orig\n', mode = 0o600, config=True) ),
+            ( '/f', rephelp.RegularFile(contents = 'orig\n', mode = 0o600) ) ])
         self.addComponent('foo:run=2', fileContents = [
             ( '/f', rephelp.Symlink(target = '/targ') ) ])
 
@@ -70,7 +70,7 @@ class RepairTest(rephelp.RepositoryHelper):
         os.unlink(self.rootDir + '/f')
         os.symlink('/', self.rootDir + '/f')
         rc, s = self.captureOutput(self.repairTroves, [ 'foo:run' ])
-        self.assertEquals(s, '')
+        self.assertEqual(s, '')
         self.verifyFile(self.rootDir + '/c', 'orig\n')
         self.verifyFile(self.rootDir + '/f', 'orig\n')
 
@@ -78,8 +78,8 @@ class RepairTest(rephelp.RepositoryHelper):
         os.unlink(self.rootDir + '/f')
         self.writeFile(self.rootDir + '/f', 'new')
         rc, s = self.captureOutput(self.repairTroves, [ 'foo:run' ])
-        self.assertEquals(s, '')
-        self.assertEquals(os.readlink(self.rootDir + '/f'), '/targ')
+        self.assertEqual(s, '')
+        self.assertEqual(os.readlink(self.rootDir + '/f'), '/targ')
 
     @testhelp.context('repair')
     def testMissingDirectory(self):
@@ -88,7 +88,7 @@ class RepairTest(rephelp.RepositoryHelper):
         self.updatePkg('foo:run')
         os.rmdir(self.rootDir + '/dir')
         rc, s = self.captureOutput(self.repairTroves, [ 'foo:run' ])
-        self.assertEquals(s, '')
+        self.assertEqual(s, '')
         sb = os.stat(self.rootDir + '/dir')
         assert(stat.S_ISDIR(sb.st_mode))
 
@@ -106,7 +106,7 @@ class RepairTest(rephelp.RepositoryHelper):
         os.rmdir(self.rootDir + '/dir')
 
         rc, s = self.captureOutput(self.repairTroves, [ 'simple:rpm' ])
-        self.assertEquals(s, '')
+        self.assertEqual(s, '')
 
         self.verifyFile(self.rootDir + '/config', "config\n")
         self.verifyFile(self.rootDir + '/normal', "normal\n")
@@ -120,5 +120,5 @@ class RepairTest(rephelp.RepositoryHelper):
         self.addRPMComponent("ghost:rpm=1.0", 'ghost-1.0-1.i386.rpm')
         self.updatePkg('ghost:rpm', raiseError=True)
         rc, s = self.captureOutput(self.repairTroves, [ 'ghost:rpm' ])
-        self.assertEquals(s, '')
+        self.assertEqual(s, '')
         self.verifyFile(self.rootDir + '/foo/ghost', '')

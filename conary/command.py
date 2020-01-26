@@ -100,7 +100,7 @@ class ConaryCommand(options.AbstractCommand):
             cfg.installLabelPath = l
             del argSet['install-label']
 
-        for k,v in cfg.environment.items():
+        for k,v in list(cfg.environment.items()):
             if v == '':
                 cfg.environment.pop(k)
                 os.environ.pop(k, None)
@@ -148,16 +148,16 @@ class HelpCommand(options.AbstractCommand):
             command = args[2]
             commands = self.mainHandler._supportedCommands
             if not command in commands:
-                print "%s: no such command: '%s'" % (self.mainHandler.name,
-                                                     command)
+                print("%s: no such command: '%s'" % (self.mainHandler.name,
+                                                     command))
                 sys.exit(1)
             commands[command].usage()
         elif len(args) == 2:
             self.mainHandler.usage(showAll=True)
             return 0
         else:
-            print "%s: too many arguments: '%s'" % (self.mainHandler.name,
-                                                    ' '.join(args[2:]))
+            print("%s: too many arguments: '%s'" % (self.mainHandler.name,
+                                                    ' '.join(args[2:])))
             sys.exit(1)
 
 class MainHandler(options.MainHandler):

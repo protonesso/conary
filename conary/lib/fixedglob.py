@@ -46,7 +46,7 @@ def glob(pathname):
                 name = os.path.join(dirname, basename)
                 try:
                     os.lstat(name)
-                except OSError, err:
+                except OSError as err:
                     # if the file does not exist, or if an element of the
                     # path to the file is not a directory, ignore the error
                     if err.errno != errno.ENOENT and err.errno != errno.ENOTDIR:
@@ -68,7 +68,7 @@ def glob1(dirname, pattern):
     except os.error:
         return []
     if pattern[0]!='.':
-        names=filter(lambda x: x[0]!='.',names)
+        names=[x for x in names if x[0]!='.']
     return fnmatch.filter(names,pattern)
 
 

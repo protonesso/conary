@@ -60,7 +60,7 @@ class DisplayTest(rephelp.RepositoryHelper):
         # path query which ends in / queries a directory
         (rc, s2) = self.captureOutput(query.displayTroves, db, self.cfg,
                                      [], pathList=['/etc/'])
-        self.assertEquals(s2, 'testcase:runtime=1.0-1-1\n'
+        self.assertEqual(s2, 'testcase:runtime=1.0-1-1\n'
                               'testcase:runtime=1.0-1-1\n')
 
     def testTroveDisplayFormat(self):
@@ -265,7 +265,7 @@ foo:runtime=1.0-1-1
         rs, txt = self.captureOutput(queryrep.displayTroves, self.cfg,
                                      ['group-foo'], info = True)
         ref = 'Name      : group-foo          Build time: %s\nVersion   : 1.0-1-1            Label     : localhost@rpl:linux\nSize      : 0                 \nFlavor    :                   \nImage Group: True\n' % timestr
-        self.assertEquals(txt, ref)
+        self.assertEqual(txt, ref)
 
     def testTroveDisplayBuildReqs(self):
         db = self.openDatabase()

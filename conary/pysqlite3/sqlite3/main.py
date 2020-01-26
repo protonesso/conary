@@ -1,4 +1,4 @@
-from __future__ import nested_scopes
+
 import conary._sqlite3 as _sqlite
 
 import copy, new, sys, weakref
@@ -10,7 +10,7 @@ import time
 import traceback
 
 if _sqlite.sqlite_version_info() < (3,2,1):
-    raise RuntimeError, "sqlite too old"
+    raise RuntimeError("sqlite too old")
 
 _BEGIN = "BEGIN IMMEDIATE"
 
@@ -49,15 +49,15 @@ class Row:
 
     def __getattr__(self, attr):
         attr = attr.upper()
-        if self.col_names.has_key(attr):
+        if attr in self.col_names:
             return self.data[self.col_names[attr]]
-        raise AttributeError, attr
+        raise AttributeError(attr)
 
     def __len__(self):
         return len(self.data)
 
     def __contains__(self, key):
-        return self.has_key(key)
+        return key in self
 
     def __getslice__(self, i, j):
         return Row(self.data[i:j], self.description[i:j])
@@ -82,16 +82,16 @@ class Row:
 
     def items(self):
         l = []
-        for i in xrange(len(self.data)):
+        for i in range(len(self.data)):
             l.append((self.description[i][0], self.data[i]))
 
         return l
 
     def has_key(self, key):
-        return self.col_names.has_key(key.upper())
+        return key.upper() in self.col_names
 
     def get(self, key, defaultval=None):
-        if self.has_key(key):
+        if key in self:
             return self[key]
         else:
             return defaultval
@@ -132,8 +132,7 @@ class Cursor:
 
     def _checkNotClosed(self, methodname=None):
         if self.closed:
-            raise _sqlite.ProgrammingError, \
-                "%s failed - the cursor is closed." % (methodname or "")
+            raise _sqlite.ProgrammingError("%s failed - the cursor is closed." % (methodname or ""))
 
     def compile(self, SQL):
         return self.con.db.prepare(SQL)
@@ -151,7 +150,7 @@ class Cursor:
         SQL = SQL.strip()
 
         if self.con is None:
-            raise _sqlite.ProgrammingError, "connection is closed."
+            raise _sqlite.ProgrammingError("connection is closed.")
 
         if self.con.autocommit:
             pass
@@ -183,19 +182,18 @@ class Cursor:
                 self.stmt.bind(i + 1, parm)
         # hashes are named parameters
         elif isinstance(parms, dict):
-            for pkey, pval in parms.iteritems():
+            for pkey, pval in parms.items():
                 if pkey[0] == ":":
                     pkey = pkey[1:]
                 kwargs[pkey] = pval
         else:
-            raise _sqlite.ProgrammingError, \
-                  "Don't know how to bind these parameters"
+            raise _sqlite.ProgrammingError("Don't know how to bind these parameters")
         # the sqlite C bindings require us to reference these bind parameters as :name
-        for pkey, pval in kwargs.items():
+        for pkey, pval in list(kwargs.items()):
             # the sqlite bindings don't like 'binding' unkown named arguments
             try:
                 self.stmt.bind(":" + pkey, pval)
-            except _sqlite.ProgrammingError, e:
+            except _sqlite.ProgrammingError as e:
                 if e.args[0] == "Bind parameter name unknown to the query":
                     continue
                 raise
@@ -221,7 +219,7 @@ class Cursor:
                     self.stmt.bind(i+1, parm)
             elif isinstance(parms, dict):
                 # bind as named arguments
-                for pkey, pval in parms.iteritems():
+                for pkey, pval in parms.items():
                     if pkey[0] != ":": pkey = ":" + pkey
                     self.stmt.bind(pkey, pval)
             else:
@@ -235,11 +233,9 @@ class Cursor:
 
     def close(self):
         if self.con and self.con.closed:
-            raise _sqlite.ProgrammingError, \
-                  "This cursor's connection is already closed."
+            raise _sqlite.ProgrammingError("This cursor's connection is already closed.")
         if self.closed:
-            raise _sqlite.ProgrammingError, \
-                  "This cursor is already closed."
+            raise _sqlite.ProgrammingError("This cursor is already closed.")
 
         self._reset()
         self.closed = 1
@@ -286,7 +282,7 @@ class Cursor:
             howmany = self.arraysize
 
         l = []
-        for i in xrange(howmany):
+        for i in range(howmany):
             row = self.fetchone()
             if row is None:
                 break
@@ -313,7 +309,7 @@ class Cursor:
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         item = self.fetchone()
         if item is None:
             raise MyStopIteration
@@ -324,15 +320,15 @@ class Cursor:
         if mode == "absolute":
             value = value - self.rownumber
         if value > 0:
-            for i in xrange(value):
+            for i in range(value):
                 row = self.fetchone()
                 if row is None:
                     raise IndexError
             return
-        raise _sqlite.NotSupportedError, "cannot scroll backward"
+        raise _sqlite.NotSupportedError("cannot scroll backward")
 
     def __getattr__(self, key):
-        if self.__dict__.has_key(key):
+        if key in self.__dict__:
             return self.__dict__[key]
         elif key == "sql":
             # The sql attribute is a PySQLite extension.
@@ -342,7 +338,7 @@ class Cursor:
         elif key == "connection":
             return self.con
         else:
-            raise AttributeError, key
+            raise AttributeError(key)
 
 class Connection:
     def __init__(self, database=None, converters={}, autocommit=0, encoding=None, timeout=None, command_logfile=None, lockJournal=None, *arg, **kwargs):
@@ -382,16 +378,15 @@ class Connection:
 
     def _checkNotClosed(self, methodname):
         if self.closed:
-            raise _sqlite.ProgrammingError, \
-                  "%s failed - Connection is closed." % methodname
+            raise _sqlite.ProgrammingError("%s failed - Connection is closed." % methodname)
 
     def __anyCursorsLeft(self):
-        return len(self.cursors.data.keys()) > 0
+        return len(list(self.cursors.data.keys())) > 0
 
     def __closeCursors(self, doclose=0):
         """__closeCursors() - closes all cursors associated with this connection"""
         if self.__anyCursorsLeft():
-            cursors = map(lambda x: x(), self.cursors.data.values())
+            cursors = [x() for x in list(self.cursors.data.values())]
 
             for cursor in cursors:
                 try:
@@ -444,7 +439,7 @@ class Connection:
     def rollback(self):
         self._checkNotClosed("rollback")
         if self.autocommit:
-            raise _sqlite.ProgrammingError, "Rollback failed - autocommit is on."
+            raise _sqlite.ProgrammingError("Rollback failed - autocommit is on.")
 
         if self.inTransaction:
             # shut down any pending sql statements
@@ -472,14 +467,14 @@ class Connection:
     #
 
     def __getattr__(self, key):
-        if key in self.__dict__.keys():
+        if key in list(self.__dict__.keys()):
             return self.__dict__[key]
         elif key in ('IntegrityError', 'InterfaceError', 'InternalError',
                      'NotSupportedError', 'OperationalError',
                      'ProgrammingError', 'Warning'):
             return getattr(_sqlite, key)
         else:
-            raise AttributeError, key
+            raise AttributeError(key)
 
 class LockJournal(object):
     def __init__(self, path):
@@ -503,6 +498,6 @@ class LockJournal(object):
     def stop(self):
         try:
             os.remove(self.path)
-        except OSError, err:
+        except OSError as err:
             if err.errno != errno.ENOENT:
                 raise

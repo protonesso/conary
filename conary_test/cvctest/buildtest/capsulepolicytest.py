@@ -50,7 +50,7 @@ class TestEpoch(CapsuleRecipe):
         repos = self.openRepository()
         trv = repos.getTrove(*nvf)
 
-        self.assertEquals(trv.troveInfo.capsule.rpm.epoch(), 17)
+        self.assertEqual(trv.troveInfo.capsule.rpm.epoch(), 17)
 
     @conary_test.rpm
     def testScriptHasLdSoConf(self):
@@ -92,13 +92,13 @@ class TestEpoch(CapsuleRecipe):
         repos = self.openRepository()
         trv = repos.getTrove(*nvf)
 
-        self.assertEquals(str(trv.provides()),
+        self.assertEqual(str(trv.provides()),
             '\n'.join(('trove: epoch:rpm',
                        'rpm: epoch',
                        'rpm: epoch[x86-32]',
                        'rpm: nonsenseProvision(BAR FOO)')))
 
-        self.assertEquals(str(trv.requires),
+        self.assertEqual(str(trv.requires),
             '\n'.join(('rpm: nonsenseRequirement(BAZ QUX)',
                        'rpmlib: CompressedFileNames',
                        'rpmlib: PayloadFilesHavePrefix')))
@@ -112,7 +112,7 @@ class TestEpoch(CapsuleRecipe):
         repos = self.openRepository()
         trv = repos.getTrove(*nvf)
 
-        self.assertEquals(str(trv.provides()),
+        self.assertEqual(str(trv.provides()),
             '\n'.join(('trove: epoch:rpm',
                        'rpm: epoch',
                        'rpm: epoch-17:1.0',
@@ -122,7 +122,7 @@ class TestEpoch(CapsuleRecipe):
                        'rpm: epoch[x86-32]-17:1.0-1',
                        'rpm: nonsenseProvision(BAR FOO)')))
 
-        self.assertEquals(str(trv.requires),
+        self.assertEqual(str(trv.requires),
             '\n'.join(('rpm: nonsenseRequirement(BAZ QUX)',
                        'rpmlib: CompressedFileNames',
                        'rpmlib: PayloadFilesHavePrefix')))
@@ -143,7 +143,7 @@ class TestEpoch(CapsuleRecipe):
 """
         try:
             self.buildRecipe(recipestr1, "TestEpoch")
-        except CookError, e:
+        except CookError as e:
             err = str(e).split('\n')[1]
             self.assertEqual(
                 str(err),
@@ -167,7 +167,7 @@ class TestEpoch(CapsuleRecipe):
 """
         try:
             self.buildRecipe(recipestr1, "TestEpoch")
-        except CookError, e:
+        except CookError as e:
             err = str(e).split('\n')[1]
             self.assertEqual(
                 str(err),
@@ -237,8 +237,8 @@ class TestRecipe(CapsuleRecipe):
             trv = repos.getTrove(*nvf)
             reqGot = list(trv.requires().iterDepsByClass(deps.RpmDependencies))
             provGot = list(trv.provides().iterDepsByClass(deps.RpmDependencies))
-            self.assertEquals(str(reqGot), reqExpected)
-            self.assertEquals(str(provGot), provExpected)
+            self.assertEqual(str(reqGot), reqExpected)
+            self.assertEqual(str(provGot), provExpected)
 
         recipestr1 = r"""
 class TestKernel(CapsuleRecipe):
@@ -315,7 +315,7 @@ class TestDepCulling(CapsuleRecipe):
         trv = repos.getTrove(*nvf)
         reqGot = list(trv.requires().iterDepsByClass(deps.RpmDependencies))
         reqExpected = "[Dependency('hal'), Dependency('gnome-main-menu-lang'), Dependency('gnome-panel'), Dependency('tango-icon-theme'), Dependency('coreutils'), Dependency('dbus-1-glib'), Dependency('libssui'), Dependency('eel'), Dependency('wireless-tools')]"
-        self.assertEquals(str(reqGot), reqExpected)
+        self.assertEqual(str(reqGot), reqExpected)
 
         self.cfg.enableRPMVersionDeps = True
         built, d = self.buildRecipe(recipestr1, "TestDepCulling")
@@ -327,7 +327,7 @@ class TestDepCulling(CapsuleRecipe):
         trv = repos.getTrove(*nvf)
         reqGot = list(trv.requires().iterDepsByClass(deps.RpmDependencies))
         reqExpected = "[Dependency('hal'), Dependency('gnome-main-menu-lang'), Dependency('gnome-main-menu-lang-0.9.10'), Dependency('gnome-panel'), Dependency('tango-icon-theme'), Dependency('coreutils'), Dependency('dbus-1-glib'), Dependency('libssui'), Dependency('eel'), Dependency('wireless-tools')]"
-        self.assertEquals(str(reqGot), reqExpected)
+        self.assertEqual(str(reqGot), reqExpected)
 
     @conary_test.rpm
     def testRPMRequiresExceptions(self):
@@ -352,7 +352,7 @@ class TestRPMRequiresExceptions(CapsuleRecipe):
         trv = repos.getTrove(*nvf)
         reqGot = list(trv.requires().iterDepsByClass(deps.RpmDependencies))
         reqExpected = "[]"
-        self.assertEquals(str(reqGot), reqExpected)
+        self.assertEqual(str(reqGot), reqExpected)
 
     @conary_test.rpm
     def testRPMRequiresExceptDeps1(self):
@@ -377,7 +377,7 @@ class TestRPMRequiresExceptDeps(CapsuleRecipe):
         trv = repos.getTrove(*nvf)
         reqGot = list(trv.requires().iterDepsByClass(deps.RpmLibDependencies))
         reqExpected = "[]"
-        self.assertEquals(str(reqGot), reqExpected)
+        self.assertEqual(str(reqGot), reqExpected)
 
     @conary_test.rpm
     def testRPMRequiresExceptDeps2(self):
@@ -402,7 +402,7 @@ class TestRPMRequiresExceptDeps(CapsuleRecipe):
         trv = repos.getTrove(*nvf)
         reqGot = list(trv.requires().iterDepsByClass(deps.RpmLibDependencies))
         reqExpected = "[]"
-        self.assertEquals(str(reqGot), reqExpected)
+        self.assertEqual(str(reqGot), reqExpected)
 
     @conary_test.rpm
     def testRPMRequiresExceptDeps3(self):
@@ -427,7 +427,7 @@ class TestRPMRequiresExceptDeps(CapsuleRecipe):
         trv = repos.getTrove(*nvf)
         reqGot = list(trv.requires().iterDepsByClass(deps.RpmDependencies))
         reqExpected = "[]"
-        self.assertEquals(str(reqGot), reqExpected)
+        self.assertEqual(str(reqGot), reqExpected)
 
     @conary_test.rpm
     def testRPMCapsuleUserGroup(self):
@@ -448,7 +448,7 @@ class TestGroup(CapsuleRecipe):
         repos = self.openRepository()
         trv = repos.getTrove(*nvf)
 
-        self.assertEquals(trv.requires(), deps.ThawDependencySet(
+        self.assertEqual(trv.requires(), deps.ThawDependencySet(
                 '17#CompressedFileNames|17#PayloadFilesHavePrefix|'
                 '17#PayloadIsBzip2'))
 
@@ -663,7 +663,7 @@ class TestTags(CapsuleRecipe):
         fileObjs = repos.getFileVersions([(x[0], x[2], x[3])
                                           for x in fileList])
         fileObj = fileObjs[0]
-        self.assertEquals(fileObj.tags, [])
+        self.assertEqual(fileObj.tags, [])
 
     @conary_test.rpm
     def testRPMCapsuleKernelDeps(self):
@@ -743,7 +743,7 @@ class TestRecipe(CapsuleRecipe):
         recipe3 = (recipe1 + "\n        "
             "r.RemoveCapsuleFiles('%(name)s:foo', '^/usr/bin/script$')")
         e = self.assertRaises(PolicyError, self.build, recipe3, 'TestRecipe')
-        self.assertEquals(str(e),
+        self.assertEqual(str(e),
                   'Package Policy errors found:\n'
                   'RemoveCapsuleFiles: Component test:foo does not exist')
 

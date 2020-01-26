@@ -221,12 +221,12 @@ class IdealRepository(AbstractTroveDatabase):
         Merges the result of getTroveLatestVersions (and friends) into
         target.
         """
-        for (name, verDict) in source.iteritems():
-            if not target.has_key(name):
+        for (name, verDict) in source.items():
+            if name not in target:
                 target[name] = verDict
             else:
-                for (version, flavorList) in verDict.iteritems():
-                    if not target[name].has_key(version):
+                for (version, flavorList) in verDict.items():
+                    if version not in target[name]:
                         target[name][version] = flavorList
                     else:
                         target[name][version] += flavorList
@@ -390,7 +390,7 @@ class ChangeSetJob:
         def filterOne(l, isConfig):
             newL = []
             inReposList = self._containsFileContents(tup[2] for tup in l)
-            for tup, inRepos in itertools.izip(l, inReposList):
+            for tup, inRepos in zip(l, inReposList):
                 if inRepos:
                     (pathId, fileId, sha1) = tup[0:3]
                     restoreContents = tup[-1]
@@ -495,12 +495,11 @@ class ChangeSetJob:
             troveFlavor = csTrove.getNewFlavor()
 
             if repos.hasTrove(troveName, newVersion, troveFlavor):
-                raise errors.CommitError, \
-                       "version %s of %s already exists" % \
-                        (newVersion.asString(), csTrove.getName())
+                raise errors.CommitError("version %s of %s already exists" % \
+                        (newVersion.asString(), csTrove.getName()))
 
             if oldTroveVersion:
-                newTrove = oldTroveIter.next()
+                newTrove = next(oldTroveIter)
                 assert(newTrove.getNameVersionFlavor() ==
                         csTrove.getOldNameVersionFlavor())
                 self.oldTrove(newTrove, csTrove, troveName, oldTroveVersion,
@@ -665,7 +664,7 @@ class ChangeSetJob:
         try:
             # we need to actualize this, not just get a generator
             list(repos.getFileVersions(checkFilesList))
-        except errors.FileStreamMissing, e:
+        except errors.FileStreamMissing as e:
             info = [ x for x in checkFilesList if x[1] == e.fileId ]
             (pathId, fileId) = info[0][0:2]
             # Missing from the repo; raise exception
@@ -710,7 +709,7 @@ class ChangeSetJob:
             for trvCs in newList:
                 slot = (trvCs.getName(), trvCs.getNewVersion().branch())
                 slots.setdefault(slot, set()).add(trvCs)
-            for slot, troves in slots.iteritems():
+            for slot, troves in slots.items():
                 # The latest trove in each LatestCache slot is reset to the
                 # current server time. This avoids client clock skew causing
                 # new troves to be older than existing troves. All other
@@ -727,7 +726,7 @@ class ChangeSetJob:
                 # Now reset all the timestamps, using now for the latest node
                 # and a lesser value for each preceding one.
                 newStamp = now
-                for ver, stamp in sorted(nodes.items(), key=lambda x: x[1],
+                for ver, stamp in sorted(list(nodes.items()), key=lambda x: x[1],
                         reverse=True):
                     for trvCs in troves:
                         if str(trvCs.getNewVersion()) == ver:

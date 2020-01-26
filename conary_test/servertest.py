@@ -20,7 +20,7 @@ from testutils import sock_utils
 import os
 import signal
 import sys
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 
 import conary_test
 
@@ -44,8 +44,8 @@ class ServerTest(rephelp.RepositoryHelper):
         for path in ('changeset?foobar.cf', 'changeset?foobar.cf-out'):
             url = base + path
             try:
-                f = urllib2.urlopen(url)
-            except urllib2.HTTPError, e:
+                f = urllib.request.urlopen(url)
+            except urllib.error.HTTPError as e:
                 assert(e.code == 404)
             else:
                 raise RuntimeError('404 not returned')
@@ -106,7 +106,7 @@ class ServerTest(rephelp.RepositoryHelper):
                     # make sure the client sends its message
                     self.sleep(7)
                     return rv
-                getChangeSet.im_func = getChangeSet
+                getChangeSet.__func__ = getChangeSet
                 netServer.getChangeSet = getChangeSet
 
                 class HttpRequestsSubclass(server.HttpRequests):

@@ -15,7 +15,7 @@
 #
 
 
-import httplib
+import http.client
 import logging
 import socket
 
@@ -78,7 +78,7 @@ class URLOpener(object):
         if isinstance(url, req_mod.Request):
             req = url
         else:
-            if isinstance(url, basestring):
+            if isinstance(url, str):
                 url = req_mod.URL.parse(url)
             elif isinstance(url, req_mod.URL):
                 pass
@@ -199,17 +199,17 @@ class URLOpener(object):
                 try:
                     response = self._requestOnce(req, proxySpec)
                     break
-                except http_error.RequestError, err:
+                except http_error.RequestError as err:
                     # Retry if an error occurred while sending the request.
                     lastError = err.wrapped
                     err = lastError.value
                     if lastError.check(socket.error):
                         self._processSocketError(err)
                         lastError.replace(err)
-                except httplib.BadStatusLine:
+                except http.client.BadStatusLine:
                     # closed connection without sending a response.
                     lastError = util.SavedException()
-                except socket.error, err:
+                except socket.error as err:
                     # Fatal error, but attach proxy information to it.
                     self._processSocketError(err)
                     util.rethrow(err, False)
@@ -311,7 +311,7 @@ class URLOpener(object):
             error.strerror = msgError
 
     def close(self):
-        for conn in self.connectionCache.values():
+        for conn in list(self.connectionCache.values()):
             conn.close()
         self.connectionCache.clear()
 

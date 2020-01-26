@@ -713,7 +713,7 @@ class GroupTest(rephelp.RepositoryHelper):
     def checkFailure(self, recipeStr, recipeName, msg):
         try:
             self.build(recipeStr, recipeName)
-        except cook.CookError, e:
+        except cook.CookError as e:
             self.assertFalse(str(e) != msg, "incorrect exception: %s" % str(e))
         else:
             self.fail("exception expected")
@@ -721,7 +721,7 @@ class GroupTest(rephelp.RepositoryHelper):
     def testError(self):
         try:
             self.build(errorGroup, 'errorGroup')
-        except errors.RecipeFileError, e:
+        except errors.RecipeFileError as e:
             # XXX should really fix this error message
             pass
         else:
@@ -763,7 +763,7 @@ class GroupTest(rephelp.RepositoryHelper):
 
         try:
             self.build(cyclicGroup, "cyclicGroup")
-        except cook.CookError, msg:
+        except cook.CookError as msg:
             assert(str(msg) == 
                    "cycle in groups:"
                    "\n  ['group-first', 'group-second']")
@@ -772,7 +772,7 @@ class GroupTest(rephelp.RepositoryHelper):
 
         try:
             self.build(cyclicGroup2, "cyclicGroup")
-        except errors.CookError, msg:
+        except errors.CookError as msg:
             assert(str(msg).endswith("group group-first cannot contain itself"))
         else:
             assert(0)
@@ -860,7 +860,7 @@ class GroupTest(rephelp.RepositoryHelper):
         elif use.Arch.x86_64:
             flavorBase = '1#x86_64|'
         else:
-            raise NotImplementedError, 'modify test for this arch'
+            raise NotImplementedError('modify test for this arch')
             
         assert(flavor.freeze() == flavorBase + '5#use:readline:~test1.foo')
         #rc, result = self.captureOutput(self.cookTestPkg, 1)
@@ -878,16 +878,16 @@ class GroupTest(rephelp.RepositoryHelper):
         assert(flavor.freeze() == '')
         group = self.build(flavoredGroup1, 'flavoredGroup')
         flavor = group.getFlavor()
-        self.assertEquals(flavor.freeze(), flavorBase + '5#use:~!bootstrap:~group-test.bar:readline:~test1.foo')
+        self.assertEqual(flavor.freeze(), flavorBase + '5#use:~!bootstrap:~group-test.bar:readline:~test1.foo')
         use.LocalFlags._clear()
         group = self.build(flavoredGroup2, 'flavoredGroup')
         flavor = group.getFlavor()
-        self.assertEquals(flavor.freeze(), flavorBase + '5#use:~!bootstrap:~group-test.test1:readline:~!test1.foo')
+        self.assertEqual(flavor.freeze(), flavorBase + '5#use:~!bootstrap:~group-test.test1:readline:~!test1.foo')
         troves = [ x for x in group.iterTroveList(strongRefs=True) ] 
         assert(len(troves) == 2)
         test1 = [ x for x in troves if x[0] == 'test1'][0]
         test1flavor = test1[2]
-        self.assertEquals(test1flavor.freeze(), flavorBase + '5#use:readline:~!test1.foo')
+        self.assertEqual(test1flavor.freeze(), flavorBase + '5#use:readline:~!test1.foo')
         # now test when both flavors are included...in this case,
         # test1.foo should be dropped from the final group's flavor
         group = self.build(flavoredGroup3, 'flavoredGroup')
@@ -911,7 +911,7 @@ class GroupTest(rephelp.RepositoryHelper):
         elif use.Arch.x86_64:
             flavorBase = '1#x86_64|'
         else:
-            raise NotImplementedError, 'modify test for this arch'
+            raise NotImplementedError('modify test for this arch')
             
         self.addComponent('group-test:source', '1.0',
                           [('group-test.recipe', almostFlavoredGroup)])
@@ -948,7 +948,7 @@ class GroupTest(rephelp.RepositoryHelper):
             assert(built[0][0][2].freeze() == '1#x86_64')
             arch = 'x86_64'
         else:
-            raise NotImplementedError, 'modify test for this arch'
+            raise NotImplementedError('modify test for this arch')
         os.chdir(self.workDir)
         self.checkout("test1")
         os.chdir("test1")
@@ -1007,7 +1007,7 @@ class DepCheckRecipe(GroupRecipe):
         self.addComponent('other:runtime', '1.0-1-1')
         try:
             self.build(depCheckRecipe, 'DepCheckRecipe')
-        except errors.CookError, msg:
+        except errors.CookError as msg:
             self.assertEqual(str(msg), '''\
 Dependency failure
 Group group-test has unresolved dependencies:
@@ -1170,7 +1170,7 @@ class AutoResolveRecipe(GroupRecipe):
         try:
             group = self.build(resolveByGroupRecipe, 'ResolveByGroup')
             assert(0)
-        except conaryclient.DependencyFailure, e:
+        except conaryclient.DependencyFailure as e:
             assert(str(e) == 'The following dependencies could not be resolved:\n    foo:run=1.0-1-1:\n\ttrove: prov1:run(foo)')
 
 
@@ -1283,7 +1283,7 @@ class DepCheckRecipe(GroupRecipe):
                   '\ttrove: other2:runtime')
         try:
             self.build(depCheckRecipe, 'DepCheckRecipe')
-        except cook.CookError, msg:
+        except cook.CookError as msg:
             assert(str(msg) == errMsg)
         else:
             assert 0
@@ -1312,7 +1312,7 @@ class DepCheckRecipe(GroupRecipe):
                   '\ttrove: other2:runtime')
         try:
             self.build(depCheckRecipe2, 'DepCheckRecipe')
-        except cook.CookError, msg:
+        except cook.CookError as msg:
             assert(str(msg) == errMsg)
         else:
             assert(0)
@@ -1404,7 +1404,7 @@ class EmptyGroup(GroupRecipe):
         self.addComponent('test:runtime', '1.0-1-1')
         try:
             self.build(emptyGroup, 'EmptyGroup')
-        except cook.CookError, msg:
+        except cook.CookError as msg:
             assert(str(msg) == 'group-test has no troves in it')
         else:
             assert(0)
@@ -1826,7 +1826,7 @@ warning: Could not find troves to remove in group-replaceNothing:
 
         try:
             self.build(addAllGroup, 'AddAllGroup')
-        except errors.CookError, msg:
+        except errors.CookError as msg:
             assert(str(msg) == '''\
 Cannot recursively addAll from group "group-os":
   Multiple groups with the same name(s) 'group-foo'
@@ -1987,8 +1987,8 @@ class GroupConflicts(GroupRecipe):
         try:
             self.build(groupConflicts, 'GroupConflicts')
             assert(0)
-        except errors.GroupPathConflicts, err:
-            self.assertEquals(str(err), '''\
+        except errors.GroupPathConflicts as err:
+            self.assertEqual(str(err), '''\
 
 The following troves in the following groups have conflicts:
 
@@ -2069,8 +2069,8 @@ class GroupConflicts(GroupRecipe):
         try:
             self.build(groupConflicts1, 'GroupConflicts')
             assert(0)
-        except errors.GroupPathConflicts, err:
-            self.assertEquals(str(err), '''\
+        except errors.GroupPathConflicts as err:
+            self.assertEqual(str(err), '''\
 
 The following troves in the following groups have conflicts:
 
@@ -2115,8 +2115,8 @@ class GroupConflicts(GroupRecipe):
         try:
             self.build(groupConflicts2, 'GroupConflicts')
             assert(0)
-        except errors.GroupPathConflicts, err:
-            self.assertEquals(str(err), '''\
+        except errors.GroupPathConflicts as err:
+            self.assertEqual(str(err), '''\
 
 The following troves in the following groups have conflicts:
 
@@ -2152,8 +2152,8 @@ class GroupConflicts(GroupRecipe):
         try:
             self.build(groupConflicts3, 'GroupConflicts')
             assert(0)
-        except errors.GroupPathConflicts, err:
-            self.assertEquals(str(err), '''\
+        except errors.GroupPathConflicts as err:
+            self.assertEqual(str(err), '''\
 
 The following troves in the following groups have conflicts:
 
@@ -2188,8 +2188,8 @@ class GroupConflicts(GroupRecipe):
         try:
             self.build(groupConflicts4, 'GroupConflicts')
             assert(0)
-        except errors.GroupPathConflicts, err:
-            self.assertEquals(str(err), '''\
+        except errors.GroupPathConflicts as err:
+            self.assertEqual(str(err), '''\
 
 The following troves in the following groups have conflicts:
 
@@ -2290,7 +2290,7 @@ class GroupConflicts(GroupRecipe):
         try:
             self.build(groupAddGroupConflicts, 'GroupConflicts')
             assert(0)
-        except errors.GroupPathConflicts, err:
+        except errors.GroupPathConflicts as err:
             self.assertEqual(str(err), '''\
 
 The following troves in the following groups have conflicts:
@@ -2335,7 +2335,7 @@ class GroupResolveConflicts(GroupRecipe):
         try:
             self.build(groupAddResolveConflicts, 'GroupResolveConflicts')
             assert(0)
-        except errors.GroupPathConflicts, err:
+        except errors.GroupPathConflicts as err:
             assert(str(err) == '''
 The following troves in the following groups have conflicts:
 
@@ -2377,7 +2377,7 @@ class GroupResolveConflicts(GroupRecipe):
         try:
             self.build(groupAddResolveConflicts, 'GroupResolveConflicts')
             assert(0)
-        except errors.GroupPathConflicts, err:
+        except errors.GroupPathConflicts as err:
             assert(str(err) == '''
 The following troves in the following groups have conflicts:
 
@@ -2420,7 +2420,7 @@ class GroupResolveConflicts(GroupRecipe):
             self.build(groupAddResolveConflicts, 'GroupResolveConflicts',
                     logLevel = log.DEBUG)
             assert(0)
-        except errors.GroupPathConflicts, err:
+        except errors.GroupPathConflicts as err:
             assert(str(err) == '''
 The following troves in the following groups have conflicts:
 
@@ -2451,9 +2451,9 @@ group-dist:
         grp = DummyGroup()
         reason = grp.getReasonString('name1', 'version', 'flavor')
         ref = "Added to satisfy dep of n=v[f]"
-        self.assertEquals(reason, ref)
+        self.assertEqual(reason, ref)
         reason = grp.getReasonString('name7', 'version', 'flavor')
-        self.assertEquals(reason, ref)
+        self.assertEqual(reason, ref)
 
     def testAddAllCreatesConflict(self):
         self.addComponent('foo:runtime', '1', [ ('/foo', 'this') ],
@@ -2477,7 +2477,7 @@ class GroupResolveConflicts(GroupRecipe):
         try:
             self.build(groupAddAllConflicts, 'GroupResolveConflicts')
             assert(0)
-        except errors.GroupPathConflicts, err:
+        except errors.GroupPathConflicts as err:
             assert(str(err) == '''\
 
 The following troves in the following groups have conflicts:
@@ -2519,7 +2519,7 @@ class GroupReplaceConflicts(GroupRecipe):
         try:
             self.build(groupReplaceConflicts, 'GroupReplaceConflicts')
             assert(0)
-        except errors.GroupPathConflicts, err:
+        except errors.GroupPathConflicts as err:
             assert(str(err) == '''\
 
 The following troves in the following groups have conflicts:
@@ -2559,7 +2559,7 @@ class GroupAddGroupConflicts(GroupRecipe):
         try:
             self.build(groupAddGroupConflicts, 'GroupAddGroupConflicts')
             assert(0)
-        except errors.GroupPathConflicts, err:
+        except errors.GroupPathConflicts as err:
             assert(str(err) == '''\
 
 The following troves in the following groups have conflicts:
@@ -2761,7 +2761,7 @@ class basicGroup(GroupRecipe):
         try:
             self.build(group1, 'basicGroup')
             assert(0)
-        except Exception, err:
+        except Exception as err:
             assert(str(err).endswith('ParseError: Error parsing label "localhost@rpl": @ sign can only be used with a colon'))
 
     def testSearchPath(self):
@@ -3075,7 +3075,7 @@ class basicGroup(GroupRecipe):
 
         try:
             self.build(unknownGroup, 'basicGroup')
-        except errors.RecipeFileError, e:
+        except errors.RecipeFileError as e:
             assert(str(e) == "No such group 'baz'")
         else:
             assert(0)
@@ -3092,7 +3092,7 @@ class basicGroup(GroupRecipe):
 """
         try:
             self.build(noContents, 'basicGroup')
-        except errors.CookError, e:
+        except errors.CookError as e:
             assert(str(e).endswith('RecipeFileError: no contents given for '
                                    'group script'))
         else:
@@ -3112,7 +3112,7 @@ class basicGroup(GroupRecipe):
 
         try:
             self.build(doubleContents, 'basicGroup')
-        except errors.RecipeFileError, e:
+        except errors.RecipeFileError as e:
             assert(str(e).endswith('script already set for group group-basic'))
         else:
             assert(0)
@@ -3129,7 +3129,7 @@ class basicGroup(GroupRecipe):
 """
         try:
             self.build(multipleContentSpec, 'basicGroup')
-        except errors.CookError, e:
+        except errors.CookError as e:
             assert(str(e).endswith('both contents and filename given for '
                                    'group script'))
         else:
@@ -3147,7 +3147,7 @@ class basicGroup(GroupRecipe):
 """
         try:
             self.build(missingFile, 'basicGroup')
-        except errors.RecipeFileError, e:
+        except errors.RecipeFileError as e:
             assert(str(e).endswith('file "path" not found for group script'))
         else:
             assert(0)
@@ -3171,8 +3171,8 @@ class basicGroup(GroupRecipe):
         try:
             self.captureOutput(self.cookItem, repos, self.cfg, 'group-pkg[!ssl]', groupOptions=groupOptions)
             assert(0)
-        except Exception, err:
-            self.assertEquals(str(err), '''The group flavors that were cooked changed from the previous cook.
+        except Exception as err:
+            self.assertEqual(str(err), '''The group flavors that were cooked changed from the previous cook.
 The following flavors were newly cooked:
     
      readline,!ssl
@@ -3248,13 +3248,13 @@ class basicGroup(GroupRecipe):
                              deps.parseFlavor('ssl,!readline is:x86'),
                              deps.parseFlavor('!ssl,readline is:x86_64')]),
                            groupOptions=groupOptions)
-        self.assertEquals(
+        self.assertEqual(
             str(self.findAndGetTrove('group-basic[ssl,readline is:x86]').getFlavor()),
              '~readline is: x86')
-        self.assertEquals(
+        self.assertEqual(
             str(self.findAndGetTrove('group-basic[ssl,!readline is:x86]').getFlavor()),
              '~!readline is: x86')
-        self.assertEquals(
+        self.assertEqual(
             str(self.findAndGetTrove('group-basic[!ssl,readline is:x86_64]').getFlavor()),
              '~readline is: x86_64')
 
@@ -3353,7 +3353,7 @@ class GroupDist(GroupRecipe):
 
         try:
             grpDist = self.build(brokenGroup, 'GroupDist')
-        except errors.CookError, e:
+        except errors.CookError as e:
             assert(str(e).endswith('RecipeFileError: group compatibility classes must be integers'))
         else:
             assert(0)
@@ -3371,7 +3371,7 @@ class GroupDist(GroupRecipe):
 
         try:
             grpDist = self.build(brokenGroup, 'GroupDist')
-        except errors.RecipeFileError, e:
+        except errors.RecipeFileError as e:
             assert(str(e).endswith('group compatibility classes must be integers'))
         else:
             assert(0)
@@ -3555,7 +3555,7 @@ class basicGroup(GroupRecipe):
         self.logFilter.compare(['+ Following redirects for trove group-foo=/localhost@rpl:linux/1-1-1[]',
         '+ Found group-foo=/localhost@rpl:branch/1-1-1[] following redirect'],
         allowMissing=True)
-        assert(grp.iterTroveList(strongRefs=True).next() == foo.getNameVersionFlavor())
+        assert(next(grp.iterTroveList(strongRefs=True)) == foo.getNameVersionFlavor())
 
     def testAddRedirect(self):
         groupRecipe = """
@@ -3576,7 +3576,7 @@ class basicGroup(GroupRecipe):
                                  redirect=[('foo', '/localhost@rpl:linux')])
         self.logFilter.add()
         grp = self.build(groupRecipe, 'basicGroup', logLevel=log.DEBUG)
-        assert(grp.iterTroveList(strongRefs=True).next()
+        assert(next(grp.iterTroveList(strongRefs=True))
                                     == foo.getNameVersionFlavor())
         self.logFilter.compare(['+ Following redirects for trove foo=/localhost@rpl:branch/1-1-1[]', '+ Found foo=/localhost@rpl:linux/1-1-1[] following redirect'], allowMissing=True)
 
@@ -3597,7 +3597,7 @@ class basicGroup(GroupRecipe):
         self.logFilter.compare([
             '+ Following redirects for trove foo:run=/localhost@rpl:linux/1.0-1-1[]', 
             '+ Redirect is to nothing'], allowMissing=True)
-        assert(grp.iterTroveList(strongRefs=True).next()
+        assert(next(grp.iterTroveList(strongRefs=True))
                                     == bar.getNameVersionFlavor())
         assert(len(list(grp.iterTroveList(strongRefs=True))) == 1)
 
@@ -3619,8 +3619,8 @@ class basicGroup(GroupRecipe):
         try:
             grp = self.build(groupRecipe, 'basicGroup')
             assert 0, "Should have gotten error"
-        except cook.CookError, msg:
-            self.assertEquals(str(msg), 'Could not find redirect target for foo:run=/localhost@rpl:linux/1.0-1-1[].  Check your search path or remove redirect from recipe: bar:run was not found on path localhost@rpl:linux')
+        except cook.CookError as msg:
+            self.assertEqual(str(msg), 'Could not find redirect target for foo:run=/localhost@rpl:linux/1.0-1-1[].  Check your search path or remove redirect from recipe: bar:run was not found on path localhost@rpl:linux')
 
     def testAddRedirectToBranch(self):
         groupRecipe = """
@@ -3640,7 +3640,7 @@ class basicGroup(GroupRecipe):
            '+ Following redirects for trove foo:run=/localhost@rpl:branch//linux/1-1[]',
            '+ Found foo:run=/localhost@rpl:linux/1-1[] following redirect'], 
              allowMissing=True)
-        assert(grp.iterTroveList(strongRefs=True).next()
+        assert(next(grp.iterTroveList(strongRefs=True))
                                     == foo.getNameVersionFlavor())
         assert(len(list(grp.iterTroveList(strongRefs=True))) == 1)
 
@@ -3658,7 +3658,7 @@ class basicGroup(GroupRecipe):
         self.addComponent('foo:run=:1/2')
         self.addCollection('group-foo=:1/1', ['foo:run'])
         grp = self.build(groupRecipe, 'basicGroup')
-        assert(grp.iterTroveList(strongRefs=True).next()
+        assert(next(grp.iterTroveList(strongRefs=True))
                                     == correctFoo.getNameVersionFlavor())
         assert([repr(x) for x in grp.getSearchPath()] == ["Label('localhost@rpl:linux')", "('group-foo', VFS('/localhost@rpl:1/1-1-1'), Flavor(''))"])
 
@@ -3676,7 +3676,7 @@ class basicGroup(GroupRecipe):
         self.addComponent('foo:run=:1/1')
         self.addCollection('group-foo=:1/1', ['foo:run'])
         grp = self.build(groupRecipe, 'basicGroup')
-        assert(grp.iterTroveList(strongRefs=True).next()
+        assert(next(grp.iterTroveList(strongRefs=True))
                                     == correctFoo.getNameVersionFlavor())
 
         groupRecipe = """
@@ -3690,7 +3690,7 @@ class basicGroup(GroupRecipe):
 """
         try:
             grp = self.build(groupRecipe, 'basicGroup')
-        except cook.CookError, msg:
+        except cook.CookError as msg:
             assert(str(msg) == 'No search label path given and no label specified for trove bar:run - set the installLabelPath')
 
 
@@ -3738,7 +3738,7 @@ class basicGroup(GroupRecipe):
         byDefault = dict((x[0], grp.includeTroveByDefault(*x)) \
                     for x in grp.iterTroveList(weakRefs=True, 
                                                strongRefs=False))
-        self.assertEquals({'foo:lib': True, 'foo:runtime': False},
+        self.assertEqual({'foo:lib': True, 'foo:runtime': False},
                           byDefault)
 
     def testFlavorPreferencesAllowBiarchDepResolutionOnX86System(self):
@@ -3829,7 +3829,7 @@ class OldFlavor(GroupRecipe):
         r.add('foo', flavor = 'old')
 """
         grp = self.build(recipeStr % {'LATEST': 'False'}, 'OldFlavor')
-        self.assertEquals([x[2] == oldFlavor for x in \
+        self.assertEqual([x[2] == oldFlavor for x in \
                 grp.iterTroveList(strongRefs = True, weakRefs = True)],
                 [True, True])
         self.assertRaises(errors.CookError, self.build,
@@ -3860,7 +3860,7 @@ class OldFlavor(GroupRecipe):
         r.add('foo', versionStr = 'localhost@rpl:linux', flavor = 'old')
 """
         grp = self.build(recipeStr % {'LATEST': 'False'}, 'OldFlavor')
-        self.assertEquals([x[2] == oldFlavor for x in \
+        self.assertEqual([x[2] == oldFlavor for x in \
                 grp.iterTroveList(strongRefs = True, weakRefs = True)],
                 [True, True])
         self.assertRaises(errors.CookError, self.build,
@@ -3891,13 +3891,13 @@ class OldFlavor(GroupRecipe):
         r.add('foo', versionStr = '/localhost@rpl:linux', flavor = 'old')
 """
         grp = self.build(recipeStr % {'LATEST': 'False'}, 'OldFlavor')
-        self.assertEquals([x[2] == oldFlavor for x in \
+        self.assertEqual([x[2] == oldFlavor for x in \
                 grp.iterTroveList(strongRefs = True, weakRefs = True)],
                 [True, True])
         # the group should build just fine. there's only the old flavor on
         # the /localhost@rpl:linux branch
         grp = self.build(recipeStr % {'LATEST': 'True'}, 'OldFlavor')
-        self.assertEquals([x[2] == oldFlavor for x in \
+        self.assertEqual([x[2] == oldFlavor for x in \
                 grp.iterTroveList(strongRefs = True, weakRefs = True)],
                 [True, True])
         self.addComponent('foo:lib', version = '3', flavor = newFlavor)
@@ -3929,13 +3929,13 @@ class OldFlavor(GroupRecipe):
         r.add('foo', versionStr = '1', flavor = 'old')
 """
         grp = self.build(recipeStr % {'LATEST': 'False'}, 'OldFlavor')
-        self.assertEquals([x[2] == oldFlavor for x in \
+        self.assertEqual([x[2] == oldFlavor for x in \
                 grp.iterTroveList(strongRefs = True, weakRefs = True)],
                 [True, True])
         # the group should build just fine. there's only the old flavor
         # with that upstream version
         grp = self.build(recipeStr % {'LATEST': 'True'}, 'OldFlavor')
-        self.assertEquals([x[2] == oldFlavor for x in \
+        self.assertEqual([x[2] == oldFlavor for x in \
                 grp.iterTroveList(strongRefs = True, weakRefs = True)],
                 [True, True])
         self.addComponent('foo:lib', version = '1-1-2', flavor = newFlavor)
@@ -3967,13 +3967,13 @@ class OldFlavor(GroupRecipe):
         r.add('foo', versionStr = '/localhost@rpl:linux/1-1-1', flavor = 'old')
 """
         grp = self.build(recipeStr % {'LATEST': 'False'}, 'OldFlavor')
-        self.assertEquals([x[2] == oldFlavor for x in \
+        self.assertEqual([x[2] == oldFlavor for x in \
                 grp.iterTroveList(strongRefs = True, weakRefs = True)],
                 [True, True])
         # the group should build just fine. an exact version was specified
         # with that upstream version
         grp = self.build(recipeStr % {'LATEST': 'True'}, 'OldFlavor')
-        self.assertEquals([x[2] == oldFlavor for x in \
+        self.assertEqual([x[2] == oldFlavor for x in \
                 grp.iterTroveList(strongRefs = True, weakRefs = True)],
                 [True, True])
         self.addComponent('foo:lib', version = '1', flavor = newFlavor)
@@ -3981,7 +3981,7 @@ class OldFlavor(GroupRecipe):
                 defaultFlavor = newFlavor)
         grp = self.build(recipeStr % {'LATEST': 'True'}, 'OldFlavor')
         # group will continue to build
-        self.assertEquals([x[2] == oldFlavor for x in \
+        self.assertEqual([x[2] == oldFlavor for x in \
                 grp.iterTroveList(strongRefs = True, weakRefs = True)],
                 [True, True])
 
@@ -4008,7 +4008,7 @@ class OldFlavor(GroupRecipe):
         r.add('foo', flavor = 'old', requireLatest = %(LATEST)s)
 """
         grp = self.build(recipeStr % {'LATEST': 'False'}, 'OldFlavor')
-        self.assertEquals([x[2] == oldFlavor for x in \
+        self.assertEqual([x[2] == oldFlavor for x in \
                 grp.iterTroveList(strongRefs = True, weakRefs = True)],
                 [True, True])
         self.assertRaises(errors.CookError, self.build,
@@ -4040,7 +4040,7 @@ class OldFlavor(GroupRecipe):
                 requireLatest = %(LATEST)s)
 """
         grp = self.build(recipeStr % {'LATEST': 'False'}, 'OldFlavor')
-        self.assertEquals([x[2] == oldFlavor for x in \
+        self.assertEqual([x[2] == oldFlavor for x in \
                 grp.iterTroveList(strongRefs = True, weakRefs = True)],
                 [True, True])
         self.assertRaises(errors.CookError, self.build,
@@ -4072,13 +4072,13 @@ class OldFlavor(GroupRecipe):
                 requireLatest = %(LATEST)s)
 """
         grp = self.build(recipeStr % {'LATEST': 'False'}, 'OldFlavor')
-        self.assertEquals([x[2] == oldFlavor for x in \
+        self.assertEqual([x[2] == oldFlavor for x in \
                 grp.iterTroveList(strongRefs = True, weakRefs = True)],
                 [True, True])
         # the group should build just fine. there's only the old flavor on
         # the /localhost@rpl:linux branch
         grp = self.build(recipeStr % {'LATEST': 'True'}, 'OldFlavor')
-        self.assertEquals([x[2] == oldFlavor for x in \
+        self.assertEqual([x[2] == oldFlavor for x in \
                 grp.iterTroveList(strongRefs = True, weakRefs = True)],
                 [True, True])
         self.addComponent('foo:lib', version = '3', flavor = newFlavor)
@@ -4111,13 +4111,13 @@ class OldFlavor(GroupRecipe):
                 requireLatest = %(LATEST)s)
 """
         grp = self.build(recipeStr % {'LATEST': 'False'}, 'OldFlavor')
-        self.assertEquals([x[2] == oldFlavor for x in \
+        self.assertEqual([x[2] == oldFlavor for x in \
                 grp.iterTroveList(strongRefs = True, weakRefs = True)],
                 [True, True])
         # the group should build just fine. there's only the old flavor
         # with that upstream version
         grp = self.build(recipeStr % {'LATEST': 'True'}, 'OldFlavor')
-        self.assertEquals([x[2] == oldFlavor for x in \
+        self.assertEqual([x[2] == oldFlavor for x in \
                 grp.iterTroveList(strongRefs = True, weakRefs = True)],
                 [True, True])
         self.addComponent('foo:lib', version = '1-1-2', flavor = newFlavor)
@@ -4150,13 +4150,13 @@ class OldFlavor(GroupRecipe):
                 requireLatest = %(LATEST)s)
 """
         grp = self.build(recipeStr % {'LATEST': 'False'}, 'OldFlavor')
-        self.assertEquals([x[2] == oldFlavor for x in \
+        self.assertEqual([x[2] == oldFlavor for x in \
                 grp.iterTroveList(strongRefs = True, weakRefs = True)],
                 [True, True])
         # the group should build just fine. an exact version was specified
         # with that upstream version
         grp = self.build(recipeStr % {'LATEST': 'True'}, 'OldFlavor')
-        self.assertEquals([x[2] == oldFlavor for x in \
+        self.assertEqual([x[2] == oldFlavor for x in \
                 grp.iterTroveList(strongRefs = True, weakRefs = True)],
                 [True, True])
         self.addComponent('foo:lib', version = '1', flavor = newFlavor)
@@ -4164,7 +4164,7 @@ class OldFlavor(GroupRecipe):
                 defaultFlavor = newFlavor)
         grp = self.build(recipeStr % {'LATEST': 'True'}, 'OldFlavor')
         # group will continue to build
-        self.assertEquals([x[2] == oldFlavor for x in \
+        self.assertEqual([x[2] == oldFlavor for x in \
                 grp.iterTroveList(strongRefs = True, weakRefs = True)],
                 [True, True])
 
@@ -4203,7 +4203,7 @@ class OldFlavor(GroupRecipe):
                 recipeStr % {'LATEST': 'True'}, 'OldFlavor')
 
         grp = self.build(recipeStr % {'LATEST': 'False'}, 'OldFlavor')
-        self.assertEquals([x[2] == oldFlavor for x in \
+        self.assertEqual([x[2] == oldFlavor for x in \
                 grp.iterTroveList(strongRefs = True, weakRefs = True)],
                 [True, True, True])
 
@@ -4235,7 +4235,7 @@ class OldFlavor(GroupRecipe):
                 requireLatest = %(LATEST)s)
 """
         grp = self.build(recipeStr % {'LATEST': 'False'}, 'OldFlavor')
-        self.assertEquals([x[2] == oldFlavor for x in \
+        self.assertEqual([x[2] == oldFlavor for x in \
                 grp.iterTroveList(strongRefs = True, weakRefs = True)],
                 [True, True])
 
@@ -4269,7 +4269,7 @@ class OldFlavor(GroupRecipe):
                 requireLatest = %(LATEST)s)
 """
         grp = self.build(recipeStr % {'LATEST': 'False'}, 'OldFlavor')
-        self.assertEquals([x[2] == oldFlavor for x in \
+        self.assertEqual([x[2] == oldFlavor for x in \
                 grp.iterTroveList(strongRefs = True, weakRefs = True)],
                 [True, True, True])
 
@@ -4300,7 +4300,7 @@ class OldFlavor(GroupRecipe):
         r.replace('foo', newFlavor = 'old', requireLatest = %(LATEST)s)
 """
         grp = self.build(recipeStr % {'LATEST': 'False'}, 'OldFlavor')
-        self.assertEquals([x[2] == oldFlavor for x in \
+        self.assertEqual([x[2] == oldFlavor for x in \
                 grp.iterTroveList(strongRefs = True, weakRefs = True)],
                 [True, True])
 
@@ -4324,7 +4324,7 @@ class OldFlavor(GroupRecipe):
         def mockFindTroves(x, *args, **kwargs):
             if sys._getframe(3).f_code.co_name != 'findTrovesForGroups':
                 return realFindTroves(x, *args, **kwargs)
-            self.assertEquals(kwargs.get('requireLatest'), self.expected)
+            self.assertEqual(kwargs.get('requireLatest'), self.expected)
             raise StopExecution
         self.mock(netclient.NetworkRepositoryClient, 'findTroves',
                 mockFindTroves)
@@ -4356,7 +4356,7 @@ class OldFlavor(GroupRecipe):
         def mockFindTroves(x, *args, **kwargs):
             if sys._getframe(3).f_code.co_name != 'findTrovesForGroups':
                 return realFindTroves(x, *args, **kwargs)
-            self.assertEquals(kwargs.get('requireLatest'), self.expected)
+            self.assertEqual(kwargs.get('requireLatest'), self.expected)
             raise StopExecution
         self.mock(netclient.NetworkRepositoryClient, 'findTroves',
                 mockFindTroves)
@@ -4446,8 +4446,8 @@ class OldFlavor(GroupRecipe):
 """
         try:
             self.build(recipeStr, 'OldFlavor')
-        except errors.CookError, e:
-            self.assertEquals(str(e), 'foo=/localhost@rpl:linux/1-1-1[old] was found, but newer troves exist:\nfoo=/localhost@rpl:linux/2-1-1[new]\n\nThis error indicates that conary selected older versions of the troves mentioned above due to flavor preference. You should probably select one of the current flavors listed. If you meant to select an older trove, you can pass requireLatest=False as a parameter to r.add, r.replace or related calls. To disable requireLatest checking entirely, declare requireLatest=False as a recipe attribute.')
+        except errors.CookError as e:
+            self.assertEqual(str(e), 'foo=/localhost@rpl:linux/1-1-1[old] was found, but newer troves exist:\nfoo=/localhost@rpl:linux/2-1-1[new]\n\nThis error indicates that conary selected older versions of the troves mentioned above due to flavor preference. You should probably select one of the current flavors listed. If you meant to select an older trove, you can pass requireLatest=False as a parameter to r.add, r.replace or related calls. To disable requireLatest checking entirely, declare requireLatest=False as a recipe attribute.')
         else:
             self.fail('Expected CookError to be raised')
         self.addComponent('foo:lib', version = '2', flavor = newFlavor2)
@@ -4455,8 +4455,8 @@ class OldFlavor(GroupRecipe):
                 defaultFlavor = newFlavor2)
         try:
             self.build(recipeStr, 'OldFlavor')
-        except errors.CookError, e:
-            self.assertEquals(str(e), 'foo=/localhost@rpl:linux/1-1-1[old] was found, but newer troves exist:\nfoo=/localhost@rpl:linux/2-1-1[new]\nfoo=/localhost@rpl:linux/2-1-1[new2]\n\nThis error indicates that conary selected older versions of the troves mentioned above due to flavor preference. You should probably select one of the current flavors listed. If you meant to select an older trove, you can pass requireLatest=False as a parameter to r.add, r.replace or related calls. To disable requireLatest checking entirely, declare requireLatest=False as a recipe attribute.')
+        except errors.CookError as e:
+            self.assertEqual(str(e), 'foo=/localhost@rpl:linux/1-1-1[old] was found, but newer troves exist:\nfoo=/localhost@rpl:linux/2-1-1[new]\nfoo=/localhost@rpl:linux/2-1-1[new2]\n\nThis error indicates that conary selected older versions of the troves mentioned above due to flavor preference. You should probably select one of the current flavors listed. If you meant to select an older trove, you can pass requireLatest=False as a parameter to r.add, r.replace or related calls. To disable requireLatest checking entirely, declare requireLatest=False as a recipe attribute.')
         else:
             self.fail('Expected CookError to be raised')
 
@@ -4494,7 +4494,7 @@ class OldFlavor(GroupRecipe):
 """
         try:
             self.build(recipeStr, 'OldFlavor')
-        except errors.CookError, e:
+        except errors.CookError as e:
             message = str(e)
             self.assertFalse('foo' not in message,
                     "Error should have referenced foo")
@@ -4552,7 +4552,7 @@ class ImageGroupTest(GroupRecipe):
         repos = self.openRepository()
         for nvf in grp.iterTroveList(strongRefs = True, weakRefs = True):
             trv = repos.getTrove(*nvf)
-            self.assertEquals(trv.troveInfo.imageGroup(),
+            self.assertEqual(trv.troveInfo.imageGroup(),
                     ref[trv.getName()])
 
     def testStartGroup(self):
@@ -4571,10 +4571,10 @@ class StartGroup(GroupRecipe):
         self.addCollection('foo', strongList = ['foo:runtime'])
         trv = self.build(startGroup, 'StartGroup', returnName = 'group-start')
         # we're testing the setDefaultGroup behavior of startGroup here
-        self.assertEquals(['group-foo'],
+        self.assertEqual(['group-foo'],
                 [x[0] for x in trv.iterTroveList(strongRefs = True,
                                                  weakRefs = False)])
-        self.assertEquals(['foo', 'foo:runtime', 'group-foo'],
+        self.assertEqual(['foo', 'foo:runtime', 'group-foo'],
                 sorted([x[0] for x in trv.iterTroveList(strongRefs = True,
                                                         weakRefs = True)]))
 
@@ -4596,21 +4596,21 @@ class StartGroup(GroupRecipe):
         self.addCollection('foo', strongList = ['foo:runtime'])
         trv = self.build(startGroup, 'StartGroup', returnName = 'group-start')
         # we're testing the setDefaultGroup behavior of startGroup here
-        self.assertEquals(['group-foo'],
+        self.assertEqual(['group-foo'],
                 [x[0] for x in trv.iterTroveList(strongRefs = True,
                                                  weakRefs = False)])
-        self.assertEquals(['foo', 'foo:runtime', 'group-bar', 'group-foo'],
+        self.assertEqual(['foo', 'foo:runtime', 'group-bar', 'group-foo'],
                 sorted([x[0] for x in trv.iterTroveList(strongRefs = True,
                                                         weakRefs = True)]))
-        self.assertEquals(trv.troveInfo.imageGroup(), 1)
+        self.assertEqual(trv.troveInfo.imageGroup(), 1)
         repos = self.openRepository()
         nvf = list(trv.iterTroveList(strongRefs = True))[0]
         groupFoo = repos.getTrove(*nvf)
-        self.assertEquals(groupFoo.troveInfo.imageGroup(), 0)
+        self.assertEqual(groupFoo.troveInfo.imageGroup(), 0)
         nvf = [x for x in groupFoo.iterTroveList(strongRefs = True) \
                 if x[0] == 'group-bar'][0]
         groupBar = repos.getTrove(*nvf)
-        self.assertEquals(groupBar.troveInfo.imageGroup(), 1)
+        self.assertEqual(groupBar.troveInfo.imageGroup(), 1)
 
     def testStartGroupByDefault(self):
         startGroup = """
@@ -4630,10 +4630,10 @@ class StartGroup(GroupRecipe):
         self.addCollection('foo', strongList = ['foo:runtime'])
         trv = self.build(startGroup, 'StartGroup', returnName = 'group-start')
         # we're testing the setDefaultGroup behavior of startGroup here
-        self.assertEquals(['group-foo'],
+        self.assertEqual(['group-foo'],
                 [x[0] for x in trv.iterTroveList(strongRefs = True,
                                                  weakRefs = False)])
-        self.assertEquals(['foo', 'foo:runtime', 'group-foo'],
+        self.assertEqual(['foo', 'foo:runtime', 'group-foo'],
                 sorted([x[0] for x in trv.iterTroveList(strongRefs = True,
                                                         weakRefs = True)]))
         repos = self.openRepository()
@@ -4641,7 +4641,7 @@ class StartGroup(GroupRecipe):
         trv = repos.getTrove(*nvf)
 
         # prove that foo was added byDefault = True to group-foo
-        self.assertEquals([(x[0][0], x[1], x[2]) for x in \
+        self.assertEqual([(x[0][0], x[1], x[2]) for x in \
                 trv.iterTroveListInfo()], [('foo', True, True),
                 ('foo:runtime', True, False)])
 
@@ -4670,10 +4670,10 @@ class StartGroup(GroupRecipe):
         self.addCollection('foo', strongList = ['foo:runtime'])
         trv = self.build(startGroup, 'StartGroup', returnName = 'group-bar')
         # we're testing the setDefaultGroup behavior of startGroup here
-        self.assertEquals(['group-foo'],
+        self.assertEqual(['group-foo'],
                 [x[0] for x in trv.iterTroveList(strongRefs = True,
                                                  weakRefs = False)])
-        self.assertEquals(['foo', 'foo:runtime', 'group-foo'],
+        self.assertEqual(['foo', 'foo:runtime', 'group-foo'],
                 sorted([x[0] for x in trv.iterTroveList(strongRefs = True,
                                                         weakRefs = True)]))
         repos = self.openRepository()
@@ -4682,7 +4682,7 @@ class StartGroup(GroupRecipe):
 
         # prove that foo was added byDefault = True to group-foo
         # note that this defies the convention of "inherit setting from parent"
-        self.assertEquals([(x[0][0], x[1], x[2]) for x in \
+        self.assertEqual([(x[0][0], x[1], x[2]) for x in \
                 trv.iterTroveListInfo()], [('foo', True, True),
                 ('foo:runtime', True, False)])
 
@@ -4844,16 +4844,16 @@ class Group(GroupRecipe):
         v = versions.VersionFromString("/cny.tv@ns:1/1-1")
         grp = self.build(groupRecipe, "Group",
                 macros=dict(productDefinitionVersion=v.asString()))
-        self.assertEquals(grp.getProductDefinitionVersion().asString(),
+        self.assertEqual(grp.getProductDefinitionVersion().asString(),
                 v.asString())
         # I should be able to reset it too
         grp.setProductDefinitionVersion(None)
-        self.assertEquals(grp.getProductDefinitionVersion(), None)
+        self.assertEqual(grp.getProductDefinitionVersion(), None)
         # Or set it as a version
         grp.setProductDefinitionVersion(v)
-        self.assertEquals(grp.getProductDefinitionVersion().asString(),
+        self.assertEqual(grp.getProductDefinitionVersion().asString(),
                 v.asString())
 
         # If unset, we should get None back
         grp = self.build(groupRecipe, "Group")
-        self.assertEquals(grp.getProductDefinitionVersion(), None)
+        self.assertEqual(grp.getProductDefinitionVersion(), None)

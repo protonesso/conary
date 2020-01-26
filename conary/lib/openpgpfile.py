@@ -32,9 +32,9 @@ try:
 except ImportError:
     RIPEMD = 'RIPEMD'
 try:
-    from cStringIO import StringIO
+    from io import StringIO
 except ImportError:
-    from StringIO import StringIO
+    from io import StringIO
 from Crypto.Cipher import AES
 from Crypto.Cipher import DES3
 from Crypto.Cipher import Blowfish
@@ -296,12 +296,12 @@ def seekKeyById(keyId, keyRing):
     if isinstance(keyRing, str):
         try:
             keyRing = util.ExtendedFile(keyRing, buffering = False)
-        except (IOError, OSError), e:
+        except (IOError, OSError) as e:
             # if we can't read/find the key, it's not there.
             return False
     msg = PGP_Message(keyRing)
     try:
-        return msg.iterByKeyId(keyId).next()
+        return next(msg.iterByKeyId(keyId))
     except StopIteration:
         return False
 
@@ -320,7 +320,7 @@ def exportKey(keyId, keyRing, armored=False):
     if isinstance(keyRing, str):
         try:
             keyRing = util.ExtendedFile(keyRing, buffering = False)
-        except (IOError, OSError), e:
+        except (IOError, OSError) as e:
             # if we can't read/find the key, it's not there.
             raise KeyNotFound(keyId)
     msg = PGP_Message(keyRing)
@@ -603,7 +603,7 @@ def readSignature(fileobj):
     # We can't really have a StopIteration here, if there was no packet in the
     # message we would have failed in parseAsciiArmor
     try:
-        pkt = msg.iterPackets().next()
+        pkt = next(msg.iterPackets())
     except ShortReadError:
         raise InvalidPacketError("Error reading signature packet")
     if not isinstance(pkt, PGP_Signature):
@@ -774,7 +774,7 @@ class PGP_Message(object):
             if pkt is None:
                 break
             yield pkt
-            pkt = pkt.next()
+            pkt = next(pkt)
 
     def iterTrustPackets(self):
         """Iterate over all trust packets"""
@@ -808,7 +808,7 @@ class PGP_Message(object):
 
     def getKeyByKeyId(self, keyId):
         try:
-            return self.iterByKeyId(keyId).next()
+            return next(self.iterByKeyId(keyId))
         except StopIteration:
             raise KeyNotFound(keyId)
 
@@ -1231,7 +1231,7 @@ class PGP_BasePacket(object):
     def isEmpty(self):
         return self.headerLength == 0
 
-    def next(self):
+    def __next__(self):
         if self._nextStream is None:
             raise StopIteration()
 
@@ -1248,10 +1248,10 @@ class PGP_BasePacket(object):
     def _iterSubPackets(self, limitTags):
         """Iterate over the packets following this packet, until we reach a
         packet of the specified type as the limit"""
-        pkt = self.next()
+        pkt = next(self)
         while not pkt.isEmpty() and pkt.tag not in limitTags:
             yield pkt
-            pkt = pkt.next()
+            pkt = next(pkt)
 
     @staticmethod
     def _hashSet(items):
@@ -1316,7 +1316,7 @@ class PGP_BaseKeySig(PGP_BasePacket):
                 ret.append(None)
             else:
                 data = PGP_BaseKeySig._readBin(stream, mLen)
-                r = 0L
+                r = 0
                 for i in data:
                     r = r * 256 + i
                 ret.append(r)
@@ -1605,7 +1605,7 @@ class PGP_Signature(PGP_BaseKeySig):
             dataf.seek(0, SEEK_SET)
             try:
                 self.checkStreamLength(dataf, 8)
-            except ShortReadError, e:
+            except ShortReadError as e:
                 raise InvalidPacketError("Expected %s bytes, got %s instead" %
                     (e.expected, e.actual))
             self.signerKeyId = self._readBin(dataf, 8)
@@ -1657,7 +1657,7 @@ class PGP_Signature(PGP_BaseKeySig):
         # Do we have enough data?
         try:
             PGP_Signature.checkStreamLength(dataf, pktlen - 1)
-        except ShortReadError, e:
+        except ShortReadError as e:
             raise ShortReadError(pktlen + pktlenlen, e.actual + pktlenlen + 1)
         dataf.seek(0, SEEK_SET)
 
@@ -3373,7 +3373,7 @@ def num_getRelPrime(q):
     # artifically deflate entropy
     randFD = os.open('/dev/urandom', os.O_RDONLY)
     b = num_bitLen(q)/8 + 1
-    r = 0L
+    r = 0
     while r < 2:
         for i in range(b):
             r = r*256 + ord(os.read(randFD, 1))
@@ -3487,7 +3487,7 @@ class PublicKeyring(object):
         try:
             util.mkdirChain(os.path.dirname(fileName))
             file(fileName, "a+")
-        except (IOError, OSError), e:
+        except (IOError, OSError) as e:
             raise KeyringError(e.errno, e.strerror, e.filename)
 
     def addKeys(self, keys, timestamp = None):
@@ -3594,7 +3594,7 @@ class PublicKeyring(object):
         # Because of this, we can't blindly grab the first key in the new
         # keyring.
         msg = PGP_Message(retStream)
-        return msg.iterByKeyId(keyId).next()
+        return next(msg.iterByKeyId(keyId))
 
     def _getAllKeys(self):
         # Return all keys and subkeys

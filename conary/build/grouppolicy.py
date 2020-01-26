@@ -77,9 +77,9 @@ class PathConflicts(policy.GroupEnforcementPolicy):
 
     def do(self):
         conflicts = {}
-        for grpTrv in self.recipe.troveMap.values():
+        for grpTrv in list(self.recipe.troveMap.values()):
             groupName = grpTrv.getNameVersionFlavor()[0]
-            if groupName not in self.groupsWithConflicts.keys():
+            if groupName not in list(self.groupsWithConflicts.keys()):
                 continue
 
             for trvs, paths in self.groupsWithConflicts[groupName]:

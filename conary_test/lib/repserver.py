@@ -108,10 +108,10 @@ class ConaryServer(object):
             with open(self.appServer.errorLog) as f:
                 data = f.read()
             if 'Traceback (most recent call last)' in data:
-                print >> sys.stderr, "Contents of error.log after test:"
-                print >> sys.stderr, data
+                print("Contents of error.log after test:", file=sys.stderr)
+                print(data, file=sys.stderr)
                 sys.stderr.flush()
-        except IOError, err:
+        except IOError as err:
             if err.args[0] != errno.ENOENT:
                 raise
 
@@ -130,13 +130,13 @@ class ConaryServer(object):
 
         util.mkdirChain(os.path.dirname(self.configPath))
         with open(self.configPath, 'w') as f:
-            for key, values in configValues.iteritems():
+            for key, values in configValues.items():
                 if values is None:
                     continue
                 if not isinstance(values, list):
                     values = [values]
                 for value in values:
-                    print >> f, key, value
+                    print(key, value, file=f)
 
     def getUrl(self, ssl=True):
         return self.rpServer.getUrl(ssl=ssl) + '/conary/'

@@ -308,18 +308,18 @@ EOF
 
             stdinTagFile = rephelp.RegularFile(
                                     contents = stdinTagConfig % self.rootDir,
-                                    perms = 0644, tags = [ 'tagdescription' ] )
+                                    perms = 0o644, tags = [ 'tagdescription' ] )
             argsTagFile = rephelp.RegularFile(
                                     contents = argsTagConfig % self.rootDir,
-                                    perms = 0644, tags = [ 'tagdescription' ] )
+                                    perms = 0o644, tags = [ 'tagdescription' ] )
             multiTagFile = rephelp.RegularFile(
                                     contents = multiTagConfig % self.rootDir,
-                                    perms = 0644, tags = [ 'tagdescription' ] )
+                                    perms = 0o644, tags = [ 'tagdescription' ] )
             stdinHandler = rephelp.RegularFile(
-                                    contents = stdinScript, perms = 0775,
+                                    contents = stdinScript, perms = 0o775,
                                     tags = [ 'taghandler' ] )
             chattyHandler = rephelp.RegularFile(
-                                    contents = chattyScript, perms = 0775,
+                                    contents = chattyScript, perms = 0o775,
                                     tags = [ 'taghandler' ] )
             taggedFile = rephelp.RegularFile(tags = [ 'testtag' ])
             multiTaggedFile = rephelp.RegularFile(
@@ -417,7 +417,7 @@ EOF
 
             # normally, stderr could be moved with respect to the rest
             # of the messages, but we forced the worst case by mocking poll
-            self.assertEquals(res, '\n'.join(('[testtag] first',
+            self.assertEqual(res, '\n'.join(('[testtag] first',
                 '[testtag] second', '[testtag] partial',
                 '[testtag] error', '')))
 
@@ -442,7 +442,7 @@ EOF
         self.updatePkg('multitag:runtime')
         fooFile = rephelp.RegularFile(
                                 contents = 'foo\n',
-                                perms = 0644, tags = [ 'foo' ] )
+                                perms = 0o644, tags = [ 'foo' ] )
         self.addComponent('foo:runtime', [('/bam', fooFile)])
         oldFuncs = (os.getuid, os.lchown, os.chroot)
 
@@ -459,7 +459,7 @@ EOF
         rc, txt = self.captureOutput(self.updatePkg, 'foo:runtime',
                                      _removeBokenPipeErrors=True)
 
-        self.assertEquals(txt.lstrip(), '[foo] [Errno 2] No such file or directory\nerror: /usr/libexec/conary/tags/foo failed\n')
+        self.assertEqual(txt.lstrip(), '[foo] [Errno 2] No such file or directory\nerror: /usr/libexec/conary/tags/foo failed\n')
 
     def testTagHandlerEnvironment(self):
         # prevent the callback from catching (and discarding) the exception
@@ -523,23 +523,23 @@ EOF
                     continue
                 try:
                     cloexec = fcntl.fcntl(fd, fcntl.F_GETFD)
-                except IOError, e:
+                except IOError as e:
                     if e.errno == errno.EBADF:
                         continue
                 if cloexec:
                     continue
                 rc = 1
                 fn = os.readlink("/proc/%d/fd/%d" % (os.getpid(), fd))
-                print "fd %d (%s) is not close-on-exec" % (fd, fn)
+                print("fd %d (%s) is not close-on-exec" % (fd, fn))
 
             os._exit(rc)
 
         stdinTagFile = rephelp.RegularFile(
                                 contents = stdinTagConfig % self.rootDir,
-                                perms = 0644, tags = [ 'tagdescription' ] )
+                                perms = 0o644, tags = [ 'tagdescription' ] )
 
         stdinHandler = rephelp.RegularFile(
-                                contents = stdinScript, perms = 0775,
+                                contents = stdinScript, perms = 0o775,
                                 tags = [ 'taghandler' ] )
 
         taggedFile = rephelp.RegularFile(tags = [ 'testtag' ])
@@ -561,7 +561,7 @@ EOF
 
         (rc, str) = self.captureOutput(self.updatePkg, 'stdin:runtime')
         if str:
-            print str
+            print(str)
             assert(0)
 
     def testTagScriptOrdering(self):

@@ -54,21 +54,21 @@ class ConaryCfgTest(rephelp.RepositoryHelper):
             options.processArgs(self.argDef, self.cfgMap, self.cfg, 
                                                 self.usage, argv=argv)
             raise RuntimeError
-        except options.OptionError, msg:
+        except options.OptionError as msg:
             assert(msg[0] == 'no such option: --unknown')
         argv = ['conary', '--one']
         try: 
             options.processArgs(self.argDef, self.cfgMap, self.cfg, 
                                                 self.usage, argv=argv)
             raise RuntimeError
-        except options.OptionError, msg:
+        except options.OptionError as msg:
             assert(msg[0] == '--one option requires an argument')
         argv = ['conary', '--no=optone']
         try: 
             options.processArgs(self.argDef, self.cfgMap, self.cfg, 
                                                 self.usage, argv=argv)
             raise RuntimeError
-        except options.OptionError, msg:
+        except options.OptionError as msg:
             assert(msg[0] == '--no option does not take a value')
 
 

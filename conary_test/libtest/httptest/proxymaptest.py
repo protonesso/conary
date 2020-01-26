@@ -49,7 +49,7 @@ class ProxyMapTest(testhelp.TestCase):
         m.addStrategy('https:*', ['https://user:pass@proxy4'],
                 replaceScheme='conary')
         m.addStrategy('*', ['https://proxy5'])
-        self.assertEqual(m.items(), [
+        self.assertEqual(list(m.items()), [
             (FilterSpec(None, Hostname('example.foo')), [
                 URL('http', (None, None), HostPort('proxy1', 80), ''),
                 URL('https', (None, None), HostPort('proxy2', 443), ''),
@@ -87,31 +87,31 @@ class ProxyMapTest(testhelp.TestCase):
         m.addStrategy('http:*', ['https://proxy5'])
 
         i = m.getProxyIter(URL('http://unrelated.foo'))
-        self.assertEqual(i.next(), URL('https://proxy5'))
-        self.assertRaises(StopIteration, i.next)
+        self.assertEqual(next(i), URL('https://proxy5'))
+        self.assertRaises(StopIteration, i.__next__)
 
         m.blacklistUrl(URL('https://proxy5'))
         i = m.getProxyIter(URL('http://unrelated.foo'))
-        self.assertRaises(StopIteration, i.next)
+        self.assertRaises(StopIteration, i.__next__)
 
         i = m.getProxyIter(URL('https://unrelated.foo'))
-        self.assertEqual(i.next(), DirectConnection)
-        self.assertRaises(StopIteration, i.next)
+        self.assertEqual(next(i), DirectConnection)
+        self.assertRaises(StopIteration, i.__next__)
 
         i = m.getProxyIter(URL('http://example.foo/bar'))
         expected = set([URL('http://proxy1'), URL('https://proxy2')])
         while expected:
-            got = i.next()
+            got = next(i)
             assert got in expected
             expected.remove(got)
-        self.assertRaises(StopIteration, i.next)
+        self.assertRaises(StopIteration, i.__next__)
 
         i = m.getProxyIter(URL('https://example.foo/bar'),
                 protocolFilter=('http', 'https', 'conary', 'conarys'))
         expected = set([URL('http://proxy1'), URL('https://proxy2')])
         while expected:
-            got = i.next()
+            got = next(i)
             assert got in expected
             expected.remove(got)
-        self.assertEqual(i.next(), URL('conarys://user:pass@proxy4'))
-        self.assertRaises(StopIteration, i.next)
+        self.assertEqual(next(i), URL('conarys://user:pass@proxy4'))
+        self.assertRaises(StopIteration, i.__next__)

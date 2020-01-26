@@ -77,7 +77,7 @@ class SqlDB(rephelp.RepositoryHelper):
             db.pinTroves(*troves[i])
             _checkPins(*checks)
 
-        for i in reversed(range(len(troves))):
+        for i in reversed(list(range(len(troves)))):
             checks[i] = False
             db.pinTroves(*troves[i] + (False, ) )
             _checkPins(*checks)
@@ -356,7 +356,7 @@ class SqlDB(rephelp.RepositoryHelper):
         cu = db.db.cursor()
         cu.execute("SELECT value FROM DatabaseAttributes WHERE name = ?",
             field)
-        row = cu.next()
+        row = next(cu)
         self.assertEqual(row[0], '0')
 
         updateq = "UPDATE DatabaseAttributes SET value = ? WHERE name = ?"
@@ -522,7 +522,7 @@ class SqlDB(rephelp.RepositoryHelper):
         cu = db.db.cursor()
         # make sure that the -*none*- entry has been added
         cu.execute('select count(*) from provides join dependencies on provides.depid=dependencies.depid and name="sqlite:lib" and flag="-*none*-"')
-        assert(cu.next() == (1,))
+        assert(next(cu) == (1,))
         db.close()
         os.unlink(fn)
 
@@ -581,8 +581,8 @@ class SqlDB(rephelp.RepositoryHelper):
         db = dbstore.connect(fn, driver='sqlite')
         db.loadSchema()
         cu = db.cursor()
-        tableCounts = dict.fromkeys(db.tables.keys())
-        for table in tableCounts.keys():
+        tableCounts = dict.fromkeys(list(db.tables.keys()))
+        for table in list(tableCounts.keys()):
             tableCounts[table] = cu.execute('select count(*) from %s' %table).fetchall()[0][0]
         # DBInstances is gone...
         tableCounts.pop('DBInstances')
@@ -599,8 +599,8 @@ class SqlDB(rephelp.RepositoryHelper):
         db2 = dbstore.connect(fn, driver='sqlite')
         db2.loadSchema()
         cu = db2.cursor()
-        tableCounts2 = dict.fromkeys(db2.tables.keys())
-        for table in tableCounts2.keys():
+        tableCounts2 = dict.fromkeys(list(db2.tables.keys()))
+        for table in list(tableCounts2.keys()):
             tableCounts2[table] = cu.execute('select count(*) from %s' %table).fetchall()[0][0]
         self.assertEqual(tableCounts, tableCounts2)
 
@@ -666,7 +666,7 @@ class SqlDB(rephelp.RepositoryHelper):
         fd, fn = tempfile.mkstemp()
         os.close(fd)
         shutil.copyfile(dbfile, fn)
-        os.chmod(fn, 0444)
+        os.chmod(fn, 0o444)
         try:
             db = sqldb.Database(fn)
         except sqldb.OldDatabaseSchema:
@@ -744,8 +744,8 @@ class SqlDB(rephelp.RepositoryHelper):
                                              (self.v20, self.emptyFlavor))])
         assert(cu.execute('SELECT COUNT(*) FROM TroveTroves WHERE inPristine=0').next()[0] == 1)
         pkg = db.getTroves([('testpkg', self.v20, self.emptyFlavor)], pristine=False)[0]
-        assert(pkg.strongTroves.keys()[0][1] == self.v10)
-        assert(pkg.weakTroves.keys() == [])
+        assert(list(pkg.strongTroves.keys())[0][1] == self.v10)
+        assert(list(pkg.weakTroves.keys()) == [])
 
 class SqlDBWithRepos(rephelp.RepositoryHelper):
     def testIterUpdateContainerInfo(self):

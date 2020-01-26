@@ -16,14 +16,14 @@
 
 
 from testrunner import testhelp
-import BaseHTTPServer
+import http.server
 import copy
 import os
-import Queue
+import queue
 import shutil
 import socket
 import sys
-from StringIO import StringIO
+from io import StringIO
 import tempfile
 import threading
 import pwd
@@ -132,7 +132,7 @@ flavor use:ssl,krb,readline,\
         assert(out.getvalue() == 'repositoryMap             host.somewhere.com        http://someotherhost.com:port/loc\n')
         out.close()
 
-        keys = cfg.macros.keys()
+        keys = list(cfg.macros.keys())
         keys.sort()
         assert(keys == ['a', 'b', 'c'])
         os.remove('foo')
@@ -332,7 +332,7 @@ flavor use:ssl,krb,readline,\
     def testIncludeUnreachableNetworkConfigFile(self):
         configUrl = "http://10.1.1.1/conaryrc"
         fobj = tempfile.NamedTemporaryFile()
-        print >> fobj, "includeConfigFile", configUrl
+        print("includeConfigFile", configUrl, file=fobj)
         fobj.flush()
         cfg = conarycfg.ConaryConfiguration(readConfigFiles=False)
 
@@ -350,7 +350,7 @@ flavor use:ssl,krb,readline,\
             sys.stderr = StringIO()
             try:
                 cfg.read(fobj.name)
-            except conarycfg.ParseError, e:
+            except conarycfg.ParseError as e:
                 assert 'timed out' in str(e) or 'timeout' in str(e)
             else:
                 self.fail('expected ParseError')
@@ -402,7 +402,7 @@ entitlementDirectory %s
             cfg.read(configFile)
             cfg.readEntitlementDirectory()
         finally:
-            os.chmod(unreadableFile, 0644)
+            os.chmod(unreadableFile, 0o644)
 
     def testProxyUsedForGettingIncludeConfigFile(self):
         # CNY-2363
@@ -514,7 +514,7 @@ user                      name* user passwd
         # CNY-1267
         try:
             cfg.configLine('user conary.rpath.com "Michael Jordon" a')
-        except conarycfg.ParseError, e:
+        except conarycfg.ParseError as e:
             self.assertEqual(str(e), "override:<No line>: expected <hostglob> <user> [<password>] for configuration item 'user'")
 
         # test iterator
@@ -658,7 +658,7 @@ user                      name* user passwd
         # proxyMap object
         self.assertFalse(pm is cfg.proxyMap)
         got = dict((x[0].protocol, (x[0].address, x[1])) for x in pm.filterList)
-        self.assertEquals(got, {
+        self.assertEqual(got, {
             'http': (networking.HostPort('*'),
                 [request.URL('conary://localhost:123')]),
             'https': (networking.HostPort('*'),
@@ -689,19 +689,19 @@ user                      name* user passwd
         cfg.configLine("proxyMap 1.1.1.1 direct")
         pm = cfg.getProxyMap()
         from conary.lib.http import proxy_map
-        self.assertEquals([ x for x in pm.getProxyIter('1.1.1.1') ],
+        self.assertEqual([ x for x in pm.getProxyIter('1.1.1.1') ],
             [ proxy_map.DirectConnection ])
 
     def testDependencyClassList(self):
         cfg = conarycfg.ConaryConfiguration(readConfigFiles=False)
         cfg.configLine('ignoreDependencies perl php')
-        self.assertEquals(set(cfg.ignoreDependencies),
+        self.assertEqual(set(cfg.ignoreDependencies),
                           set((deps.PerlDependencies, deps.PhpDependencies)) )
         try:
             cfg.configLine('ignoreDependencies foo')
             assert(0)
-        except conarycfg.ParseError, e:
-            self.assertEquals(str(e), "override:<No line>: unknown dependency "
+        except conarycfg.ParseError as e:
+            self.assertEqual(str(e), "override:<No line>: unknown dependency "
                     "class: foo for configuration item 'ignoreDependencies'")
 
     def testFingerprintMap(self):
@@ -755,7 +755,7 @@ class EntitlementTest(testhelp.TestCase):
         def _doTest(cfg, server, content, value):
             fullPath = os.path.join(cfg.entitlementDir, server)
             open(fullPath, "w").write(content)
-            os.chmod(fullPath, 0644)
+            os.chmod(fullPath, 0o644)
             rc = conarycfg.loadEntitlement(cfg.entitlementDir, server)
             assert(rc == value)
 
@@ -767,7 +767,7 @@ class EntitlementTest(testhelp.TestCase):
             f.write(content)
             f.write("EOFEOF\n")
             f.close()
-            os.chmod(fullPath, 0755)
+            os.chmod(fullPath, 0o755)
 
             rc = conarycfg.loadEntitlement(cfg.entitlementDir, server)
             assert(rc == value)
@@ -825,13 +825,13 @@ class EntitlementTest(testhelp.TestCase):
             fullPath = os.path.join(cfg.entitlementDir, 'localhost')
             open(fullPath, "w").write(content)
             if execable:
-                os.chmod(fullPath, 0755)
+                os.chmod(fullPath, 0o755)
             else:
-                os.chmod(fullPath, 0644)
+                os.chmod(fullPath, 0o644)
 
             try:
                 conarycfg.loadEntitlement(cfg.entitlementDir, 'localhost')
-            except errors.ConaryError, err:
+            except errors.ConaryError as err:
                 return str(err)
             self.fail('load should have failed!') # none of these should succeed
 
@@ -839,8 +839,8 @@ class EntitlementTest(testhelp.TestCase):
         cfg.entitlementDir = d
         try:
             unparsable = '<server><'
-            self.assertEquals(_test(unparsable), 'Malformed entitlement at %s/localhost: not well-formed (invalid token): line 1, column 22' % d)
-            self.assertEquals(_test(unparsable, True).split('\n')[0], 'Entitlement generator at "%s/localhost" died with exit status 1 - stderr output follows:' % d)
+            self.assertEqual(_test(unparsable), 'Malformed entitlement at %s/localhost: not well-formed (invalid token): line 1, column 22' % d)
+            self.assertEqual(_test(unparsable, True).split('\n')[0], 'Entitlement generator at "%s/localhost" died with exit status 1 - stderr output follows:' % d)
 
             scriptTemplate = """#!/bin/bash
 cat <<EOFEOF
@@ -848,17 +848,17 @@ cat <<EOFEOF
 EOFEOF
     """
             scriptUnparsable = scriptTemplate % unparsable
-            self.assertEquals(_test(scriptUnparsable, True), 'Malformed entitlement at %s/localhost: not well-formed (invalid token): line 1, column 22' % d)
+            self.assertEqual(_test(scriptUnparsable, True), 'Malformed entitlement at %s/localhost: not well-formed (invalid token): line 1, column 22' % d)
 
             exitCode = ((scriptTemplate % unparsable)
                         + "echo 'foo' > /dev/stderr\nexit 22")
-            self.assertEquals(_test(exitCode, True), 'Entitlement generator at "%s/localhost" died with exit status 22 - stderr output follows:\nfoo\n' % d)
+            self.assertEqual(_test(exitCode, True), 'Entitlement generator at "%s/localhost" died with exit status 22 - stderr output follows:\nfoo\n' % d)
             exitSignal = """#!/usr/bin/python
 import os, sys
 print  >>sys.stderr, "foo\\n"
 os.kill(os.getpid(), 9)
 """
-            self.assertEquals(_test(exitSignal, True), 'Entitlement generator at "%s/localhost" died with signal 9 - stderr output follows:\nfoo\n\n' % d)
+            self.assertEqual(_test(exitSignal, True), 'Entitlement generator at "%s/localhost" died with signal 9 - stderr output follows:\nfoo\n\n' % d)
         finally:
             shutil.rmtree(cfg.entitlementDir)
 
@@ -1066,12 +1066,12 @@ def startServer():
         srv.handle_request()
 
     port = testhelp.findPorts(num = 1)[0]
-    queue = Queue.Queue(maxsize = 20)
+    queue = queue.Queue(maxsize = 20)
     t = threading.Thread(target = startFunc, args = (port, queue))
     t.start()
     return t, port, queue
 
-class QueuedRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
+class QueuedRequestHandler(http.server.BaseHTTPRequestHandler):
 
     def do_GET(self):
         self.send_response(200)
@@ -1082,7 +1082,7 @@ class QueuedRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.wfile.write(response)
 
         # Put the headers in the queue
-        for k, v in self.headers.items():
+        for k, v in list(self.headers.items()):
             self.server.queue.put((k, v))
         # We're done
 
@@ -1091,7 +1091,7 @@ class QueuedRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         pass
 
 
-class HTTPServer(BaseHTTPServer.HTTPServer):
+class HTTPServer(http.server.HTTPServer):
     def __init__(self, queue, *args):
         self.queue = queue
-        BaseHTTPServer.HTTPServer.__init__(self, *args)
+        http.server.HTTPServer.__init__(self, *args)

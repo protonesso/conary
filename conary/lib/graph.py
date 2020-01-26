@@ -86,7 +86,7 @@ class NodeDataByHash(NodeData):
         return iter(self.hashedData)
 
     def sort(self, sortAlg=None):
-        return sorted(((x[1], x[0]) for x in self.hashedData.iteritems()),
+        return sorted(((x[1], x[0]) for x in self.hashedData.items()),
                       sortAlg)
 
     def copy(self):
@@ -158,7 +158,7 @@ class DirectedGraph:
         idx = self.data.getIndex(item)
         self.data.delete(item)
         self.edges.pop(idx, 0)
-        [ x.pop(idx, 0) for x in self.edges.itervalues() ]
+        [ x.pop(idx, 0) for x in self.edges.values() ]
 
     def deleteEdges(self, item):
         self.edges[self.data.getIndex(item)] = {}
@@ -167,26 +167,26 @@ class DirectedGraph:
         idx = self.data.getIndex(item)
         children = self.data.getItemsByIndex(self.edges[idx])
         if withEdges:
-            return itertools.izip(children, self.edges[idx].itervalues())
+            return zip(children, iter(self.edges[idx].values()))
         else:
             return children
 
     def getReversedEdges(self):
         newEdges = {}
-        for fromId, toIdList in self.edges.iteritems():
+        for fromId, toIdList in self.edges.items():
             if fromId not in newEdges:
                 newEdges[fromId] = []
-            for toId, value in toIdList.iteritems():
+            for toId, value in toIdList.items():
                 if toId not in newEdges:
                     newEdges[toId] = [(fromId, value)]
                 else:
                     newEdges[toId].append((fromId, value))
-        return dict((x[0], dict(x[1])) for x in newEdges.iteritems())
+        return dict((x[0], dict(x[1])) for x in newEdges.items())
 
     def iterChildren(self, node, withEdges=False):
         if withEdges:
             return ((self.data.get(x[0]), x[1])
-                    for x in self.edges[self.data.getIndex(node)].iteritems())
+                    for x in self.edges[self.data.getIndex(node)].items())
         return (self.data.get(idx)
                     for idx in self.edges[self.data.getIndex(node)])
 
@@ -201,7 +201,7 @@ class DirectedGraph:
 
     def iterEdges(self):
         get = self.data.get
-        for fromId, toIdList in self.edges.iteritems():
+        for fromId, toIdList in self.edges.items():
             fromNode = get(fromId)
             for toId in toIdList:
                 yield fromNode, get(toId)
@@ -210,21 +210,21 @@ class DirectedGraph:
         idx = self.data.getIndex(node)
         if withEdges:
             return [ (self.data.get(x[0]), x[1][idx])
-                        for x in self.edges.iteritems() if idx in x[1] ]
+                        for x in self.edges.items() if idx in x[1] ]
         else:
             return [self.data.get(x) for x in self.edges if idx in self.edges[x]]
 
     def getLeaves(self):
         return [ self.data.get(x[0])
-                    for x in self.edges.iteritems() if not x[1] ]
+                    for x in self.edges.items() if not x[1] ]
 
     def getRoots(self):
         return self.transpose().getLeaves()
 
     def getDisconnected(self):
         # gets nodes with neither edges pointing in or out
-        disconnected = set(x[0] for x in self.edges.iteritems() if not x[1])
-        for edges in self.edges.itervalues():
+        disconnected = set(x[0] for x in self.edges.items() if not x[1])
+        for edges in self.edges.values():
             disconnected.difference_update(edges)
             if not disconnected:
                 break
@@ -374,7 +374,7 @@ class DirectedGraph:
 
         # Find back edges (two adjacent nodes u, v have a back edge iff
         # starts[u] > starts[v] and finishes[u] < finishes[v]
-        for fromIdx, toIdxList in self.edges.iteritems():
+        for fromIdx, toIdxList in self.edges.items():
             for toIdx in toIdxList:
                 if starts[fromIdx] > starts[toIdx] and \
                    finishes[fromIdx] < finishes[toIdx]:
@@ -394,11 +394,11 @@ class DirectedGraph:
         def nodeSelect(a, b):
             return cmp(finishes[b[0]], finishes[a[0]])
 
-        finishesByTime = sorted(finishes.iteritems(), key=lambda x: x[1])
+        finishesByTime = sorted(iter(finishes.items()), key=lambda x: x[1])
         starts, finished, trees = t.doDFS(
                                         start=self.get(finishesByTime[-1][0]),
                                         nodeSort=nodeSelect)
-        treeKeys = [ x[0] for x in self.data.sortSubset(trees.iterkeys(),
+        treeKeys = [ x[0] for x in self.data.sortSubset(iter(trees.keys()),
                                                         nodeSelect) ]
         return [ frozenset(self.get(y) for y in trees[x]) for x in treeKeys ]
 
@@ -425,7 +425,7 @@ class DirectedGraph:
 
     def flatten(self):
         start, finished, trees = self.doDFS()
-        for node in self.edges.keys():
+        for node in list(self.edges.keys()):
             seen = set()
             children = set(self.edges.get(node, set()))
             while children:
@@ -457,11 +457,11 @@ class DirectedGraph:
                 idx = self.data.getIndex(node)
                 nodes[idx] = node
                 out.write('   n%s [label="%s"]\n' % (idx, labelFormatFn(node)))
-        for fromIdx, toIdxDict in self.edges.iteritems():
+        for fromIdx, toIdxDict in self.edges.items():
             if fromIdx not in nodes:
                 continue
             fromNode = nodes[fromIdx]
-            for toIdx, value in toIdxDict.iteritems():
+            for toIdx, value in toIdxDict.items():
                 if toIdx not in nodes:
                     continue
                 out.write('   n%s -> n%s' % (fromIdx, toIdx))

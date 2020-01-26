@@ -117,7 +117,7 @@ class Flag(dict):
 
      # --- boolean operations on Flags ---
 
-    def __nonzero__(self):
+    def __bool__(self):
         if self._tracking:
             self._setUsed(True)
         return self._value
@@ -163,9 +163,9 @@ class Collection(dict):
             python identifier.
         """
         if alias in self or alias in self._attrs:
-            raise RuntimeError, 'alias is already set'
+            raise RuntimeError('alias is already set')
         elif self[realKey]._alias:
-            raise RuntimeError, 'key %s already has an alias' % realKey
+            raise RuntimeError('key %s already has an alias' % realKey)
         else:
             self._setAttr(alias, self[realKey])
             self[realKey]._alias = alias
@@ -192,17 +192,17 @@ class Collection(dict):
 
     def __repr__(self):
         return "%s: {%s}" % (self._name,
-                             ', '.join((repr(x) for x in self.values())))
+                             ', '.join((repr(x) for x in list(self.values()))))
 
-    def __nonzero__(self):
+    def __bool__(self):
         raise RuntimeError(
                     'Cannot compare collection as True/False')
 
 
     def _clear(self):
-        for flag in self.keys():
+        for flag in list(self.keys()):
             del self[flag]
-        for attr in self._attrs.keys():
+        for attr in list(self._attrs.keys()):
             del self._attrs[attr]
 
     def __getattr__(self, key):
@@ -213,7 +213,7 @@ class Collection(dict):
         if key in self._attrs:
             return self._getAttr(key)
         if key[0] == '_':
-            raise AttributeError, key
+            raise AttributeError(key)
         return self._getNonExistantKey(key)
 
     def __getitem__(self, key):
@@ -226,16 +226,16 @@ class Collection(dict):
         if key[0] == '_':
             self.__dict__[key] = value
         else:
-            raise RuntimeError, "Cannot set value of flags: %s" % key
+            raise RuntimeError("Cannot set value of flags: %s" % key)
 
     def _getNonExistantKey(self, key):
         """ Method that is called when a nonexistant key is accessed.
             Overridden by subclasses to allow for useful error messages
             or default key values to be supplied """
-        raise AttributeError, key
+        raise AttributeError(key)
 
     def _iterAll(self):
-        for child in self.itervalues():
+        for child in self.values():
             if isinstance(child, Collection):
                 for flag in child._iterAll():
                     yield flag
@@ -259,18 +259,18 @@ class Collection(dict):
 
     def _trackUsed(self, value=True):
         self._tracking = value
-        for child in self.itervalues():
+        for child in self.values():
             child._trackUsed(value)
 
     def _resetUsed(self):
-        for child in self.itervalues():
+        for child in self.values():
             child._resetUsed()
 
     def _getUsed(self):
         return [ x for x in self._iterUsed() ]
 
     def _iterUsed(self):
-        for child in self.itervalues():
+        for child in self.values():
             if isinstance(child, Collection):
                 for flag in child._iterUsed():
                     yield flag
@@ -306,7 +306,7 @@ class CollectionWithFlag(Flag, Collection):
 
     def __repr__(self):
         return "%s: %s {%s}" % (self._name, self._value,
-                                ', '.join((repr(x) for x in self.values())))
+                                ', '.join((repr(x) for x in list(self.values()))))
 
 class NoSuchUseFlagError(CvcError):
 
@@ -395,7 +395,7 @@ class ArchCollection(Collection):
             else:
                 self[key]._set(False)
         if not found:
-            raise AttributeError, "No Such Arch %s" % majArch
+            raise AttributeError("No Such Arch %s" % majArch)
 
     def _setArchProps(self, *archProps):
         """ Sets the required arch properties.
@@ -427,13 +427,11 @@ class ArchCollection(Collection):
         extraKeys = tuple(set(archProps.keys()) - set(self._archProps))
         missingKeys = tuple(set(self._archProps) - set(archProps.keys()))
         if extraKeys:
-            raise RuntimeError, \
-                'Extra arch properties %s provided by %s' % (extraKeys, majArch)
+            raise RuntimeError('Extra arch properties %s provided by %s' % (extraKeys, majArch))
         if missingKeys:
-            raise RuntimeError, \
-                'Missing arch properties %s not provided by %s' % (missingKeys,
-                                                                   majArch)
-        for archProp, value in archProps.iteritems():
+            raise RuntimeError('Missing arch properties %s not provided by %s' % (missingKeys,
+                                                                   majArch))
+        for archProp, value in archProps.items():
             self._setAttr(archProp, value)
 
     def _iterAll(self):
@@ -441,7 +439,7 @@ class ArchCollection(Collection):
             almost always what you want, otherwise it's easy enough
             to manually go through the architectures
         """
-        for child in self.itervalues():
+        for child in self.values():
             if child._get():
                 for flag in child._iterAll():
                     yield flag
@@ -472,7 +470,7 @@ class ArchCollection(Collection):
         return arch._getMacros()
 
     def getCurrentArch(self):
-        for majarch in self.itervalues():
+        for majarch in self.values():
             if majarch._get():
                 return majarch
 
@@ -501,14 +499,14 @@ class MajorArch(CollectionWithFlag):
             currentArch._setUsed()
 
     def _getMacro(self, key):
-        for subArch in self.itervalues():
+        for subArch in self.values():
             if subArch._get() and key in subArch._macros:
                 return subArch._macros[key]
         return self._macros[key]
 
     def _getMacros(self):
         macros = self._macros.copy()
-        for subArch in self.itervalues():
+        for subArch in self.values():
             if subArch._get():
                 macros.update(subArch._macros)
         return macros
@@ -658,7 +656,7 @@ class LocalFlagCollection(Collection):
         self[key]._set(value, override=True)
 
     def _getNonExistantKey(self, key):
-        raise AttributeError, 'No such local flag %s' % key
+        raise AttributeError('No such local flag %s' % key)
 
     def __setattr__(self, key, value):
         if key[0] == '_':
@@ -707,7 +705,7 @@ class PackageFlag(LocalFlag):
 def allowUnknownFlags(value=True):
     Use._setStrictMode(not value)
     Arch._setStrictMode(not value)
-    for majArch in Arch.values():
+    for majArch in list(Arch.values()):
         Arch._setStrictMode(not value)
 
 def setUsed(flagList):
@@ -811,10 +809,10 @@ def setBuildFlagsFromFlavor(recipeName, flavor, error=True, warn=False,
         on the flavor; we would only be able to do as half-baked job
     """
     crossCompiling = False
-    for depGroup in flavor.getDepClasses().values():
+    for depGroup in list(flavor.getDepClasses().values()):
         if isinstance(depGroup, deps.UseDependency):
             for dep in depGroup.getDeps():
-                for flag, sense in dep.flags.iteritems():
+                for flag, sense in dep.flags.items():
                     if sense in (deps.FLAG_SENSE_REQUIRED,
                                  deps.FLAG_SENSE_PREFERRED):
                         value = True
@@ -863,7 +861,7 @@ def setBuildFlagsFromFlavor(recipeName, flavor, error=True, warn=False,
             found = False
             try:
                 majorArch = arch.getMajorArch(depGroup.getDeps())
-            except arch.IncompatibleInstructionSets, e:
+            except arch.IncompatibleInstructionSets as e:
                 raise RuntimeError(str(e))
 
             if majorArch is None:
@@ -871,7 +869,7 @@ def setBuildFlagsFromFlavor(recipeName, flavor, error=True, warn=False,
                 return
 
             subarches = []
-            for (flag, sense) in majorArch.flags.iteritems():
+            for (flag, sense) in majorArch.flags.items():
                 if sense in (deps.FLAG_SENSE_REQUIRED,
                              deps.FLAG_SENSE_PREFERRED):
                     subarches.append(flag)

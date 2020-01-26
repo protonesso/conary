@@ -34,7 +34,7 @@ def _exceptionProtection(method):
 
         try:
             return method(self, *args, **kwargs)
-        except Exception, e:
+        except Exception as e:
             exc_info = sys.exc_info()
             if errors.exceptionIsUncatchable(e):
                 raise
@@ -46,15 +46,13 @@ def _exceptionProtection(method):
 class _CallbackMeta(type):
     """Decorate all methods of Callback and its subclasses"""
     def __new__(metacls, cls_name, cls_bases, cls_dict):
-        for key, value in cls_dict.items():
+        for key, value in list(cls_dict.items()):
             if isinstance(value, types.FunctionType) and not key.startswith('_'):
                 cls_dict[key] = _exceptionProtection(value)
         return type.__new__(metacls, cls_name, cls_bases, cls_dict)
 
 
-class Callback(object):
-
-    __metaclass__ = _CallbackMeta
+class Callback(object, metaclass=_CallbackMeta):
 
     def _exceptionOccured(self, exc_info):
         etype, e, tb = exc_info
@@ -364,7 +362,7 @@ class UpdateCallback(ChangesetCallback):
         @type stderr: boolean
         @return: None
         """
-        print "[%s] %s" % (tag, msg),
+        print("[%s] %s" % (tag, msg), end=' ')
 
     def troveScriptOutput(self, typ, msg):
         """
@@ -377,7 +375,7 @@ class UpdateCallback(ChangesetCallback):
         @type msg: string
         @return: None
         """
-        print "[%s] %s" % (typ, msg)
+        print("[%s] %s" % (typ, msg))
 
     def troveScriptStarted(self, typ):
         """Called when the script starts to execute"""
@@ -397,7 +395,7 @@ class UpdateCallback(ChangesetCallback):
         @type errcode: integer
         @return: None
         """
-        print "[%s] %s" % (typ, errcode)
+        print("[%s] %s" % (typ, errcode))
 
     def setUpdateHunk(self, hunk, hunkCount):
         """
@@ -525,7 +523,7 @@ class KeyCacheCallback(Callback):
 
     def getKeyPassphrase(self, keyId, prompt, errorMessage = None):
         if errorMessage:
-            print errorMessage
+            print(errorMessage)
         keyDesc = "conary:pgp:%s" % keyId
         try:
             import keyutils
@@ -539,8 +537,8 @@ class KeyCacheCallback(Callback):
             keyId = keyutils.request_key(keyDesc, keyring)
             if keyId is not None:
                 return keyutils.read_key(keyId)
-        print
-        print prompt
+        print()
+        print(prompt)
         passPhrase = getpass.getpass("Passphrase: ")
         if keyutils:
             keyutils.add_key(keyDesc, passPhrase, keyring)
@@ -621,7 +619,7 @@ class LineOutput:
     def __del__(self):
         if self.last:
             self._message("")
-            print >> self.out, "\r",
+            print("\r", end=' ', file=self.out)
             self.out.flush()
 
     def __init__(self, f = sys.stdout):

@@ -24,7 +24,7 @@ import pwd
 import shutil
 import stat
 import tempfile
-import StringIO
+import io
 import sys
 import time
 
@@ -151,7 +151,7 @@ class UpdateTest(rephelp.RepositoryHelper):
         return self._compareRoots(self.compareFileModes, root1, root2)
 
     def verifyPermissions(self, path, expected):
-        return (os.lstat(path).st_mode & 07777) == expected
+        return (os.lstat(path).st_mode & 0o7777) == expected
 
     def applyLocalChangeSet(self, root, fileName):
         db = database.Database(root, self.cfg.dbPath)
@@ -283,7 +283,7 @@ class User(UserInfoRecipe):
         db.close()
         self.assertIn('Installed : Fri Mar 18 01:58:31 2005\n', s)
 
-        os.chmod(os.path.join(root2, 'etc/changedconfig'), 0777)
+        os.chmod(os.path.join(root2, 'etc/changedconfig'), 0o777)
         self.updatePkg(root1, pkgname, vers[1])
         self.updatePkg(root2, pkgname, vers[1])
 
@@ -302,7 +302,7 @@ class User(UserInfoRecipe):
                       'the changeset did not result in the new contents '
                       'being written')
         if not self.verifyPermissions(
-                    os.path.join(root2, 'etc/changedconfig'), 0777):
+                    os.path.join(root2, 'etc/changedconfig'), 0o777):
             self.fail('permission change in second root did not survive '
                       'an update to a newer version of the package')
         shutil.rmtree(root1)
@@ -406,7 +406,7 @@ class User(UserInfoRecipe):
         self.logFilter.add()
         try:
             self.rollback(root1, 7)
-        except database.RollbackDoesNotExist, e:
+        except database.RollbackDoesNotExist as e:
             self.assertEqual(str(e), "rollback r.7 does not exist")
             self.logFilter.compare("error: rollback 'r.7' not present")
         else:
@@ -730,18 +730,18 @@ class User(UserInfoRecipe):
                           fileContents = [
                           ('/foo', rephelp.RegularFile(contents = 'bar\n',
                                                        transient = True,
-                                                       mode = 0644)) ])
+                                                       mode = 0o644)) ])
         self.addComponent('test:runtime=2.0',
                           fileContents = [
                           ('/foo', rephelp.RegularFile(contents = 'blah\n',
                                                        transient = True,
-                                                       mode = 0644)) ])
+                                                       mode = 0o644)) ])
 
         self.addComponent('test:runtime=2.1',
                           fileContents = [
                           ('/foo', rephelp.RegularFile(contents = 'blah\n',
                                                        transient = True,
-                                                       mode = 0600)) ])
+                                                       mode = 0o600)) ])
 
         path = self.rootDir + "/foo"
 
@@ -774,7 +774,7 @@ class User(UserInfoRecipe):
         (rc, str) = self.captureOutput(self.updatePkg,
                                        [ '-test:old', '+test:new' ])
         self.verifyFile(path, "blah\n")
-        self.assertEquals(str,
+        self.assertEqual(str,
                 'warning: cannot remove /foo: No such file or directory\n')
 
     def testNewTransients(self):
@@ -931,7 +931,7 @@ class User(UserInfoRecipe):
             os.unlink(path)
             v2 = repos.getTroveLeavesByLabel(
                             { pkgname : { self.cfg.buildLabel : None } } )
-            v2 = v2[pkgname].keys()
+            v2 = list(v2[pkgname].keys())
             repos.close()
             assert(len(v2) == 1 and v2[0] == v)
 
@@ -940,7 +940,7 @@ class User(UserInfoRecipe):
         (fd, file) = tempfile.mkstemp()
         try:
             os.close(fd)
-            os.chmod(os.path.join(self.rootDir, 'etc/changedconfig'), 0777)
+            os.chmod(os.path.join(self.rootDir, 'etc/changedconfig'), 0o777)
             self.localChangeset(self.rootDir, pkgname, file)
             self.resetRoot()
             self.updatePkg(self.rootDir, pkgname, versionList[0])
@@ -949,7 +949,7 @@ class User(UserInfoRecipe):
             os.unlink(file)
 
         if not self.verifyPermissions(
-                    os.path.join(self.rootDir, 'etc/changedconfig'), 0777):
+                    os.path.join(self.rootDir, 'etc/changedconfig'), 0o777):
             self.fail("local change set didn't fix permission change")
 
     def testLdconfig(self):
@@ -965,15 +965,15 @@ class User(UserInfoRecipe):
         assert(util.isregular(ldsoname))
         ldsoContents = file(ldsoname).read()
         if use.Arch.x86:
-            self.assertEquals(ldsoContents, '/lib\n/usr/lib\n')
+            self.assertEqual(ldsoContents, '/lib\n/usr/lib\n')
         elif use.Arch.x86_64:
-            self.assertEquals(ldsoContents, '/lib64\n/usr/lib64\n')
+            self.assertEqual(ldsoContents, '/lib64\n/usr/lib64\n')
         else:
-            raise NotImplementedError, 'edit test for this arch'
+            raise NotImplementedError('edit test for this arch')
 
     def testLdconfigNoSubRoot(self):
         'CNY-2982: no double leading / on entries'
-        templdsoconf = StringIO.StringIO()
+        templdsoconf = io.StringIO()
         def mkstemp(*args, **kwargs):
             return templdsoconf, 'ignoreme'
         def true(*args, **kwargs):
@@ -1000,7 +1000,7 @@ class User(UserInfoRecipe):
         self.realRoot()
         templdsoconf.seek(0)
         data = templdsoconf.read()
-        self.assertEquals('/sir/not/appearing/on/this/system\n', data)
+        self.assertEqual('/sir/not/appearing/on/this/system\n', data)
 
     def testLdconfigSubRoot(self):
         'CNY-2982: handle trailing / on root'
@@ -1019,7 +1019,7 @@ class User(UserInfoRecipe):
         elif use.Arch.x86_64:
             assert ldsoContents == '/lib64\n/usr/lib64\n'
         else:
-            raise NotImplementedError, 'edit test for this arch'
+            raise NotImplementedError('edit test for this arch')
 
     def testLdconfigConfD(self):
         (built, d) = self.buildRecipe(recipes.libhelloRecipeLdConfD, "Libhello")
@@ -1040,14 +1040,14 @@ class User(UserInfoRecipe):
         elif use.Arch.x86_64:
             assert ldsoContents == 'include /etc/ld.so.conf.d/*.conf\n/opt/foo\n/usr/lib64\n'
         else:
-            raise NotImplementedError, 'edit test for this arch'
+            raise NotImplementedError('edit test for this arch')
         ldsoDContents = file(ldsoDname).read()
         if use.Arch.x86:
             assert ldsoDContents == '/lib\n'
         elif use.Arch.x86_64:
             assert ldsoDContents == '/lib64\n'
         else:
-            raise NotImplementedError, 'edit test for this arch'
+            raise NotImplementedError('edit test for this arch')
 
     def testErase(self):
         (built, d) = self.buildRecipe(recipes.testRecipe1, "TestRecipe1")
@@ -1087,7 +1087,7 @@ class User(UserInfoRecipe):
         try:
             client.cfg.localRollbacks = True
             self.updatePkg('foo:runtime=1')
-            os.chmod(fooPath, 0600)             # change the inode
+            os.chmod(fooPath, 0o600)             # change the inode
             self.verifyFile(fooPath, '1')
             self.updatePkg('foo:runtime=2')
             self.rollback(1)
@@ -1175,14 +1175,14 @@ class User(UserInfoRecipe):
 
         # a file we don't have permission to remove
         try:
-            os.chmod(self.rootDir + "/etc", 0444)
+            os.chmod(self.rootDir + "/etc", 0o444)
             self.logCheck(self.removeFile,
                           (self.rootDir, "/etc/unchangedconfig"),
                           "warning: cannot remove /etc/unchangedconfig: "
                           "Permission denied")
             assert(self.rollbackCount() == 2)
         finally:
-            os.chmod(self.rootDir + "/etc", 0755)
+            os.chmod(self.rootDir + "/etc", 0o755)
 
         # multiple files
         self.resetRoot()
@@ -1753,7 +1753,7 @@ class User(UserInfoRecipe):
         self.verifyNoFile(self.rootDir + '/usr/share/unchanged')
         (rc, str) = self.captureOutput(
                 self.erasePkg, self.rootDir, 'testcase', justDatabase=True)
-        self.assertEquals(str, """\
+        self.assertEqual(str, """\
 warning: cannot remove /usr/share/changed: No such file or directory
 warning: cannot remove /usr/share/unchanged: No such file or directory
 warning: cannot remove /usr/bin/hello: No such file or directory
@@ -2423,7 +2423,7 @@ class FooRecipe(PackageRecipe):
         self.updatePkg(self.rootDir, "test:runtime")
         assert(os.readlink(self.rootDir + "/var/link") == "/foo")
         assert(open(self.rootDir + "/var/regf").read() == "contents\n")
-        assert(os.stat(self.rootDir + "/var/regf").st_mode & 0777 == 0644)
+        assert(os.stat(self.rootDir + "/var/regf").st_mode & 0o777 == 0o644)
 
     @testhelp.context('splitting')
     def testJobSplitting(self):
@@ -2466,7 +2466,7 @@ class FooRecipe(PackageRecipe):
 
         jobs = [ sorted([ x[0] for x in jobSet ]) for jobSet in 
                  updJob.getJobs()]
-        self.assertEquals(jobs, [['foo:runtime'],
+        self.assertEqual(jobs, [['foo:runtime'],
                           ['bar', 'bar:runtime', 'foo']])
         assert(updJob.getCriticalJobs() == [0])
 
@@ -2556,7 +2556,7 @@ class FooRecipe(PackageRecipe):
 
             combinedCrit = uJob.getCriticalJobs()
             self.assertEqual(len(combinedCrit), len(criticalJobs))
-            for i, j in itertools.izip(combinedCrit, criticalJobs):
+            for i, j in zip(combinedCrit, criticalJobs):
                 self.assertEqual(combined[i], troveNames[j])
 
         _test(2, [ [ "a:run" ], [ "a" ] ],
@@ -2876,7 +2876,7 @@ class FooRecipe(PackageRecipe):
                            ('/contents2', 'bar\n')])
         (rc, str) = self.captureOutput(self.updatePkg,
                                        ['-foo:runtime', 'bar:runtime'])
-        self.assertEquals(str,
+        self.assertEqual(str,
             "warning: cannot remove /contents0: No such file or directory\n")
         assert(not os.path.exists('%s/contents0' % self.cfg.root))
         self.verifyFile('%s/contents1' % self.cfg.root, 'bar\n')
@@ -3045,7 +3045,7 @@ class FooRecipe(PackageRecipe):
         try:
             self.checkUpdate('foo',
                              ['foo', 'foo:lib' ])
-        except errors.MissingTrovesError, e:
+        except errors.MissingTrovesError as e:
             self.assertEqual(str(e), 'The following troves are missing from the repository and cannot be installed: foo:lib=/localhost@rpl:linux/1-1-1[]')
         else:
             self.fail('expected MissingTrovesError')
@@ -3237,7 +3237,7 @@ class FooRecipe(PackageRecipe):
         try:
             client.applyUpdate(updJob)
             self.fail("InternalConaryError not raised")
-        except errors.InternalConaryError, e:
+        except errors.InternalConaryError as e:
             self.assertEqual(str(e), "Stale update job")
 
         # Database state shouldn't have changed
@@ -3278,7 +3278,7 @@ class FooRecipe(PackageRecipe):
         installs = ['foo=1.0', 'bar=1.0', 'corecomp=1.0']
         try:
             self.discardOutput(self.updatePkg, installs, raiseError=True)
-        except errors.ReexecRequired, e:
+        except errors.ReexecRequired as e:
             self.discardOutput(self.updatePkg, installs, raiseError=True,
                                restartInfo=e.data)
 
@@ -3293,7 +3293,7 @@ class FooRecipe(PackageRecipe):
             for trvn in [name, name + ':run', name + ':walk']:
                 trvList.append((trvn, None, None))
         trvs = client.repos.findTroves(self.defLabel, trvList)
-        trvs = [ x[0] for x in trvs.values() ]
+        trvs = [ x[0] for x in list(trvs.values()) ]
         troveObjs = client.repos.getTroves(trvs, withFiles = False)
         troveObjs = dict((x.getNameVersionFlavor(), x) for x in troveObjs)
 
@@ -3311,14 +3311,14 @@ class FooRecipe(PackageRecipe):
         # Manually adding some pre scripts
         jobs = [updJob.jobs[0][0], updJob.jobs[1][0]]
         trvs = [troveObjs[(x[0], ) + x[2]] for x in jobs ]
-        preScripts = zip(jobs, ["echo corecomp", "echo foo"], [0, 0], [1, 1],
-                         ['preupdate', 'preinstall'], trvs)
+        preScripts = list(zip(jobs, ["echo corecomp", "echo foo"], [0, 0], [1, 1],
+                         ['preupdate', 'preinstall'], trvs))
         for jb, script, oldCompatClass, newCompatClass, action, troveObj in preScripts:
             updJob.addJobPreScript(jb, script, oldCompatClass, newCompatClass,
                                    action, troveObj)
 
         # ... and some postrollback scripts
-        postRBScripts = zip(jobs, ["echo corecomp", "echo foo"], [0, 0], [1, 1])
+        postRBScripts = list(zip(jobs, ["echo corecomp", "echo foo"], [0, 0], [1, 1]))
         expPostRBScripts = {}
         for job, script, oldCompatClass, newCompatClass in postRBScripts:
             updJob.addJobPostRollbackScript(job, script, oldCompatClass,
@@ -3775,11 +3775,11 @@ True)])
 
         # Install group-foo
         self.updatePkg('group-foo=1')
-        self.assertEquals(fooVer(), ['/localhost@rpl:linux/1-1-1'])
+        self.assertEqual(fooVer(), ['/localhost@rpl:linux/1-1-1'])
 
         # run updateall
         self.captureOutput(self.updateAll)
-        self.assertEquals(fooVer(), ['/localhost@rpl:linux/2-1-1'])
+        self.assertEqual(fooVer(), ['/localhost@rpl:linux/2-1-1'])
 
         # bar should be installed
         try:
@@ -4114,7 +4114,7 @@ True)])
         try:
             self.updatePkg('foo:run', raiseError=True)
             assert(0)
-        except update.DowngradeError, e:
+        except update.DowngradeError as e:
             assert(str(e) == '''\
 Updating would install older versions of the following packages.  This means that the installed version on the system is not available in the repository.  To override, specify the version explicitly.
 
@@ -4163,7 +4163,7 @@ foo:run
     def testUpdateWithRename(self):
         def _test():
             inode = os.stat(self.rootDir + '/foo').st_ino
-            os.chmod(self.rootDir + '/foo', 0755)
+            os.chmod(self.rootDir + '/foo', 0o755)
             self.updatePkg('test:runtime=2-2-2')
             assert(os.stat(self.rootDir + '/bar').st_ino == inode)
             self.rollback(self.rootDir, 1)
@@ -4192,17 +4192,17 @@ foo:run
         self.addComponent('foo:runtime=1-1-1',
               fileContents = [ ('/a',
                     rephelp.RegularFile(contents = '1',
-                                        mode = 0600)) ])
+                                        mode = 0o600)) ])
         self.addComponent('bar:runtime=1-1-1',
               fileContents = [ ('/a',
                     rephelp.RegularFile(contents = '2',
-                                        mode = 0640)) ])
+                                        mode = 0o640)) ])
         self.updatePkg('foo:runtime')
-        os.chmod(self.rootDir + '/a', 0644)
+        os.chmod(self.rootDir + '/a', 0o644)
         self.updatePkg('bar:runtime', replaceFiles = True)
-        assert(os.lstat(self.rootDir + '/a').st_mode & 0777 == 0640)
+        assert(os.lstat(self.rootDir + '/a').st_mode & 0o777 == 0o640)
         self.rollback(1)
-        assert(os.lstat(self.rootDir + '/a').st_mode & 0777 == 0644)
+        assert(os.lstat(self.rootDir + '/a').st_mode & 0o777 == 0o644)
 
     @testhelp.context('rollback')
     def testRemovedAndModifiedSharedFileId(self):
@@ -4302,7 +4302,7 @@ foo:run
             self.updatePkg('foo:runtime=1')
             self.updatePkg('foo:runtime=2')
             self.rollback(1)
-            self.assertEquals(os.readlink(self.rootDir + '/foo'), '/linktarget')
+            self.assertEqual(os.readlink(self.rootDir + '/foo'), '/linktarget')
 
             self.resetRoot()
             self.updatePkg('foo:runtime=2')
@@ -4323,9 +4323,9 @@ foo:run
                 ] )
         self.addComponent('foo:runtime=:other-label/1', fileContents = [
                 ('/foo', rephelp.RegularFile(contents = 'foo')), # identical
-                ('/bar', rephelp.RegularFile(contents = 'foo', mode=0600)), # mode changes
+                ('/bar', rephelp.RegularFile(contents = 'foo', mode=0o600)), # mode changes
                 ('/baz', rephelp.RegularFile(contents = 'baz')), # content changes
-                ('/beef', rephelp.Socket(mode=0600)), # not a regular file
+                ('/beef', rephelp.Socket(mode=0o600)), # not a regular file
                 ] )
         self.updatePkg('foo:runtime=1')
         for name in ['/foo', '/bar', '/baz', '/beef']:
@@ -4378,40 +4378,40 @@ foo:run
         modelFile = systemmodel.SystemModelFile(model)
         updatecmd.doModelUpdate(self.cfg, model, modelFile, [],
             keepExisting=True)
-        self.assertEquals(file(root+'/contents1').read(), 'hello, world!\n')
+        self.assertEqual(file(root+'/contents1').read(), 'hello, world!\n')
 
         rc, txt = self.captureOutput(
             updatecmd.updateAll, self.cfg, systemModel=model,
                 systemModelFile=modelFile)
-        self.assertEquals(txt, '\n'.join(
+        self.assertEqual(txt, '\n'.join(
             ('Applying update job 1 of 2:',
              '    Update  foo(:runtime) (1.0-1-1 -> 2.0-1-1)',
              'Applying update job 2 of 2:',
              '    Update  group-dist (1.0-1-1 -> 2.0-1-1)',
              '')))
 
-        self.assertEquals(util.exists(root+'/contents1'), False)
-        self.assertEquals(file(root+'/contents2').read(), 'hello, world!\n')
-        self.assertEquals(file(root+'/etc/conary/system-model').read(),
+        self.assertEqual(util.exists(root+'/contents1'), False)
+        self.assertEqual(file(root+'/contents2').read(), 'hello, world!\n')
+        self.assertEqual(file(root+'/etc/conary/system-model').read(),
             'search group-dist=localhost@rpl:linux/2.0-1-1\n'
             'install group-dist\n')
 
         updatecmd.doModelUpdate(self.cfg, model, modelFile,
             ['bar=localhost@rpl:linux'], keepExisting=False)
-        self.assertEquals(util.exists(root+'/contents1'), False)
-        self.assertEquals(file(root+'/contents2').read(), 'hello, world!\n')
-        self.assertEquals(file(root+'/contents3').read(), 'hello, world!\n')
-        self.assertEquals(file(root+'/etc/conary/system-model').read(),
+        self.assertEqual(util.exists(root+'/contents1'), False)
+        self.assertEqual(file(root+'/contents2').read(), 'hello, world!\n')
+        self.assertEqual(file(root+'/contents3').read(), 'hello, world!\n')
+        self.assertEqual(file(root+'/etc/conary/system-model').read(),
             'search group-dist=localhost@rpl:linux/2.0-1-1\n'
             'install group-dist\n'
             'update bar=localhost@rpl:linux/2.0-1-1\n')
 
         updatecmd.doModelUpdate(self.cfg, model, modelFile,
             ['-bar=localhost@rpl:linux'], keepExisting=False)
-        self.assertEquals(util.exists(root+'/contents1'), False)
-        self.assertEquals(file(root+'/contents2').read(), 'hello, world!\n')
-        self.assertEquals(util.exists(root+'/contents3'), False)
-        self.assertEquals(file(root+'/etc/conary/system-model').read(),
+        self.assertEqual(util.exists(root+'/contents1'), False)
+        self.assertEqual(file(root+'/contents2').read(), 'hello, world!\n')
+        self.assertEqual(util.exists(root+'/contents3'), False)
+        self.assertEqual(file(root+'/etc/conary/system-model').read(),
             'search group-dist=localhost@rpl:linux/2.0-1-1\n'
             'install group-dist\n')
 
@@ -4430,7 +4430,7 @@ foo:run
         modelFile = systemmodel.SystemModelFile(model)
         updatecmd.doModelUpdate(self.cfg, model, modelFile, [],
             keepExisting=True)
-        self.assertEquals(file(root+'/contents1').read(), 'hello, world!\n')
+        self.assertEqual(file(root+'/contents1').read(), 'hello, world!\n')
 
         self.addComponent('conf:runtime', '1.0', filePrimer=1)
         self.addCollection('conf', '1.0', [ ':runtime' ])
@@ -4442,9 +4442,9 @@ foo:run
             updatecmd.updateAll, self.cfg, systemModel=model,
                 systemModelFile=modelFile)
 
-        self.assertEquals(util.exists(root+'/contents1'), True)
-        self.assertEquals(file(root+'/contents1').read(), 'hello, world!\n')
-        self.assertEquals(file(root+'/etc/conary/system-model').read(),
+        self.assertEqual(util.exists(root+'/contents1'), True)
+        self.assertEqual(file(root+'/contents1').read(), 'hello, world!\n')
+        self.assertEqual(file(root+'/etc/conary/system-model').read(),
             'install group-dist=localhost@rpl:linux/2.0-1-1\n')
 
         self.addComponent('conf:runtime', '2.0', fileContents=[
@@ -4510,7 +4510,7 @@ foo:run
             updatecmd.updateAll, self.cfg, systemModel=model,
                 systemModelFile=modelFile)
 
-        self.assertEquals(file(root+'/etc/conary/system-model').read(),
+        self.assertEqual(file(root+'/etc/conary/system-model').read(),
             'install group-dist=localhost@rpl:linux/3.1-1-1\n')
 
         # get rid of /contents1 conflict a different way
@@ -4526,14 +4526,14 @@ foo:run
             updatecmd.updateAll, self.cfg, systemModel=model,
                 systemModelFile=modelFile)
 
-        self.assertEquals(file(root+'/etc/conary/system-model').read(),
+        self.assertEqual(file(root+'/etc/conary/system-model').read(),
             'install group-dist=localhost@rpl:linux/3.2-1-1\n')
 
-        self.assertEquals(file(root+'/contents1').read(), 'hello, world!\n')
-        self.assertEquals(file(root+'/new').read(), 'b\n')
+        self.assertEqual(file(root+'/contents1').read(), 'hello, world!\n')
+        self.assertEqual(file(root+'/new').read(), 'b\n')
         self.rollback(1)
-        self.assertEquals(file(root+'/contents1').read(), 'hello, world!\n')
-        self.assertEquals(util.exists(root+'/new'), False)
+        self.assertEqual(file(root+'/contents1').read(), 'hello, world!\n')
+        self.assertEqual(util.exists(root+'/new'), False)
 
     @testhelp.context('sysmodel', 'rollback')
     def testModelUpdateFailResume(self):
@@ -4578,8 +4578,8 @@ foo:run
         ic = conarycmd.InstallCommand()
         rc, txt = self.captureOutput(
             ic.runCommand, self.cfg, {}, ['conary', 'install', 'foo'])
-        self.assertEquals(rc, 1)
-        self.assertEquals(txt, 'error: The previous update was aborted;'
+        self.assertEqual(rc, 1)
+        self.assertEqual(txt, 'error: The previous update was aborted;'
             ' resume with "conary sync" or revert with "conary rollback 1"\n')
 
         # now, mangle the main system model to make sure that the
@@ -4595,8 +4595,8 @@ foo:run
         self.verifyFile(root+'/etc/conary/system-model',
             'search group-dist=localhost@rpl:linux/1.0\ninstall group-dist\n')
         self.verifyFile(root+'/contents1', 'hello, world!\n')
-        self.assertEquals(util.exists(root+'/contents2'), False)
-        self.assertEquals(util.exists(root+'/etc/conary/system-model.next'),
+        self.assertEqual(util.exists(root+'/contents2'), False)
+        self.assertEqual(util.exists(root+'/etc/conary/system-model.next'),
             False)
 
         # Now, blow up an updateall!
@@ -4607,7 +4607,7 @@ foo:run
         _, txt = self.captureOutput(self.assertRaises, update.UpdateError,
             updatecmd.updateAll,
             self.cfg, systemModel=model, systemModelFile=modelFile)
-        self.assertEquals(txt,
+        self.assertEqual(txt,
             'Applying update job 1 of 3:\n'
             '    Install info-bar(:user)=2.0-1-1\n'
             'Applying update job 2 of 3:\n'
@@ -4621,7 +4621,7 @@ foo:run
         rc, txt = self.captureOutput(client.applyRollback,
             '1', tagScript=None, justDatabase=False,
             noScripts=False, showInfoOnly=False, abortOnError=False)
-        self.assertEquals(util.exists(root+'/etc/conary/system-model.next'),
+        self.assertEqual(util.exists(root+'/etc/conary/system-model.next'),
             False)
         self.verifyFile(root+'/etc/conary/system-model',
             'search group-dist=localhost@rpl:linux/1.0\ninstall group-dist\n')
@@ -4632,7 +4632,7 @@ foo:run
         _, txt = self.captureOutput(self.assertRaises, update.UpdateError,
             updatecmd.updateAll,
             self.cfg, systemModel=model, systemModelFile=modelFile)
-        self.assertEquals(txt,
+        self.assertEqual(txt,
             'Applying update job 1 of 3:\n'
             '    Install info-bar(:user)=2.0-1-1\n'
             'Applying update job 2 of 3:\n'
@@ -4652,5 +4652,5 @@ foo:run
             'search group-dist=localhost@rpl:linux/2.0-1-1\n'
             'install group-dist\n')
         self.verifyFile(root+'/contents2', 'hello, world!\n')
-        self.assertEquals(util.exists(root+'/etc/conary/system-model.next'),
+        self.assertEqual(util.exists(root+'/etc/conary/system-model.next'),
             False)

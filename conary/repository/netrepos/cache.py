@@ -80,15 +80,15 @@ class DumbCache(dict):
             self._shrink()
 
     def set_multi(self, items, time = 0, key_prefix = None):
-        for key, val in items.iteritems():
+        for key, val in items.items():
             self.set(key, val, time = time, key_prefix = key_prefix)
 
     def _shrink(self):
-        order = sorted((x for x in self.items() if x[1][1] is not None),
+        order = sorted((x for x in list(self.items()) if x[1][1] is not None),
                        lambda a, b: cmp(b[1][1], a[1][1]))
         toRemove = order[0:self.limit / 10]
         if (len(self) - len(toRemove)) > (self.limit * 0.95):
-            toRemove += [ x for x in self.items() ][0:self.limit / 10]
+            toRemove += [ x for x in list(self.items()) ][0:self.limit / 10]
 
         for x in toRemove:
             del self[x[0]]
@@ -98,7 +98,7 @@ class DumbCache(dict):
         if val is None:
             return None
         try:
-            val = long(val)
+            val = int(val)
         except ValueError:
             return None
         val = str(val + delta)

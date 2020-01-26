@@ -42,7 +42,7 @@ class TroveInfoTable:
         assert(trove.troveInfo.completeFixup() is None)
         c = ':' in n and not n.endswith(':source')
         newInfo = []
-        for (tag, (size, streamType, name)) in trove.troveInfo.streamDict.iteritems():
+        for (tag, (size, streamType, name)) in trove.troveInfo.streamDict.items():
             frz = trove.troveInfo.__getattribute__(name).freeze()
             if frz:
                 # FIXME: somehow we're getting buildReqs and loadedTrovs in the

@@ -39,7 +39,7 @@ class SignalException(Exception):
         os.kill(os.getpid(), self.sigNum)
 
     def __str__(self):
-        for name, val in signal.__dict__.iteritems():
+        for name, val in signal.__dict__.items():
             if name.startswith('SIG') and val == self.sigNum:
                 break
 
@@ -86,12 +86,12 @@ def sigprotect(*signals):
                     signal.signal(sigNum, signalHandler)
 
                 rc = fn(*args, **kwargs)
-            except SignalException, exception:
+            except SignalException as exception:
                 rekill = True
                 # not clear what else we can return if we make it that
                 # far!
                 rc = exception
-            except Exception, exception:
+            except Exception as exception:
                 # rc isn't set here because we're going to reraise this
                 # exception after cleaning up the process's signal
                 # handlers

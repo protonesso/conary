@@ -456,7 +456,7 @@ class testRedirect(RedirectRecipe):
             self.mkbranch("/localhost@rpl:linux//branch/1.0-1-0.1",
                           versions.Label("localhost@foo:bar"),
                           "redirect", shadow = True)
-        except conary.errors.ShadowRedirect, e:
+        except conary.errors.ShadowRedirect as e:
             assert(str(e) == 'cannot create a shadow of redirect=/localhost@rpl:linux//branch/1.0-1-0.1[] because it is a redirect')
         else:
             assert(0)
@@ -590,7 +590,7 @@ class testRedirect(RedirectRecipe):
                             defaultFlavor='foo')
         try:
            self.buildRecipe(redirectRecipe, 'testRedirect')
-        except errors.CookError, msg:
+        except errors.CookError as msg:
             assert(str(msg) ==
                     'Could not find target with satisfying flavor for '
                     'redirect redirect - either create a redirect with '
@@ -604,7 +604,7 @@ class testRedirect(RedirectRecipe):
 
         try:
             self.checkUpdate('redirect', ['test[foo]', 'test:runtime[foo]'])
-        except Exception, err:
+        except Exception as err:
             # FIXME: We tried to follow a redirect, but failed.
             # should we give a better error in this case?
             assert(str(err) == 'test was not found on path localhost@rpl:linux (Closest alternate flavors found: [~foo])')
@@ -663,7 +663,7 @@ class testRedirect(RedirectRecipe):
         self.buildRecipe(redirectBaseRecipe, "testRedirect")
         try:
             self.buildRecipe(redirectRecipe, "testRedirect")
-        except errors.RecipeFileError, err:
+        except errors.RecipeFileError as err:
             assert(str(err) == 'Label localhost@rpl:linux matched multiple branches.')
 
         self.resetRepository()
@@ -679,7 +679,7 @@ class testRedirect(RedirectRecipe):
 
         try:
             self.buildRecipe(redirect, "testRedirect")
-        except errors.CookError, msg:
+        except errors.CookError as msg:
             assert('groups cannot be redirected' in str(msg))
 
 
@@ -690,14 +690,14 @@ class testRedirect(RedirectRecipe):
 
         try:
             self.buildRecipe(redirect, "testRedirect")
-        except errors.CookError, msg:
+        except errors.CookError as msg:
             assert('components cannot be individually redirected' in str(msg))
 
         redirect = redirectTemplate % dict(name='redirect', extra = '',
                     redirect='"blah", "%s"' % self.cfg.buildLabel)
         try:
             self.buildRecipe(redirect, "testRedirect")
-        except errors.RecipeFileError, msg:
+        except errors.RecipeFileError as msg:
             assert(str(msg) == 'No troves found with name(s) redirect')
 
         self.addComponent('redirect:runtime', '1.0')
@@ -705,7 +705,7 @@ class testRedirect(RedirectRecipe):
 
         try:
             self.buildRecipe(redirect, "testRedirect")
-        except errors.RecipeFileError, msg:
+        except errors.RecipeFileError as msg:
             assert(str(msg) == 'Trove blah does not exist')
 
         self.resetRepository()
@@ -719,7 +719,7 @@ class testRedirect(RedirectRecipe):
 
         try:
             self.buildRecipe(redirect, "testRedirect")
-        except errors.CookError, msg:
+        except errors.CookError as msg:
             assert(str(msg) == 'Could not find target with satisfying flavor for redirect redirect - either create a redirect with targetFlavor and sourceFlavor set, or create a redirect with skipTargetMatching = True')
 
         self.addComponent('test:runtime', '1.1')
@@ -734,7 +734,7 @@ class testRedirect(RedirectRecipe):
 
         try:
             self.buildRecipe(redirect, "testRedirect")
-        except errors.RecipeFileError, err:
+        except errors.RecipeFileError as err:
             assert(str(err) == 'Multiple redirect targets specified '
                                'from trove redirect[]')
 

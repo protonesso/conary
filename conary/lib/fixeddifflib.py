@@ -50,6 +50,7 @@ __all__ = ['get_close_matches', 'ndiff', 'restore', 'SequenceMatcher',
 
 import heapq
 from conary.lib.compat import namedtuple as _namedtuple
+from functools import reduce
 
 Match = _namedtuple('Match', 'a b size')
 
@@ -425,7 +426,7 @@ class SequenceMatcher:
         # junk-free match ending with a[i-1] and b[j]
         j2len = {}
         nothing = []
-        for i in xrange(alo, ahi):
+        for i in range(alo, ahi):
             # look at all instances of a[i] in b; note that because
             # b2j has no junk keys, the loop is skipped if a[i] is junk
             j2lenget = j2len.get
@@ -541,7 +542,7 @@ class SequenceMatcher:
 
         non_adjacent.append( (la, lb, 0) )
         self.matching_blocks = non_adjacent
-        return map(Match._make, self.matching_blocks)
+        return list(map(Match._make, self.matching_blocks))
 
     def get_opcodes(self):
         """Return list of 5-tuples describing how to turn a into b.
@@ -932,14 +933,14 @@ class Differ:
             elif tag == 'equal':
                 g = self._dump(' ', a, alo, ahi)
             else:
-                raise ValueError, 'unknown tag %r' % (tag,)
+                raise ValueError('unknown tag %r' % (tag,))
 
             for line in g:
                 yield line
 
     def _dump(self, tag, x, lo, hi):
         """Generate comparison results for a same-tagged range."""
-        for i in xrange(lo, hi):
+        for i in range(lo, hi):
             yield '%s %s' % (tag, x[i])
 
     def _plain_replace(self, a, alo, ahi, b, blo, bhi):
@@ -985,10 +986,10 @@ class Differ:
         # search for the pair that matches best without being identical
         # (identical lines must be junk lines, & we don't want to synch up
         # on junk -- unless we have to)
-        for j in xrange(blo, bhi):
+        for j in range(blo, bhi):
             bj = b[j]
             cruncher.set_seq2(bj)
-            for i in xrange(alo, ahi):
+            for i in range(alo, ahi):
                 ai = a[i]
                 if ai == bj:
                     if eqi is None:
@@ -1044,7 +1045,7 @@ class Differ:
                     atags += ' ' * la
                     btags += ' ' * lb
                 else:
-                    raise ValueError, 'unknown tag %r' % (tag,)
+                    raise ValueError('unknown tag %r' % (tag,))
             for line in self._qformat(aelt, belt, atags, btags):
                 yield line
         else:
@@ -1485,7 +1486,7 @@ def _mdiff(fromlines, tolines, context=None, linejunk=None,
             # so we can do some very readable comparisons.
             while len(lines) < 4:
                 try:
-                    lines.append(diff_lines_iterator.next())
+                    lines.append(next(diff_lines_iterator))
                 except StopIteration:
                     lines.append('X')
             s = ''.join([line[0] for line in lines])
@@ -1572,7 +1573,7 @@ def _mdiff(fromlines, tolines, context=None, linejunk=None,
         while True:
             # Collecting lines of text until we have a from/to pair
             while (len(fromlines)==0 or len(tolines)==0):
-                from_line, to_line, found_diff =line_iterator.next()
+                from_line, to_line, found_diff =next(line_iterator)
                 if from_line is not None:
                     fromlines.append((from_line,found_diff))
                 if to_line is not None:
@@ -1587,7 +1588,7 @@ def _mdiff(fromlines, tolines, context=None, linejunk=None,
     line_pair_iterator = _line_pair_iterator()
     if context is None:
         while True:
-            yield line_pair_iterator.next()
+            yield next(line_pair_iterator)
     # Handle case where user wants context differencing.  We must do some
     # storage of lines until we know for sure that they are to be yielded.
     else:
@@ -1600,7 +1601,7 @@ def _mdiff(fromlines, tolines, context=None, linejunk=None,
             index, contextLines = 0, [None]*(context)
             found_diff = False
             while(found_diff is False):
-                from_line, to_line, found_diff = line_pair_iterator.next()
+                from_line, to_line, found_diff = next(line_pair_iterator)
                 i = index % context
                 contextLines[i] = (from_line, to_line, found_diff)
                 index += 1
@@ -1620,7 +1621,7 @@ def _mdiff(fromlines, tolines, context=None, linejunk=None,
             # Now yield the context lines after the change
             lines_to_write = context-1
             while(lines_to_write):
-                from_line, to_line, found_diff = line_pair_iterator.next()
+                from_line, to_line, found_diff = next(line_pair_iterator)
                 # If another change within the context, extend the context
                 if found_diff:
                     lines_to_write = context-1
@@ -2060,7 +2061,7 @@ def restore(delta, which):
     try:
         tag = {1: "- ", 2: "+ "}[int(which)]
     except KeyError:
-        raise ValueError, ('unknown delta choice (must be 1 or 2): %r'
+        raise ValueError('unknown delta choice (must be 1 or 2): %r'
                            % which)
     prefixes = ("  ", tag)
     for line in delta:

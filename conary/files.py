@@ -188,11 +188,11 @@ class InodeStream(streams.StreamSet):
     def permsString(self):
         perms = self.perms()
 
-        l = self.triplet(perms >> 6, perms & 04000) + \
-            self.triplet(perms >> 3, perms & 02000) + \
+        l = self.triplet(perms >> 6, perms & 0o4000) + \
+            self.triplet(perms >> 3, perms & 0o2000) + \
             self.triplet(perms >> 0)
 
-        if perms & 01000:
+        if perms & 0o1000:
             if l[8] == "x":
                 l[8] = "t"
             else:
@@ -205,7 +205,7 @@ class InodeStream(streams.StreamSet):
         return time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime(self.mtime()))
 
     def isExecutable(self):
-        return (self.perms() & 0111) != 0
+        return (self.perms() & 0o111) != 0
 
     def __eq__(self, other, skipSet = { 'mtime' : True }):
         return streams.StreamSet.__eq__(self, other, skipSet = skipSet)
@@ -386,9 +386,9 @@ class File(streams.StreamSet):
             # do not ever make a file setuid or setgid the wrong user
             rgid = os.getgid()
             if uid != ruid:
-                mask |= 04000
+                mask |= 0o4000
             if gid != rgid:
-                mask |= 02000
+                mask |= 0o2000
         self.chmod(target, mask)
 
     def twm(self, diff, base, skip = None):
@@ -636,7 +636,7 @@ class RegularFile(File):
                 os.link(tmpname, destTarget)
             try:
                 os.rename(tmpname, target)
-            except OSError, err:
+            except OSError as err:
                 if err.args[0] != errno.EISDIR:
                     raise
                 os.rmdir(target)
@@ -664,7 +664,7 @@ def FileFromFilesystem(path, pathId, possibleMatch = None, inodeInfo = False,
     if assumeRoot:
         owner = 'root'
         group = 'root'
-    elif isinstance(s.st_uid, basestring):
+    elif isinstance(s.st_uid, str):
         # Already stringified -- some capsule code will fabricate a stat result
         # from e.g. a RPM header
         owner = s.st_uid
@@ -683,7 +683,7 @@ def FileFromFilesystem(path, pathId, possibleMatch = None, inodeInfo = False,
             group = '+%d' % s.st_gid
 
     needsSha1 = 0
-    inode = InodeStream(s.st_mode & 07777, s.st_mtime, owner, group)
+    inode = InodeStream(s.st_mode & 0o7777, s.st_mtime, owner, group)
 
     if (stat.S_ISREG(s.st_mode)):
         f = RegularFile(pathId)

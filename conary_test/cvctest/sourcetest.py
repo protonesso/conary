@@ -19,7 +19,7 @@ from testrunner.testhelp import context
 
 import copy
 import sys
-from StringIO import StringIO
+from io import StringIO
 import time
 
 from conary.build import errors as cvcerrors, packagerecipe, source
@@ -41,7 +41,7 @@ import tempfile
 from conary import versions
 from conary.lib import log, openpgpfile, sha1helper, util
 
-from buildtest import lookasidetest
+from .buildtest import lookasidetest
 
 diff0 = """\
 (working version) (no log message)
@@ -224,14 +224,14 @@ contents(size sha1)
         self.writeFile("test.source", ''.join(lines))
         repos = self.openRepository()
         status = checkin.generateStatus(repos)
-        self.assertEquals(status, [('?', 'test.source'), ('?', 'testcase.recipe')])
+        self.assertEqual(status, [('?', 'test.source'), ('?', 'testcase.recipe')])
         self.addfile("testcase.recipe")
         status = checkin.generateStatus(repos)
-        self.assertEquals(status, [('?', 'test.source'), ('A', 'testcase.recipe')])
+        self.assertEqual(status, [('?', 'test.source'), ('A', 'testcase.recipe')])
         self.addfile("test.source", text = True)
         os.chdir(self.workDir)
         status = checkin.generateStatus(repos, os.sep.join((self.workDir, 'testcase')))
-        self.assertEquals(status, [('A', 'test.source'), ('A', 'testcase.recipe')])
+        self.assertEqual(status, [('A', 'test.source'), ('A', 'testcase.recipe')])
         os.chdir("testcase")
         self.commit()
         lines[2] = '1.0-2 changes line 3\n'
@@ -242,9 +242,9 @@ contents(size sha1)
         self.assertIn(rdiffOutputNewTestcase, rc)
         self.assertIn(rdiffOutputNewSource, rc)
         rc = self.rdiff('testcase', '1.0-1', '1.0-2')
-        self.assertEquals(rc, rdiffOutputDiff)
+        self.assertEqual(rc, rdiffOutputDiff)
         rc = self.rdiff('testcase', '-1', '1.0-2')
-        self.assertEquals(rc, rdiffOutputDiff)
+        self.assertEqual(rc, rdiffOutputDiff)
         #cleanup
         os.chdir("..")
         shutil.rmtree("testcase")
@@ -268,7 +268,7 @@ contents(size sha1)
         lines[2] = 'line#\n'
         self.writeFile("test.source", ''.join(lines))
         rc = self.diff()
-        self.assertEquals(rc, difflines)
+        self.assertEqual(rc, difflines)
 
         #cleanup
         os.chdir("..")
@@ -335,10 +335,10 @@ contents(sha1)
         self.writeFile("test.source2", ''.join(lines))
 
         rc = self.diff('test.source2')
-        self.assertEquals(rc, mdiff2)
+        self.assertEqual(rc, mdiff2)
 
         rc = self.diff('test.source1')
-        self.assertEquals(rc, mdiff1)
+        self.assertEqual(rc, mdiff1)
 
         #cleanup
         os.chdir("..")
@@ -467,21 +467,21 @@ contents(sha1)
         for line in lines:
             aLines.append('1.0-1 (Tset): ' + line)
         rc = self.annotate('test.source')
-        self.assertEquals(rc, ''.join(aLines))
+        self.assertEqual(rc, ''.join(aLines))
 
         lines[2] = '1.0-2 changes line 3\n'
         self.writeFile("test.source", ''.join(lines))
         self.commit()
         aLines[2] = '1.0-2 (Test): ' + lines[2]
         rc = self.annotate('test.source')
-        self.assertEquals(rc, ''.join(aLines))
+        self.assertEqual(rc, ''.join(aLines))
 
         lines.append('1.0-3 adds line 4\n')
         self.writeFile("test.source", ''.join(lines))
         self.commit()
         aLines.append('1.0-3 (Test): ' + lines[3])
         rc = self.annotate('test.source')
-        self.assertEquals(rc, ''.join(aLines))
+        self.assertEqual(rc, ''.join(aLines))
 
         # test annotate on a file that never changed (CNY-1066)
         rc = self.annotate('neverchange')
@@ -500,7 +500,7 @@ contents(sha1)
         aLines[1] = '1.0-2/localhost@rpl:branch/3 (Test): ' + lines[1]
         del aLines[3]
         rc = self.annotate('test.source')
-        self.assertEquals(rc, ''.join(aLines))
+        self.assertEqual(rc, ''.join(aLines))
         #cleanup
         os.chdir(origDir)
 
@@ -531,7 +531,7 @@ contents(sha1)
         self.addfile('testcase.recipe')
         logMessagesUncommitted = [self.removeDateFromLogMessage(x)
                                   for x in checkin.iterLog(repos)]
-        self.assertEquals(logMessagesUncommitted,
+        self.assertEqual(logMessagesUncommitted,
                           ['nothing has been committed'])
         self.commit()
         os.chdir(self.workDir)
@@ -547,7 +547,7 @@ contents(sha1)
         logMessagesNewer = [self.removeDateFromLogMessage(x)
                             for x in checkin.iterLog(repos, newer=True,
                                                      dirName='testcase')]
-        self.assertEquals(logMessagesFull, [
+        self.assertEqual(logMessagesFull, [
             'Name  : testcase:source',
             'Branch: /localhost@rpl:linux',
             '',
@@ -558,7 +558,7 @@ contents(sha1)
             '    foo',
             ''
             ])
-        self.assertEquals(logMessagesNewer, [
+        self.assertEqual(logMessagesNewer, [
             'Name  : testcase:source',
             'Branch: /localhost@rpl:linux',
             '',
@@ -569,10 +569,10 @@ contents(sha1)
         os.chdir(self.workDir + '/testcase')
         cmdLineNewer = self.showLog(**{'newer':True})
         # cmdline has more trailing whitespace
-        self.assertEquals('\n'.join(logMessagesNewer).strip(),
+        self.assertEqual('\n'.join(logMessagesNewer).strip(),
                           cmdLineNewer.strip())
         self.assertRaises(errors.CvcError,
-            checkin.iterLog(repos, branch='foo', newer=True).next)
+            checkin.iterLog(repos, branch='foo', newer=True).__next__)
 
 
     def testSource(self):
@@ -633,13 +633,13 @@ contents(sha1)
         self.addfile("test.newsource", text = True)
         self.remove("test.fifo")
         rc = self.diff(rc = 1)
-        self.assertEquals(rc, diff0)
+        self.assertEqual(rc, diff0)
 
         self.commit()
 
         s = self.showLog()
         lines = [ x.strip() for x in s.split('\n') if x.strip() != '' ]
-        self.assertEquals(lines, ['Name  : testcase:source',
+        self.assertEqual(lines, ['Name  : testcase:source',
                          'Branch: /localhost@rpl:linux',
                          '1.0-2 Test', 'foo', '1.0-1 Test', 'foo' ] )
         os.chdir("..")
@@ -687,7 +687,7 @@ contents(sha1)
         # work
         self.remove("test.newsource")
         rc = self.diff(rc = 1)
-        self.assertEquals(rc, "(working version) (no log message)\n\n"
+        self.assertEqual(rc, "(working version) (no log message)\n\n"
                       "test.renamed (aka test.source)\n"
                       "test.newsource: removed\n")
         self.commit()
@@ -712,9 +712,9 @@ contents(sha1)
         sourceContents2 = recipes.testRecipe1 + "# some comments\n"
         self.writeFile("testcase.recipe", sourceContents2)
         rc = self.diff()
-        self.assertEquals(rc, diff1)
+        self.assertEqual(rc, diff1)
         rc = self.diff(revision='1.0-3')
-        self.assertEquals(rc, diff1)
+        self.assertEqual(rc, diff1)
         self.commit()
         os.chdir("..")
         shutil.rmtree("testcase")
@@ -760,7 +760,7 @@ contents(sha1)
         branchContents = recipes.testRecipe1 + "# branch comment\n"
         self.writeFile("testcase.recipe", branchContents)
         rc = self.diff()
-        self.assertEquals(rc, diff2)
+        self.assertEqual(rc, diff2)
         self.commit()
         os.chdir("..")
 
@@ -869,7 +869,7 @@ contents(sha1)
         conaryState = state.ConaryStateFromFile(os.path.join('foo', 'CONARY'),
                                                 None)
         sourceState = conaryState.getSourceState()
-        self.assertEquals([ x[1] for x in sourceState.iterFileList() if x[1].endswith('.recipe') ], ['foo.recipe'])
+        self.assertEqual([ x[1] for x in sourceState.iterFileList() if x[1].endswith('.recipe') ], ['foo.recipe'])
 
         self.cfg.recipeTemplate = None
 
@@ -967,7 +967,7 @@ contents(sha1)
                     fileContents = [ ( 'bash.recipe', recipes.bashRecipe) ] )
         self.checkout('bash')
         trvState = state.ConaryStateFromFile('bash/CONARY')
-        self.assertEquals(trvState.getSourceState().getVersion(),
+        self.assertEqual(trvState.getSourceState().getVersion(),
                     versions.VersionFromString(b3) )
 
         shutil.rmtree('bash')
@@ -977,7 +977,7 @@ contents(sha1)
                          '/localhost@rpl:foo//linux' % self.workDir ],
                        self.update, verbosity = log.INFO)
         trvState = state.ConaryStateFromFile('CONARY')
-        self.assertEquals(trvState.getSourceState().getVersion(),
+        self.assertEqual(trvState.getSourceState().getVersion(),
                     versions.VersionFromString(b3) )
 
         # make sure a commit doesn't switch branches
@@ -985,7 +985,7 @@ contents(sha1)
         self.addfile('test.txt')
         self.commit()
         trvState = state.ConaryStateFromFile('CONARY')
-        self.assertEquals(trvState.getSourceState().getVersion().branch(),
+        self.assertEqual(trvState.getSourceState().getVersion().branch(),
                     versions.VersionFromString(b3).branch() )
 
     def testCookLabelMultiplicity(self):
@@ -1095,8 +1095,8 @@ contents(sha1)
             # timestamps changing on commit
             v1 = versions.ThawVersion(l1[-1].split()[1])
             v2 = versions.ThawVersion(l2[-1].split()[1])
-            self.assertEquals(v1, v2)
-            self.assertEquals(l1[:-1], l2[:-1])
+            self.assertEqual(v1, v2)
+            self.assertEqual(l1[:-1], l2[:-1])
 
         def _checkCONARYFiles(l):
             f = open('CONARY', 'r')
@@ -1146,7 +1146,7 @@ contents(sha1)
         rc = self.diff()
         # ignore mtime changes
         rc = rc.replace('inode(mtime)\n', '')
-        self.assertEquals(rc, autoSourceDiff)
+        self.assertEqual(rc, autoSourceDiff)
         self.commit()
         _checkCONARYFiles(('distcc-2.9.tar.bz2', 'localfile',
                            'autosource.recipe'))
@@ -1198,7 +1198,7 @@ contents(sha1)
                                 '+ localfile not yet cached, fetching...'])
         os.chdir("..")
         v = _checkFile(repos, 'multilib-sample.tar.bz2', '3.0-1').split('/')[-1]
-        self.assertEquals(v, '3.0-1')
+        self.assertEqual(v, '3.0-1')
         # copy 3.0 conary up a dir
         self.diff()
         shutil.copy('autosource/CONARY', 'CONARY')
@@ -1288,7 +1288,7 @@ contents(sha1)
                                   deps.deps.Flavor()), None)[0]
         changeList = [(trvTup[0], (None, None), trvTup[1:], False)]
         cs = repos.createChangeSet(changeList, excludeAutoSource=True)
-        troveCs = cs.iterNewTroveList().next()
+        troveCs = next(cs.iterNewTroveList())
 
         found = False
         for (pathId, path, fileId, version) in troveCs.getNewFileList():
@@ -1307,7 +1307,7 @@ contents(sha1)
             assert 0, 'changeset contained autosource components!'
 
         cs = repos.createChangeSet(changeList, excludeAutoSource=True)
-        troveCs = cs.iterNewTroveList().next()
+        troveCs = next(cs.iterNewTroveList())
         for (pathId, path, fileId, version) in troveCs.getNewFileList():
             fileObj = files.ThawFile(cs.getFileChange(None, fileId), pathId)
             if fileObj.flags.isAutoSource():
@@ -1378,13 +1378,13 @@ class foo(PackageRecipe):
         self.writeFile(self.workDir + '/CONARY',
                        "context 1\ncontext 2\n")
         conaryState = state.ConaryStateFromFile(self.workDir + '/CONARY')
-        self.assertEquals(conaryState.context, '2')
+        self.assertEqual(conaryState.context, '2')
         self.writeFile(self.workDir + '/CONARY',
                        "nonesuch 1\ncontext 2\n")
         try:
             state.ConaryStateFromFile(self.workDir + '/CONARY')
-        except state.ConaryStateError, err:
-            self.assertEquals(str(err), 'Cannot parse state file ' + self.workDir +
+        except state.ConaryStateError as err:
+            self.assertEqual(str(err), 'Cannot parse state file ' + self.workDir +
                    '/CONARY: Invalid field "nonesuch"')
         else:
             assert(0)
@@ -1492,8 +1492,8 @@ class foo(PackageRecipe):
         self.addfile('foo', binary = True)
         try:
             self.commit()
-        except cvcerrors.RecipeFileError, err:
-            self.assertEquals(str(err), 'The following file names conflict (cvc does not currently support multiple files with the same name from different locations):\n   http://localhost/foo\n   foo')
+        except cvcerrors.RecipeFileError as err:
+            self.assertEqual(str(err), 'The following file names conflict (cvc does not currently support multiple files with the same name from different locations):\n   http://localhost/foo\n   foo')
         else:
             assert(0)
 
@@ -1544,8 +1544,8 @@ branch /conary.rpath.com@rpl:linux
 
         try:
             st = state.ConaryStateFromFile(self.workDir + '/CONARY', None)
-        except Exception, err:
-            self.assertEquals(str(err), 'Cannot parse state file %s/CONARY: CONARY file has version 1, but this application cannot convert - please run a cvc command, e.g. cvc diff, to convert.' % self.workDir)
+        except Exception as err:
+            self.assertEqual(str(err), 'Cannot parse state file %s/CONARY: CONARY file has version 1, but this application cannot convert - please run a cvc command, e.g. cvc diff, to convert.' % self.workDir)
         else:
             assert(0)
 
@@ -1593,8 +1593,8 @@ branch /conary.rpath.com@rpl:linux
 
         try:
             st = state.ConaryStateFromFile(self.workDir + '/CONARY', None)
-        except Exception, err:
-            self.assertEquals(str(err), 'Cannot parse state file %s/CONARY: CONARY file has version 0, but this application cannot convert - please run a cvc command, e.g. cvc diff, to convert.' % self.workDir)
+        except Exception as err:
+            self.assertEqual(str(err), 'Cannot parse state file %s/CONARY: CONARY file has version 0, but this application cannot convert - please run a cvc command, e.g. cvc diff, to convert.' % self.workDir)
         else:
             assert(0)
 
@@ -1706,14 +1706,14 @@ repositoryMap foo http://foo.com
         cfg = copy.deepcopy(self.cfg)
         cfg.includeConfigFile('conaryrc')
         rc, txt = self.captureOutput(self.context, cfg=cfg)
-        self.assertEquals(txt, 'No context set.\n')
+        self.assertEqual(txt, 'No context set.\n')
         assert(not os.path.exists('CONARY'))
         self.context('context', cfg=cfg)
         assert(os.path.exists('CONARY'))
         assert('context context\n' in open('CONARY').readlines())
         cfg.setContext('context')
         rc, txt = self.captureOutput(self.context, cfg=cfg)
-        self.assertEquals(txt, '''\
+        self.assertEqual(txt, '''\
 [context]
 installLabelPath          localhost@rpl:new
 repositoryMap             foo                       http://foo.com
@@ -1728,7 +1728,7 @@ repositoryMap             foo                       http://foo.com
         self.writeFile('simple.recipe', recipes.simpleRecipe)
         self.addfile('simple.recipe')
         rc, txt = self.captureOutput(self.commit)
-        self.assertEquals(txt, '''\
+        self.assertEqual(txt, '''\
 WARNING: performing this commit will switch the active branch:
 
 New version simple:source=/localhost@rpl:linux/1-1
@@ -1764,7 +1764,7 @@ error: interactive mode is required when changing active branch
         self.addComponent('simple:source', '/localhost@rpl:foo//linux/1-1')
 
         s = self.showLog()
-        self.assertEquals(s, 'Name  : simple:source\nBranch: /localhost@rpl:linux\n\n1-2 Test \n    foo\n\n1-1 Test \n    foo\n\n')
+        self.assertEqual(s, 'Name  : simple:source\nBranch: /localhost@rpl:linux\n\n1-2 Test \n    foo\n\n1-1 Test \n    foo\n\n')
 
     def testNewPackageBadName(self):
         self.assertRaises(errors.CvcError, self.newpkg, 'foo/bar')
@@ -2006,10 +2006,10 @@ class SimpleRecipe(PackageRecipe):
         recipe = DummyPackageRecipe(self.cfg)
         recipe._sources = recipe._makeSources()
         srcPathList = recipe.getSourcePathList()
-        self.assertEquals(len(recipe._sources), 6)
-        self.assertEquals([x.getPath() for x in srcPathList], ['foo4', 'foo5',
+        self.assertEqual(len(recipe._sources), 6)
+        self.assertEqual([x.getPath() for x in srcPathList], ['foo4', 'foo5',
                 'foo6'])
-        self.assertEquals(recipe.fetchLocalSources(), ['foo4', 'foo5', 'foo6'])
+        self.assertEqual(recipe.fetchLocalSources(), ['foo4', 'foo5', 'foo6'])
 
     def testUnknownUser(self):
         self.addComponent('foo:source', '1.0',
@@ -2018,7 +2018,7 @@ class SimpleRecipe(PackageRecipe):
                                                 group = 'unknowngroup2') ) ] )
         self.addComponent('foo:source', '2.0',
                           fileContents = [ 'foo.recipe', ( 'new.file',
-                            rephelp.RegularFile(perms = 0600,
+                            rephelp.RegularFile(perms = 0o600,
                                                 contents = '2',
                                                 owner = 'unknownuser2',
                                                 group = 'unknowngroup2') ) ] )
@@ -2046,7 +2046,7 @@ class SimpleRecipe(PackageRecipe):
         conaryState = state.ConaryStateFromFile('CONARY', None)
         sourceState = conaryState.getSourceState()
         files = sorted([ x[1] for x in sourceState.iterFileList() ])
-        self.assertEquals(files, [ 'group-basic.recipe', 'script-file' ] )
+        self.assertEqual(files, [ 'group-basic.recipe', 'script-file' ] )
 
     def testRevert(self):
         os.chdir(self.workDir)
@@ -2061,8 +2061,8 @@ class SimpleRecipe(PackageRecipe):
               "      r.addArchive('distcc-2.9.tar.bz2')\n"
               "\n")
         self.writeFile('foo.recipe', r1)
-        perms = os.stat('foo.recipe').st_mode & 0777;
-        assert(perms != 0200)
+        perms = os.stat('foo.recipe').st_mode & 0o777;
+        assert(perms != 0o200)
         self.addfile('foo.recipe')
 
         self.writeFile('other', 'some contents\n')
@@ -2080,9 +2080,9 @@ class SimpleRecipe(PackageRecipe):
         self.revertSource()
         self.verifyFile('foo.recipe', r1)
 
-        os.chmod('foo.recipe', 0200)
+        os.chmod('foo.recipe', 0o200)
         self.revertSource()
-        self.assertEqual(perms, os.stat('foo.recipe').st_mode & 0777)
+        self.assertEqual(perms, os.stat('foo.recipe').st_mode & 0o777)
 
         self.logCheck(self.commit, (),
                       '+ no changes have been made to commit')
@@ -2101,7 +2101,7 @@ class SimpleRecipe(PackageRecipe):
 
         try:
             self.revertSource('distcc-2.9.tar.bz2')
-        except cvcerrors.CvcError, e:
+        except cvcerrors.CvcError as e:
             self.assertEqual(str(e), 'autosource files cannot be reverted')
         else:
             assert(0)
@@ -2140,7 +2140,7 @@ class SimpleRecipe(PackageRecipe):
         self.addfile('simple.recipe')
         self.commit()
         trv = self.findAndGetTrove('simple:source')
-        self.assertEquals(str(trv.getVersion().trailingRevision()), '1-2')
+        self.assertEqual(str(trv.getVersion().trailingRevision()), '1-2')
         self.writeFile('simple.recipe', recipes.simpleRecipe + '#comment\n')
         self.commit()
         self.markRemoved('simple:source=1-3')
@@ -2151,7 +2151,7 @@ class SimpleRecipe(PackageRecipe):
         self.writeFile('simple.recipe', recipes.simpleRecipe + '#comment\n')
         self.commit()
         trv = self.findAndGetTrove('simple:source')
-        self.assertEquals(str(trv.getVersion().trailingRevision()), '1-4')
+        self.assertEqual(str(trv.getVersion().trailingRevision()), '1-4')
 
     def testRedundantAdd(self):
         # CNY-1428
@@ -2224,7 +2224,7 @@ class GroupTest(GroupRecipe):
         self.addComponent('foo:run=:branch/1')
         self.cookItem(repos, cfg, 'group-test=:branch')
         trv = self.findAndGetTrove('group-test=:branch')
-        self.assertEquals(str(trv.iterTroveList(strongRefs=True).next()[1].trailingLabel()), 'localhost@rpl:branch')
+        self.assertEqual(str(trv.iterTroveList(strongRefs=True).next()[1].trailingLabel()), 'localhost@rpl:branch')
 
     def testUpdate(self):
         os.chdir(self.workDir)
@@ -2286,7 +2286,7 @@ class GroupTest(GroupRecipe):
         def _checkState(path, fileList):
             trv = state.ConaryStateFromFile(path).getSourceState()
             filesInState = [ x[1] for x in trv.iterFileList() ]
-            self.assertEquals(set(filesInState), set(fileList))
+            self.assertEqual(set(filesInState), set(fileList))
 
         self.addComponent('foo:source', '1-1',
                           fileContents = [ ('a', '1') ] )
@@ -2356,7 +2356,7 @@ class BarRecipe(PackageRecipe):
 
     def testCvcKeyManagement(self):
         def _checkAdd(repos, server, user, key, check = []):
-            self.assertEquals([server, user, key], check)
+            self.assertEqual([server, user, key], check)
 
         def expect(server, user, asciiKey):
             self.mock(sys, 'stdin', StringIO(asciiKey))
@@ -2371,33 +2371,33 @@ class BarRecipe(PackageRecipe):
         self.openRepository()
         self.openRepository(1)
         s = self.captureOutput(keymgmt.displayKeys, self.cfg, None, None)[1]
-        self.assertEquals(s, 'Public key fingerprints for user test on server '
+        self.assertEqual(s, 'Public key fingerprints for user test on server '
                 'localhost:\n    F94E405E\n')
         s = self.captureOutput(keymgmt.displayKeys, self.cfg, None, None,
                                showFingerprints = True)[1]
-        self.assertEquals(s, 'Public key fingerprints for user test on server '
+        self.assertEqual(s, 'Public key fingerprints for user test on server '
                 'localhost:\n    95B457D16843B21EA3FC73BBC7C32FC1F94E405E\n')
 
         # make sure the servername arg works by stopping the first server
         self.stopRepository()
         s = self.captureOutput(keymgmt.displayKeys, self.cfg, 'localhost1',
                                None)[1]
-        self.assertEquals(s, 'Public key fingerprints for user test on server '
+        self.assertEqual(s, 'Public key fingerprints for user test on server '
                     'localhost1:\n    F94E405E\n')
 
         s = self.captureOutput(keymgmt.displayKeys, self.cfg, 'localhost1',
                                'missing')[1]
-        self.assertEquals(s, 'No keys found for user missing on server localhost1.\n')
+        self.assertEqual(s, 'No keys found for user missing on server localhost1.\n')
 
         s = self.captureOutput(keymgmt.showKey, self.cfg, 'localhost1',
                                'F94E405E')[1]
         fromServer = openpgpfile.parseAsciiArmorKey(s)
-        self.assertEquals(fromServer, binaryKey)
+        self.assertEqual(fromServer, binaryKey)
 
         # restart localhost repository
         self.openRepository()
         s2 = self.captureOutput(keymgmt.showKey, self.cfg, None, 'F94E405E')[1]
-        self.assertEquals(s, s2)
+        self.assertEqual(s, s2)
 
         expect('localhost', 'test', asciiKey)
         keymgmt.addKey(self.cfg, None, None)
@@ -2430,13 +2430,13 @@ class BarRecipe(PackageRecipe):
         self.newpkg("foo", factory = 'bar')
         os.chdir('foo')
         (rc, str) = self.captureOutput(checkin.factory)
-        self.assertEquals(str, 'bar\n')
+        self.assertEqual(str, 'bar\n')
         checkin.factory('baz')
         (rc, str) = self.captureOutput(checkin.factory)
-        self.assertEquals(str, 'baz\n')
+        self.assertEqual(str, 'baz\n')
         checkin.factory('')
         (rc, str) = self.captureOutput(checkin.factory)
-        self.assertEquals(str, '(none)\n')
+        self.assertEqual(str, '(none)\n')
 
     def testCvcUpdateToFactory(self):
         self.addComponent('simple:source',
@@ -2462,19 +2462,19 @@ class BarRecipe(PackageRecipe):
         for pathId, path, fileId, fileVer in trv.iterFileList():
             fileObj = repos.getFileVersion(pathId, fileId, fileVer)
             mode = fileObj.inode.perms()
-            assert(mode == 0644)
+            assert(mode == 0o644)
 
         os.chdir(self.workDir)
         self.checkout('autosource')
         os.chdir('autosource')
-        os.chmod('localfile', 0755)
+        os.chmod('localfile', 0o755)
         self.commit()
         self.cookItem(repos, self.cfg, 'autosource')
         trv = self.findAndGetTrove('autosource:runtime')
         for pathId, path, fileId, fileVer in trv.iterFileList():
             fileObj = repos.getFileVersion(pathId, fileId, fileVer)
             mode = fileObj.inode.perms()
-            assert(mode == 0755)
+            assert(mode == 0o755)
 
 
     def testGpgKeyRetrievalFailure(self):

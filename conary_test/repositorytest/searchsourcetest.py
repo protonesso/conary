@@ -198,7 +198,7 @@ class SearchSourceTest(rephelp.RepositoryHelper):
         try:
             _find('/localhost@rpl:branch//')
             assert(0)
-        except errors.TroveNotFound, msg:
+        except errors.TroveNotFound as msg:
             assert(str(msg) == 'Error parsing version "/localhost@rpl:branch//": branch tag may not be empty')
 
         # test dep resolution.  Should pull in foo:runtime from the trove stack

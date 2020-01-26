@@ -20,10 +20,10 @@ import re
 
 from conary.lib import cfg, cfgtypes
 
-from base_drv import BaseDatabase as Database
-from base_drv import BaseCursor as Cursor
-from migration import SchemaMigration
-from sqlerrors import InvalidBackend
+from .base_drv import BaseDatabase as Database
+from .base_drv import BaseCursor as Cursor
+from .migration import SchemaMigration
+from .sqlerrors import InvalidBackend
 
 # default driver we want to use
 __DRIVER = "sqlite"
@@ -37,7 +37,7 @@ def __get_driver(driver = __DRIVER):
         driver = __DRIVER
     # requesting a postgresql driver that is pooling aware switches to
     # the pgpool driver
-    if driver == "postgresql" and os.environ.has_key("POSTGRESQL_POOL"):
+    if driver == "postgresql" and "POSTGRESQL_POOL" in os.environ:
         driver = "pgpool"
 
     if driver not in _driverCache:
@@ -52,7 +52,7 @@ def _loadDriver(name):
     modName = name + '_drv'
     try:
         driverModule = __import__(modName, globals(), locals())
-    except ImportError, err:
+    except ImportError as err:
         if modName in str(err):
             # Re-throw only in cases where the dbstore driver missing.
             raise InvalidBackend("The SQL backend %r is not supported" %

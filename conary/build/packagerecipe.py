@@ -96,7 +96,7 @@ def _clearReqs(attrName, reqs):
                            'creating the recipe class')
     # get a list of all classes that are derived from AbstractPackageRecipe
     classes = []
-    for value in callerGlobals.itervalues():
+    for value in callerGlobals.values():
         if inspect.isclass(value) and hasattr(value, attrName):
             classes.append(value)
 
@@ -279,7 +279,7 @@ class AbstractPackageRecipe(Recipe):
             return
         del self.__dict__[name]
 
-    def setCrossCompile(self, (crossHost, crossTarget, isCrossTool)):
+    def setCrossCompile(self, xxx_todo_changeme):
         """ Tell conary it should cross-compile, or build a part of a
             cross-compiler toolchain.
 
@@ -296,6 +296,7 @@ class AbstractPackageRecipe(Recipe):
                  binaries from this build should be runnable on the build
                  architecture.
         """
+        (crossHost, crossTarget, isCrossTool) = xxx_todo_changeme
         def _parseArch(archSpec, target=False):
             if isinstance(archSpec, deps.Flavor):
                 return archSpec, None, None
@@ -311,7 +312,7 @@ class AbstractPackageRecipe(Recipe):
                     flavor = deps.parseFlavor('target: ' + arch)
                 else:
                     flavor = deps.parseFlavor('is: ' + arch)
-            except deps.ParseError, msg:
+            except deps.ParseError as msg:
                 raise errors.CookError('Invalid architecture specification %s'
                                        %archSpec)
 
@@ -406,7 +407,7 @@ class AbstractPackageRecipe(Recipe):
             if setEnviron:
                 os.environ['CONFIG_SITE'] = siteConfig
 
-        self.macros.update(dict(x for x in crossMacros.iteritems()
+        self.macros.update(dict(x for x in crossMacros.items()
                                  if x[0] not in self.macros))
 
         tmpArch = use.Arch.copy()
@@ -500,7 +501,7 @@ class AbstractPackageRecipe(Recipe):
     def _addTroveScript(self, troveNames, scriptContents, scriptType,
                         fromClass = None):
         scriptTypeMap = dict((y[2], x) for (x, y) in
-                             trove.TroveScripts.streamDict.items())
+                             list(trove.TroveScripts.streamDict.items()))
         assert(scriptType in scriptTypeMap)
         for troveName in troveNames:
             self._scriptsMap.setdefault(troveName, {})[scriptType] = \
@@ -604,14 +605,14 @@ class SourcePackageRecipe(AbstractPackageRecipe):
     def __init__(self, *args, **kwargs):
         klass = self._getParentClass('AbstractPackageRecipe')
         klass.__init__(self, *args, **kwargs)
-        for name, item in build.__dict__.items():
+        for name, item in list(build.__dict__.items()):
             if inspect.isclass(item) and issubclass(item, action.Action):
                 self._addBuildAction(name, item)
 _SourcePackageRecipe = SourcePackageRecipe
 
 
-exec defaultrecipes.BaseRequiresRecipe
-exec defaultrecipes.PackageRecipe
-exec defaultrecipes.BuildPackageRecipe
-exec defaultrecipes.CPackageRecipe
-exec defaultrecipes.AutoPackageRecipe
+exec(defaultrecipes.BaseRequiresRecipe)
+exec(defaultrecipes.PackageRecipe)
+exec(defaultrecipes.BuildPackageRecipe)
+exec(defaultrecipes.CPackageRecipe)
+exec(defaultrecipes.AutoPackageRecipe)

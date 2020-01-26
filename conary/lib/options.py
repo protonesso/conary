@@ -22,9 +22,9 @@ Command-line option handling
 import inspect
 import optparse
 try:
-    from cStringIO import StringIO
+    from io import StringIO
 except ImportError:
-    from StringIO import StringIO
+    from io import StringIO
 
 from conary.lib import log, util
 import sys
@@ -36,11 +36,11 @@ import sys
  MULT_PARAM, # arg may occur N times, w/ parameter
  COUNT_PARAM, # arg may occur N times, value is the count
  STRICT_OPT_PARAM, # arg may occur once, optional parameter, stricter parsing
- ) = range(0,6)
+ ) = list(range(0,6))
 
 (NORMAL_HELP,
  VERBOSE_HELP,  # only display in usage messages if -v is used
-) = range(0,2)
+) = list(range(0,2))
 
 class OptionError(Exception):
     val = 1
@@ -139,7 +139,7 @@ def strictOptParamCallback(*args, **kw):
 
 
 def addOptions(parser, argDef, skip=None):
-    for name, data in sorted(argDef.iteritems()):
+    for name, data in sorted(argDef.items()):
         if name == skip:
             continue
         if isinstance(data, dict):
@@ -269,7 +269,7 @@ def _getParser(params, cfgMap, usage, version, useHelp, defaultGroup,
     d['help'] = NO_PARAM, optparse.SUPPRESS_HELP
 
     if addConfigOptions:
-        for (arg, name) in cfgMap.items():
+        for (arg, name) in list(cfgMap.items()):
             d[arg] = ONE_PARAM
 
 
@@ -306,11 +306,11 @@ def _processArgs(params, cfgMap, cfg, usage, argv=None, version=None,
         for path in configFileList:
             try:
                 cfg.read(path, exception = True)
-            except IOError, msg:
+            except IOError as msg:
                 raise OptionError(msg, parser)
 
-        for (arg, name) in cfgMap.items():
-            if argSet.has_key(arg):
+        for (arg, name) in list(cfgMap.items()):
+            if arg in argSet:
                 cfg.configLine("%s %s" % (name, argSet[arg]))
                 del argSet[arg]
 
@@ -321,7 +321,7 @@ def _processArgs(params, cfgMap, cfg, usage, argv=None, version=None,
             del argSet['verbose']
 
     if addDebugOptions:
-        if argSet.has_key('debugger'):
+        if 'debugger' in argSet:
             del argSet['debugger']
             from conary.lib import debugger
             debugger.set_trace()
@@ -359,7 +359,7 @@ def getOptionParser(params, usage, version=None, useHelp=False,
         parser.add_option_group(group)
 
     found = None
-    for name, data in params.iteritems():
+    for name, data in params.items():
         if name == defaultGroup:
             continue
         if isinstance(data, dict):
@@ -384,7 +384,7 @@ def getArgSet(params, parser, argv=None):
 
     argSet = {}
 
-    for name, data in params.iteritems():
+    for name, data in params.items():
         if isinstance(data, dict):
             for name in data:
                 val = getattr(options, name)

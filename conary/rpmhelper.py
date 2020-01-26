@@ -22,7 +22,7 @@ Contains functions to assist in dealing with rpm files.
 import itertools
 import os
 import re
-import StringIO
+import io
 import struct
 import tempfile
 from conary.lib import cpiostream, digestlib, openpgpfile, sha1helper, util, log
@@ -182,12 +182,12 @@ class _RpmHeader(object):
 
     def has_key(self, tag):
         # __getitem__ assumes OLDFILENAMES is always present
-        return self.entries.has_key(tag) or tag == OLDFILENAMES or \
+        return tag in self.entries or tag == OLDFILENAMES or \
             tag in self._tagListValues
     __contains__ = has_key
 
     def keys(self):
-        return self.entries.keys()
+        return list(self.entries.keys())
 
     def paths(self):
         if OLDFILENAMES in self:
@@ -214,7 +214,7 @@ class _RpmHeader(object):
         return default
 
     def getFiles(self):
-        for path, size, username, groupname, flags in itertools.izip(
+        for path, size, username, groupname, flags in zip(
                 self.paths(), self[FILESIZES], self[FILEUSERNAME],
                 self[FILEGROUPNAME], self[FILEFLAGS]):
             yield self._Stat(path=path, size=size, user=username,
@@ -249,7 +249,7 @@ class _RpmHeader(object):
             rpmvers = itertools.repeat(None, len(rpmdeps))
 
         depset = deps.DependencySet()
-        for dep, flags, ver in itertools.izip(rpmdeps, rpmflags, rpmvers):
+        for dep, flags, ver in zip(rpmdeps, rpmflags, rpmvers):
             if dep.startswith('/'):
                 depset.addDep(deps.FileDependencies, deps.Dependency(dep))
             elif dep.startswith('rpmlib'):
@@ -299,7 +299,7 @@ class _RpmHeader(object):
                     l = None
                     if ver and len(ver) >= 8:
                         try:
-                            l = long(ver, 16)
+                            l = int(ver, 16)
                         except ValueError:
                             pass
                     if l:
@@ -401,7 +401,7 @@ class _RpmHeader(object):
             # mimic OLDFILENAMES using DIRNAMES and BASENAMES
             dirs = dict(enumerate(self[DIRNAMES]))
             paths = []
-            for dirIndex, baseName in itertools.izip(self[DIRINDEXES],
+            for dirIndex, baseName in zip(self[DIRINDEXES],
                                                      self[BASENAMES]):
                 paths.append(dirs[dirIndex] + baseName)
 
@@ -459,8 +459,8 @@ class _RpmHeader(object):
         (mag1, mag2, mag3, ver, reserved, entries, size) = \
             struct.unpack("!BBBBiii", intro)
 
-        if mag1 != 0x8e or mag2 != 0xad or mag3 != 0xe8  or ver != 01:
-            raise IOError, "bad magic for header"
+        if mag1 != 0x8e or mag2 != 0xad or mag3 != 0xe8  or ver != 0o1:
+            raise IOError("bad magic for header")
 
         entryTable = f.read(entries * 16)
 
@@ -473,7 +473,7 @@ class _RpmHeader(object):
             computedSha1 = sha1helper.sha1ToString(
                 sha1helper.sha1String(intro + entryTable + self.data))
             if computedSha1 != sha1:
-                raise IOError, "bad header sha1"
+                raise IOError("bad header sha1")
 
         for i in range(entries):
             (tag, dataType, offset, count) = struct.unpack("!iiii",
@@ -519,7 +519,7 @@ class RpmHeader(object):
                     totalSize = None
 
                 if totalSize and headerPlusPayloadSize < (totalSize - pos):
-                    raise IOError, "file size does not match size specified by header"
+                    raise IOError("file size does not match size specified by header")
         # if we insist, we could also verify SIG_MD5
         self.isSource = self._sigHeader.isSource
         self._genHeader = _RpmHeader(f, sha1 = sha1, isSource = self.isSource)
@@ -559,8 +559,8 @@ def readSignatureHeader(f):
     lead = f.read(96)
     leadMagic = struct.unpack("!i", lead[0:4])[0]
 
-    if (leadMagic & 0xffffffffl) != 0xedabeedbl:
-        raise IOError, "file is not an RPM"
+    if (leadMagic & 0xffffffff) != 0xedabeedb:
+        raise IOError("file is not an RPM")
 
     isSource = (struct.unpack('!H', lead[6:8])[0] == 1)
 
@@ -574,7 +574,7 @@ def headerFromBlob(blob):
     method.
     """
     blob = '\x8e\xad\xe8\x01\0\0\0\0' + blob
-    sio = StringIO.StringIO(blob)
+    sio = io.StringIO(blob)
     return _RpmHeader(sio)
 
 
@@ -714,7 +714,7 @@ def extractFilesFromCpio(fileIn, fileList, tmpDir = '/tmp'):
 
     cpioObj = cpiostream.CpioStream(fileIn)
     for entry in cpioObj:
-        if entry.header.mode & 0170000 != 0100000:
+        if entry.header.mode & 0o170000 != 0o100000:
             # Not a regular file
             continue
         fileName = _normpath(entry.filename)
@@ -742,7 +742,7 @@ def extractFilesFromCpio(fileIn, fileList, tmpDir = '/tmp'):
         fileNameInodeMap[fileName] = key
 
     # Now compose the return
-    retMap = dict((y, x) for (x, y) in fileNameMap.items())
+    retMap = dict((y, x) for (x, y) in list(fileNameMap.items()))
     results = []
     for suppliedFileName in fileList:
         normFileName = retMap.get(suppliedFileName)
@@ -800,7 +800,7 @@ class NEVRA(namedtuple('NEVRA', 'name epoch version release arch')):
     def fromHeader(cls, header):
         args = []
         for tag in [NAME, EPOCH, VERSION, RELEASE, ARCH]:
-            if tag in header.keys():
+            if tag in list(header.keys()):
                 args.append(header[tag])
             else:
                 args.append(None)

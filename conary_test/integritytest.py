@@ -119,7 +119,7 @@ class IntegrityTest(rephelp.RepositoryHelper):
         try:
             repos.commitChangeSet(cs)
             assert 0, "Did not raise IntegrityError"
-        except errors.IntegrityError, e:
+        except errors.IntegrityError as e:
             assert(str(e).startswith("Incomplete changeset specified: missing pathId e806729b6a2b568fa7e77c3efa3a9684 fileId"))
 
     def testFileIdWrong(self):
@@ -151,7 +151,7 @@ class IntegrityTest(rephelp.RepositoryHelper):
         try:
             repos.commitChangeSet(cs)
             assert 0, "Integrity Error not raised"
-        except errors.TroveIntegrityError, e:
+        except errors.TroveIntegrityError as e:
             assert(str(e) == 'fileObj.fileId() != fileId in changeset for '
                              'pathId %s' % sha1helper.md5ToString(pathId))
 
@@ -187,7 +187,7 @@ class IntegrityTest(rephelp.RepositoryHelper):
         try:
             repos.commitChangeSet(cs)
             assert 0, "Did not raise integrity error"
-        except errors.IntegrityError, e:
+        except errors.IntegrityError as e:
             assert(str(e).startswith("Missing file contents for pathId e806729b6a2b568fa7e77c3efa3a9684, fileId"))
 
     def testSourceItemCollision(self):

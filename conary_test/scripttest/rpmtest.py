@@ -107,7 +107,7 @@ class RpmTest(unittest.TestCase):
         tmp.seek(0)
         try:
             rpmhelper.readHeader(tmp)
-        except IOError, e:
+        except IOError as e:
             assert(str(e) == 'file size does not match size specified by '
                              'header')
         else:
@@ -123,7 +123,7 @@ class RpmTest(unittest.TestCase):
         tmp.seek(0)
         try:
             rpmhelper.readHeader(tmp)
-        except IOError, e:
+        except IOError as e:
             assert(str(e) == "bad header sha1")
         else:
             assert(0)
@@ -208,7 +208,7 @@ class RpmTest(unittest.TestCase):
             ts.run(cb.callback,'')
             ts.closeDB()
         d = tempfile.mkdtemp()
-        os.chmod(d, 0777)
+        os.chmod(d, 0o777)
         try:
             go(d + '/root1')
             util.rmtree(d + '/root1')

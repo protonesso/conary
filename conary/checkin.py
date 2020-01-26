@@ -242,7 +242,7 @@ def _checkout(repos, cfg, workDirArg, trvList, callback):
         if not os.path.isdir(workDir):
             try:
                 os.mkdir(workDir)
-            except OSError, err:
+            except OSError as err:
                 log.error("cannot create directory %s/%s: %s", os.getcwd(),
                           workDir, str(err))
                 return
@@ -269,7 +269,7 @@ def _checkout(repos, cfg, workDirArg, trvList, callback):
     pathMap = {}
     sourceStateMap = {}
 
-    for trvInfo, spec in itertools.izip(trvList, checkoutSpecs):
+    for trvInfo, spec in zip(trvList, checkoutSpecs):
         sourceState = spec.conaryState.getSourceState()
         troveCs = cs.getNewTroveVersion(*trvInfo)
         trv = trove.Trove(troveCs)
@@ -378,7 +378,7 @@ def commit(repos, cfg, message, callback=None, test=False, force=False):
                 recipeObj = recipeClass(repos, cfg, label,
                                         None, lcache, srcdirs,
                                         lightInstance = True)
-        except builderrors.RecipeFileError, msg:
+        except builderrors.RecipeFileError as msg:
             log.error(str(msg))
             sys.exit(1)
 
@@ -412,7 +412,7 @@ def commit(repos, cfg, message, callback=None, test=False, force=False):
                         [ (x[0], x[2], x[3]) for x in srcPkg.iterFileList() ],
                         allowMissingFiles = bool(callback))
             for srcFileObj, (pathId, path, fileId, version) in \
-                            itertools.izip(srcFiles, srcPkg.iterFileList() ):
+                            zip(srcFiles, srcPkg.iterFileList() ):
                 if not state.hasFile(pathId):
                     # this path no longer exists (it was manually removed)
                     continue
@@ -450,7 +450,7 @@ def commit(repos, cfg, message, callback=None, test=False, force=False):
         try:
             srcFiles = recipeObj.fetchAllSources(skipFilter=skipFilter,
                     withEphemeral=False)
-        except OSError, e:
+        except OSError as e:
             if e.errno == errno.ENOENT:
                 raise errors.CvcError('Source file %s does not exist' %
                                       e.filename)
@@ -519,7 +519,7 @@ def commit(repos, cfg, message, callback=None, test=False, force=False):
         d = repos.getTroveVersionsByBranch({ troveName :
                                             { state.getBranch() : None } },
                                             troveTypes=repos.TROVE_QUERY_ALL)
-        versionList = d.get(troveName, {}).keys()
+        versionList = list(d.get(troveName, {}).keys())
         versionList.sort()
 
         ver = None
@@ -552,7 +552,7 @@ def commit(repos, cfg, message, callback=None, test=False, force=False):
                         forceSha1=True,
                         crossRepositoryDeltas = False,
                         allowMissingFiles = bool(callback))
-    except OSError, e:
+    except OSError as e:
         if e.errno == errno.ENOENT:
             raise errors.CvcError('File %s does not exist' % e.filename)
         else:
@@ -582,19 +582,19 @@ def commit(repos, cfg, message, callback=None, test=False, force=False):
 
 
     if cfg.interactive:
-        print 'The following commits will be performed:'
-        print
-        print '\t%s=%s' % (troveName, newVersion.asString())
-        print
+        print('The following commits will be performed:')
+        print()
+        print('\t%s=%s' % (troveName, newVersion.asString()))
+        print()
     if not force and conflicts:
-        print 'WARNING: performing this commit will switch the active branch:'
-        print
-        print 'New version %s=%s' % (troveName, newVersion)
+        print('WARNING: performing this commit will switch the active branch:')
+        print()
+        print('New version %s=%s' % (troveName, newVersion))
         for otherVersion in conflicts:
-            print '   obsoletes existing %s=%s' % (troveName, otherVersion)
+            print('   obsoletes existing %s=%s' % (troveName, otherVersion))
 
         if not cfg.interactive:
-            print 'error: interactive mode is required when changing active branch'
+            print('error: interactive mode is required when changing active branch')
             return
 
     if cfg.interactive:
@@ -639,7 +639,7 @@ def commit(repos, cfg, message, callback=None, test=False, force=False):
 
         changeSet = changeset.CreateFromFilesystem([ (None, newState,
                                                       fileMap) ])
-        troveCs = changeSet.iterNewTroveList().next()
+        troveCs = next(changeSet.iterNewTroveList())
 
     # this replaces the TroveChangeSet update.buildLocalChanges put in
     # the changeset
@@ -699,7 +699,7 @@ def annotate(repos, filename):
 
     labelVerList = repos.getTroveVersionsByBranch(
                         {troveName: { branch : None}})[troveName]
-    labelVerList = labelVerList.keys()
+    labelVerList = list(labelVerList.keys())
     # sort verList into ascending order (first commit is first in list)
     labelVerList.sort()
 
@@ -770,7 +770,7 @@ def annotate(repos, filename):
                     index = index + 1
                 unmatchedLines = index
             else:
-                for i in xrange(0, len(newLines)):
+                for i in range(0, len(newLines)):
                     if lineMap.get(i, None) is not None:
                         assert(newLines[i] == finalLines[lineMap[i]][0])
                 # use fixeddifflib SequenceMatcher to
@@ -827,7 +827,7 @@ def annotate(repos, filename):
         (newFileV, newLines) = (oldFileV, oldLines)
 
         # assert that the lineMap is still correct --
-        for i in xrange(0, len(newLines)):
+        for i in range(0, len(newLines)):
             if lineMap.get(i, None) is not None:
                 assert(newLines[i] == finalLines[lineMap[i]][0])
 
@@ -838,7 +838,7 @@ def annotate(repos, filename):
             if branch not in branchVerList:
                 labelVerList = repos.getTroveVersionsByBranch(
                         { troveName : { branch : None }})[troveName]
-                keys = labelVerList.keys()
+                keys = list(labelVerList.keys())
                 keys.sort()
 
                 for ver in keys:
@@ -875,7 +875,7 @@ def annotate(repos, filename):
         # since the line is not necessary starting at a tabstop,
         # lines might not line up
         line[0] = line[0].replace('\t', ' ' * 8)
-        print "%-*s %s %s" % (maxV, version.asString(defaultBranch=branch), info, line[0]),
+        print("%-*s %s %s" % (maxV, version.asString(defaultBranch=branch), info, line[0]), end=' ')
 
 def _describeShadow(oldVersion, newVersion):
     return "New shadow:\n  %s\n  of\n  %s" %(newVersion, oldVersion)
@@ -884,7 +884,7 @@ def _describeShadow(oldVersion, newVersion):
 def findRelativeVersion(repos, troveName, count, newV):
     vers = repos.getTroveVersionsByBranch(
                             { troveName : { newV.branch() : None } } )
-    vers = vers[troveName].keys()
+    vers = list(vers[troveName].keys())
     vers.sort()
     # erase everything later than us
     i = vers.index(newV)
@@ -909,7 +909,7 @@ def rdiff(repos, buildLabel, troveName, oldVersion, newVersion):
     i = _getIterRdiff(repos, buildLabel, troveName, oldVersion, newVersion)
     if i is not None:
         for line in i:
-            print line
+            print(line)
 
 def rdiffChangeSet(repos, job):
     # creates a changeset, but only puts in file contents for config files, and
@@ -1000,14 +1000,14 @@ def _getIterRdiff(repos, buildLabel, troveName, oldVersion, newVersion):
     try:
         count = -int(oldVersion)
         if count == 1 and newV.isShadow() and not newV.isModifiedShadow():
-            print _describeShadow(newV.parentVersion().asString(), newVersion)
+            print(_describeShadow(newV.parentVersion().asString(), newVersion))
             return
         old, oldV = findRelativeVersion(repos, troveName, count, newV)
 
     except ValueError:
         if newV.isShadow() and not newV.isModifiedShadow() and \
            newV.parentVersion().asString() == oldVersion:
-            print _describeShadow(oldVersion, newVersion)
+            print(_describeShadow(oldVersion, newVersion))
             return
 
         old = repos.findTrove(buildLabel, (troveName, oldVersion, None))
@@ -1066,13 +1066,13 @@ def revert(repos, fileList):
     fileObjects = repos.getFileVersions(
                             [ (x[0], x[2], x[3]) for x in checkList ] )
     contentsNeeded = [ (x[0][2], x[0][3]) for x in
-                            itertools.izip(checkList, fileObjects)
+                            zip(checkList, fileObjects)
                             if x[1].hasContents ]
     contents = repos.getFileContents(contentsNeeded)
 
     currentDir = os.getcwd()
 
-    for fileInfo, fileObj in itertools.izip(checkList, fileObjects):
+    for fileInfo, fileObj in zip(checkList, fileObjects):
         if fileObj.flags.isAutoSource():
             raise errors.CvcError('autosource files cannot be '
                                   'reverted')
@@ -1107,7 +1107,7 @@ def diff(repos, versionStr = None, pathList = None, logErrors = True, dirName='.
     if i in (0, 2):
         return i
     for line in i:
-        print line
+        print(line)
     return 1
 
 def _getIterDiff(repos, versionStr, pathList=None, logErrors=True, dirName='.'):
@@ -1133,7 +1133,7 @@ def _getIterDiff(repos, versionStr, pathList=None, logErrors=True, dirName='.'):
 
         try:
             pkgList = repos.findTrove(None, (state.getName(), versionStr, None))
-        except errors.TroveNotFound, e:
+        except errors.TroveNotFound as e:
             log.error("Unable to find source component %s with version %s: %s",
                       state.getName(), versionStr, str(e))
             return 2
@@ -1164,7 +1164,7 @@ def _getIterDiff(repos, versionStr, pathList=None, logErrors=True, dirName='.'):
 def _iterChangeSet(repos, changeSet, oldTrove, newTrove,
                    displayAutoSourceFiles = True, pathList = None):
     troveChanges = changeSet.iterNewTroveList()
-    troveCs = troveChanges.next()
+    troveCs = next(troveChanges)
     assert(util.assertIteratorAtEnd(troveChanges))
 
     for line in formatOneLog(troveCs.getNewVersion(), troveCs.getChangeLog()):
@@ -1248,9 +1248,9 @@ def _iterChangeSet(repos, changeSet, oldTrove, newTrove,
 def updateSrc(repos, versionList = None, callback = None):
     try:
         return nologUpdateSrc(repos, versionList, callback)
-    except builderrors.UpToDate, e:
+    except builderrors.UpToDate as e:
         e.logInfo()
-    except builderrors.CheckinError, e:
+    except builderrors.CheckinError as e:
         e.logError()
 
 @api.developerApi
@@ -1298,7 +1298,7 @@ def nologUpdateSrc(repos, versionList = None, callback = None):
         r = repos.getTroveLatestByLabel(q)
 
         for i, state in [ (x[0], x[1][2]) for x in latestVersions ]:
-            headVersion = r[state.getName()].keys()[0]
+            headVersion = list(r[state.getName()].keys())[0]
             newBranch = None
             if headVersion == state.getVersion():
                 raise builderrors.UpToDate(targetDir)
@@ -1317,7 +1317,7 @@ def nologUpdateSrc(repos, versionList = None, callback = None):
 
         try:
             matches = repos.findTroves(None, q)
-        except errors.TroveNotFound, e:
+        except errors.TroveNotFound as e:
             raise builderrors.NoSourceTroveFound(str(e))
 
         for i, (targetDir, versionStr, state) in specificVersions:
@@ -1374,7 +1374,7 @@ def nologUpdateSrc(repos, versionList = None, callback = None):
 
         fsJob.apply()
         newPkgs = fsJob.iterNewTroveList()
-        newState = newPkgs.next()
+        newState = next(newPkgs)
         assert(util.assertIteratorAtEnd(newPkgs))
 
         if newState.getVersion() == troveCs.getNewVersion() and newBranch:
@@ -1390,7 +1390,7 @@ def _determineRootVersion(repos, state):
     assert(ver.isShadow())
     if ver.hasParentVersion():
         d = {state.getName(): {ver.parentVersion() : None}}
-        return repos.getTroveVersionFlavors(d)[state.getName()].keys()[0]
+        return list(repos.getTroveVersionFlavors(d)[state.getName()].keys())[0]
     else:
         branch = ver.branch()
         name = state.getName()
@@ -1401,8 +1401,8 @@ def _determineRootVersion(repos, state):
             if ver.hasParentVersion():
                 parentVer = ver.parentVersion()
                 # we need to get the timestamp for this version
-                parentVer = repos.getTroveVersionFlavors(
-                            { name : { parentVer : None } })[name].keys()[0]
+                parentVer = list(repos.getTroveVersionFlavors(
+                            { name : { parentVer : None } })[name].keys())[0]
                 return parentVer
         # We must have done a shadow at some point.
         assert(0)
@@ -1433,7 +1433,7 @@ def merge(cfg, repos, versionSpec=None, callback=None):
     # make sure the current version is at head
     r = repos.getTroveLatestByLabel(
             { troveName : { troveBranch.label() : [ deps.deps.Flavor() ] } } )
-    shadowHeadVersion = r[troveName].keys()[0]
+    shadowHeadVersion = list(r[troveName].keys())[0]
     if state.getVersion() != shadowHeadVersion:
         log.info("working directory is not the latest on label %s" %
                             troveBranch.label())
@@ -1472,7 +1472,7 @@ def merge(cfg, repos, versionSpec=None, callback=None):
                 { troveName : { troveBranch.parentBranch().label() :
                                 [ deps.deps.Flavor() ] } } )
         assert(len(r[troveName]) == 1)
-        parentHeadVersion = r[troveName].keys()[0]
+        parentHeadVersion = list(r[troveName].keys())[0]
 
     parentRootVersion = _determineRootVersion(repos, state)
 
@@ -1549,7 +1549,7 @@ def merge(cfg, repos, versionSpec=None, callback=None):
 
     # make sure there are changes to apply
     troveChanges = changeSet.iterNewTroveList()
-    troveCs = troveChanges.next()
+    troveCs = next(troveChanges)
     assert(util.assertIteratorAtEnd(troveChanges))
 
     localVer = parentRootVersion.createShadow(versions.LocalLabel())
@@ -1566,7 +1566,7 @@ def merge(cfg, repos, versionSpec=None, callback=None):
     fsJob.apply()
 
     newPkgs = fsJob.iterNewTroveList()
-    newState = newPkgs.next()
+    newState = next(newPkgs)
     assert(util.assertIteratorAtEnd(newPkgs))
 
     # this check succeeds if the merge was successful
@@ -1611,11 +1611,11 @@ def markRemoved(cfg, repos, troveSpec):
     # XXX This forces interactive mode for removing troves. Seems like a good
     # idea.
     if True or cfg.interactive:
-        print 'The contents of the following troves will be removed:'
-        print
+        print('The contents of the following troves will be removed:')
+        print()
         for (name, version, flavor) in trvList:
-            print '\t%s=%s[%s]' % (name, version.asString(), str(flavor))
-        print
+            print('\t%s=%s[%s]' % (name, version.asString(), str(flavor)))
+        print()
         okay = cmdline.askYn('continue with commit? [Y/n]', default=True)
 
         if not okay:
@@ -1808,7 +1808,7 @@ def removeFile(filename, repos=None):
                 os.rmdir(filename)
             else:
                 os.unlink(filename)
-        except OSError, e:
+        except OSError as e:
             log.error("cannot remove %s: %s" % (filename, e.strerror))
             return 1
 
@@ -1897,7 +1897,7 @@ def newTrove(repos, cfg, name, dir = None, template = None, buildBranch=None,
 
         try:
             recipe.write(template % macros)
-        except builderrors.MacroKeyError, e:
+        except builderrors.MacroKeyError as e:
             log.error("could not replace '%s' in recipe template '%s'" % (e.args[0], path))
             return
         recipe.close()
@@ -1942,7 +1942,7 @@ def renameFile(oldName, newName, repos=None):
 
 def showLog(repos, branch = None, newer = False):
     for message in iterLog(repos, branch = branch, newer = newer):
-        print message
+        print(message)
 
 @api.developerApi
 def iterLog(repos, branch = None, newer = False, dirName = '.'):
@@ -1980,7 +1980,7 @@ def iterLog(repos, branch = None, newer = False, dirName = '.'):
         yield 'nothing has been committed'
         return
 
-    verList = verList[troveName].keys()
+    verList = list(verList[troveName].keys())
     verList.sort()
     verList.reverse()
     if newer:
@@ -2009,7 +2009,7 @@ def iterLogMessages(troves):
         yield ''
 
 def showOneLog(version, changeLog=''):
-    print '\n'.join(formatOneLog(version, changeLog))
+    print('\n'.join(formatOneLog(version, changeLog)))
 
 def formatOneLog(version, changeLog=''):
     when = time.strftime("%c", time.localtime(version.timeStamps()[-1]))
@@ -2047,7 +2047,7 @@ def setContext(cfg, contextName=None, ask=False, repos=None):
                 msg = "%s [%s]: " % (txt, defaultText)
             else:
                 msg = "%s: " % txt
-            answer = raw_input(msg)
+            answer = input(msg)
             if answer:
                 return answer
             elif defaultText:
@@ -2077,7 +2077,7 @@ def setContext(cfg, contextName=None, ask=False, repos=None):
         return
     else:
         # ask and not context
-        print '* Creating new context %s' % contextName
+        print('* Creating new context %s' % contextName)
         context = cfg.setSection(contextName)
         conaryrc = _ask('File to store context definition in',
                         os.environ['HOME'] + '/.conaryrc')
@@ -2192,7 +2192,7 @@ def refresh(repos, cfg, refreshPatterns=[], callback=None, dirName='.'):
 
     try:
         recipeObj = recipeClass(cfg, lcache, srcdirs, lightInstance=True)
-    except builderrors.RecipeFileError, msg:
+    except builderrors.RecipeFileError as msg:
         raise errors.CvcError(msg)
 
     recipeObj.sourceVersion = state.getVersion()
@@ -2213,7 +2213,7 @@ def refresh(repos, cfg, refreshPatterns=[], callback=None, dirName='.'):
     try:
         recipeObj.fetchAllSources(refreshFilter = refreshFilter,
                                   skipFilter = skipFilter)
-    except OSError, e:
+    except OSError as e:
         if e.errno == errno.ENOENT:
             raise errors.CvcError('Source file %s does not exist' %
                                   e.filename)
@@ -2292,7 +2292,7 @@ def generateStatus(repos, dirName='.'):
     (changeSet, ((isDifferent, newState),)) = result
 
     troveChanges = changeSet.iterNewTroveList()
-    troveCs = troveChanges.next()
+    troveCs = next(troveChanges)
     assert(util.assertIteratorAtEnd(troveChanges))
 
     fileList = [ (x[0], x[1], True, x[2], x[3]) for x in
@@ -2340,20 +2340,21 @@ troveCs.getNewFileList() ]
 def _showStat(results):
     'print out status lists as returned by C{generateStatus}'
     for fstat, path in results:
-        print "%s  %s" % (fstat, path)
+        print("%s  %s" % (fstat, path))
     return results
 
 def stat_(repos):
     return _showStat(generateStatus(repos))
 
 
-def localAutoSourceChanges(oldTrove, (changeSet, ((isDifferent, newState),))):
+def localAutoSourceChanges(oldTrove, xxx_todo_changeme):
     # look for autosource files which have changed from upstream; we don't
     # use buildLocalChanges to do this because we don't want to download
     # autosource'd files which haven't changed; a side affect is that
     # changing, adding, or removing a url in a recipe won't show up here as a
     # change to an autosource files; only changes due to refresh will be
     # noticed
+    (changeSet, ((isDifferent, newState),)) = xxx_todo_changeme
     for (pathId, path, fileId, version) in newState.iterFileList():
         if not newState.fileNeedsRefresh(pathId): continue
         assert(newState.fileIsAutoSource(pathId))
@@ -2378,9 +2379,9 @@ def factory(newFactory = None, targetDir=None):
 
     if newFactory is None:
         if state.getFactory():
-            print state.getFactory()
+            print(state.getFactory())
         else:
-            print "(none)"
+            print("(none)")
     else:
         state.setFactory(newFactory)
         conaryState.write(stateFile)

@@ -409,7 +409,7 @@ class TestGroup(GroupRecipe):
                     ( '/bin/foo', rephelp.RegularFile(
                        version = '/localhost@rpl:linux/1.0-1-1',
                        contents = 'foo' ) ),
-                    ('/usr/foo', rephelp.Directory(perms = 0755,
+                    ('/usr/foo', rephelp.Directory(perms = 0o755,
                        version = '/localhost@rpl:linux/1.0-1-1',
                     ) ),
                     ] )
@@ -420,7 +420,7 @@ class TestGroup(GroupRecipe):
                     ( '/bin/foo', rephelp.RegularFile(
                        version = '/localhost@rpl:linux/1.0-1-1',
                        contents = 'foo' ) ),
-                    ('/usr/foo', rephelp.Directory(perms = 0755,
+                    ('/usr/foo', rephelp.Directory(perms = 0o755,
                        version = '/localhost@rpl:linux/1.0-1-1',
                     ) ),
                     ] )
@@ -431,7 +431,7 @@ class TestGroup(GroupRecipe):
                 ( '/bin/foo', rephelp.RegularFile(
                    version = '/localhost@rpl:linux//localhost1@rpl:linux/1.0-1.1-1',
                    contents = 'foo' ) ),
-                ('/usr/foo', rephelp.Directory(perms = 0755,
+                ('/usr/foo', rephelp.Directory(perms = 0o755,
                    version = '/localhost@rpl:linux//localhost1@rpl:linux/1.0-1.1-1',
                 ) ),
                 ] )
@@ -442,7 +442,7 @@ class TestGroup(GroupRecipe):
                 ( '/bin/foo', rephelp.RegularFile(
                    version = '/localhost@rpl:linux//localhost1@rpl:linux/1.0-1.1-1',
                    contents = 'foo' ) ),
-                ('/usr/foo', rephelp.Directory(perms = 0755,
+                ('/usr/foo', rephelp.Directory(perms = 0o755,
                    version = '/localhost@rpl:linux//localhost1@rpl:linux/1.0-1.1-1',
                 ) ),
                 ] )
@@ -472,7 +472,7 @@ class TestGroup(GroupRecipe):
                               ( new.getVersion(),  new.getFlavor() ), False ),
             ], csPath, mirrorMode = True)
         cs = changeset.ChangeSetFromFile(csPath)
-        assert( [ x[0] != '\x01' for x in cs.files.values() ] == 
+        assert( [ x[0] != '\x01' for x in list(cs.files.values()) ] == 
                     [ True, True ] )
 
     def testMirrorModeChangesets1(self):

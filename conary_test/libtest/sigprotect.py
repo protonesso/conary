@@ -52,7 +52,7 @@ class SignalsTest(testhelp.TestCase):
         def _test(sigNum, c, reraise = False):
             try:
                 killself(sigNum)
-            except sigprotect.SignalException, e:
+            except sigprotect.SignalException as e:
                 assert(e.sigNum == sigNum)
                 c()
                 if reraise:

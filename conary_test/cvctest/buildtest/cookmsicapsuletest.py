@@ -80,7 +80,7 @@ class TestCookWithMSICapsule(CapsuleRecipe):
         self.assertEqual(ti.capsule.msi.msiArgs(),
                              '/q /l*v /i')
 
-        self.assertEquals(pkgNames, [pkgName, pkgName +':msi'])
+        self.assertEqual(pkgNames, [pkgName, pkgName +':msi'])
 
     def _cookAndInstall(self, recipestr, filename, pkgname,
                         builtpkgnames=None, output = ''):
@@ -112,7 +112,7 @@ class TestCookWithMSICapsule(CapsuleRecipe):
             if not updatePackage:
                 self.addfile(recipename)
 
-            if isinstance(filename, types.StringType):
+            if isinstance(filename, bytes):
                 filenames = [filename]
             else:
                 filenames = filename

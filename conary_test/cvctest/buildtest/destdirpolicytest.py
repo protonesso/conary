@@ -20,7 +20,7 @@ import gzip
 import os
 import re
 import stat
-import StringIO
+import io
 import sys
 from testrunner import testhelp
 import tempfile
@@ -65,9 +65,9 @@ class TestFixDirModes(PackageRecipe):
         self.updatePkg(self.workDir, built[0][0], built[0][1])
         self.assertRaises(OSError, os.stat, self.workDir + os.sep + 'foo')
         s = os.stat(self.workDir + os.sep + 'bar')[stat.ST_MODE]
-        assert((s & 0777) == 0111)
+        assert((s & 0o777) == 0o111)
         # keep resetWork() from complaining in util.rmtree()
-        os.chmod(self.workDir + os.sep + 'bar', 0700)
+        os.chmod(self.workDir + os.sep + 'bar', 0o700)
 
 
 class AutoDocTest(rephelp.RepositoryHelper):
@@ -319,7 +319,7 @@ class PythonLocationTest(PackageRecipe):
         nvf = repos.findTrove(self.cfg.buildLabel, built[0])
         client = self.getConaryClient()
         fileDict = client.getFilesFromTrove(*nvf[0])
-        self.assertEquals(sorted(fileDict.keys()),
+        self.assertEqual(sorted(fileDict.keys()),
                 ['/usr/lib64/python2.4/site-packages/foo/foo.py',
                  '/usr/lib64/python2.4/site-packages/foo/foo.pyc',
                  '/usr/lib64/python2.4/site-packages/foo/foo.pyo'])
@@ -346,14 +346,14 @@ class PythonLocationTest(PackageRecipe):
         (built, d) = self.buildRecipe(recipestr, "PythonLocationTest",
                 macros = {'libdir': '/usr/lib64', 'lib': 'lib64'})
         # prove component is correct
-        self.assertEquals(built[0][0], 'splat:python')
+        self.assertEqual(built[0][0], 'splat:python')
 
         # prove files got moved
         repos = self.openRepository()
         nvf = repos.findTrove(self.cfg.buildLabel, built[0])
         client = self.getConaryClient()
         fileDict = client.getFilesFromTrove(*nvf[0])
-        self.assertEquals(sorted(fileDict.keys()),
+        self.assertEqual(sorted(fileDict.keys()),
                 ['/usr/lib64/python2.4/site-packages/foo/foo.py',
                  '/usr/lib64/python2.4/site-packages/foo/foo.pyc',
                  '/usr/lib64/python2.4/site-packages/foo/foo.pyo'])
@@ -529,9 +529,9 @@ class TestReadableDocs(PackageRecipe):
             trove.getName(), trove.getVersion(), trove.getFlavor(),
             withFiles=True):
             if path == '/usr/share/doc/test-0/README': 
-                assert(fileObj.inode.perms() == 0644)
+                assert(fileObj.inode.perms() == 0o644)
             elif path == '/usr/share/doc/test-0/README-TOO': 
-                assert(fileObj.inode.perms() == 0755)
+                assert(fileObj.inode.perms() == 0o755)
 
 
 
@@ -790,8 +790,8 @@ class TestNormalizeCompression(PackageRecipe):
         b = self.workDir + '/usr/share/b.bz2'
         assert(file(foo).read() == file(bar).read())
         assert(file(a).read() == file(b).read())
-        assert(os.lstat(foo).st_mode &0777 == 0444)
-        assert(os.lstat(a).st_mode &0777 == 0440)
+        assert(os.lstat(foo).st_mode &0o777 == 0o444)
+        assert(os.lstat(a).st_mode &0o777 == 0o440)
 
 class NormalizeManPagesTest(rephelp.RepositoryHelper):
     def testNormalizeManPagesTest1(self):
@@ -840,9 +840,9 @@ more content''')
         for p in built:
             self.updatePkg(self.workDir, p[0], p[1], depCheck=False)
         mode = self.getmode('/usr/share/man/man1/a.1.gz')
-        assert(mode & 0777 == 0644)
+        assert(mode & 0o777 == 0o644)
         mode = self.getmode('/usr/share/man/man1')
-        assert(mode & 0777 == 0755)
+        assert(mode & 0o777 == 0o755)
         # make sure destdir is removed:
         f = os.popen("gzip -dc "+self.workDir+"/usr/share/man/man1/a.1.gz")
         assert(f.read() == 'ABCDEFGABCDEFGABCDEFGABCDEFG/\n')
@@ -888,9 +888,9 @@ class TestNormalizeManPages(PackageRecipe):
         (built, d) = self.buildRecipe(recipestr, "TestNormalizeManPages")
         for p in built:
             self.updatePkg(self.workDir, p[0], p[1], depCheck=False)
-        self.failUnless(os.path.exists(os.path.join(self.workDir, 'usr/share/'
+        self.assertTrue(os.path.exists(os.path.join(self.workDir, 'usr/share/'
             'test/man/man8/test.8.gz')))
-        self.failUnlessEqual(os.readlink(self.workDir + '/usr/share/man/man8/'
+        self.assertEqual(os.readlink(self.workDir + '/usr/share/man/man8/'
             'test.8.gz'), '../../test/man/man8/test.8.gz')
         a = magic.magic("/usr/share/test/man/man8/test.8.gz", self.workDir)
         assert(a.contents['compression'] == '9')
@@ -949,9 +949,9 @@ class Test(PackageRecipe):
         (built, d) = self.buildRecipe(recipestr, 'Test')
         for p in built:
             self.updatePkg(self.workDir, p[0], p[1], depCheck=False)
-        self.failUnless(os.path.exists(self.workDir + '/usr/man'))
-        self.failUnless(os.path.islink(self.workDir + '/usr/man'))
-        self.failUnlessEqual(os.readlink(self.workDir + '/usr/man'), 'share/man')
+        self.assertTrue(os.path.exists(self.workDir + '/usr/man'))
+        self.assertTrue(os.path.islink(self.workDir + '/usr/man'))
+        self.assertEqual(os.readlink(self.workDir + '/usr/man'), 'share/man')
 
 class NormalizeAppDefaultsTest(rephelp.RepositoryHelper):
     def testNormalizeAppDefaultsTest1(self):
@@ -1031,7 +1031,7 @@ class TestNormalizeInterpreterPaths(PackageRecipe):
     def _checkOneFileNoEnv(self, path):
         workpath = self.workDir + path
         mode = os.lstat(workpath)[stat.ST_MODE]
-        os.chmod(workpath, mode | 0400)
+        os.chmod(workpath, mode | 0o400)
         f = file(workpath)
         line = f.readline()
         f.close()
@@ -1041,7 +1041,7 @@ class TestNormalizeInterpreterPaths(PackageRecipe):
     def _checkOneFileLine(self, path, lines):
         workpath = self.workDir + path
         mode = os.lstat(workpath)[stat.ST_MODE]
-        os.chmod(workpath, mode | 0400)
+        os.chmod(workpath, mode | 0o400)
         f = file(workpath)
         thisline = f.readline()
         f.close()
@@ -1112,7 +1112,7 @@ class TestNormalizePamConfig(PackageRecipe):
         line = f.readline()
         f.close()
         self.assertEqual(line.find('ISA'), -1)
-        self.assertEqual(os.stat(path)[stat.ST_MODE] & 0777, 0400)
+        self.assertEqual(os.stat(path)[stat.ST_MODE] & 0o777, 0o400)
 
         path = self.workDir+'/etc/pam.d/stack'
         f = file(path)
@@ -1337,10 +1337,10 @@ class TestNormalizePythonInterpreterVersionMap(PackageRecipe):
         fullpath = self.workDir + path
 
         mode = os.lstat(fullpath)[stat.ST_MODE]
-        if not mode & 0111:
+        if not mode & 0o111:
             return
 
-        os.chmod(fullpath, mode | 0400)
+        os.chmod(fullpath, mode | 0o400)
 
         f = file(fullpath, 'r')
         line = f.readline().strip()
@@ -1419,14 +1419,14 @@ class TestNormalizeInfoPages(PackageRecipe):
         nvf = [x for x in built if x[0] == 'test:doc'][0]
         nvf = repos.findTrove(self.cfg.buildLabel, nvf)
         fileDict = client.getFilesFromTrove(*nvf[0])
-        self.assertEquals(fileDict.keys(), ['/usr/share/info/foo.info.gz'])
+        self.assertEqual(list(fileDict.keys()), ['/usr/share/info/foo.info.gz'])
         # gzip module depends on file-like objects honoring two-param seek.
-        fileObj = fileDict.values()[0]
+        fileObj = list(fileDict.values())[0]
         fileObj.seek(0)
-        fileObj = StringIO.StringIO(fileObj.read())
+        fileObj = io.StringIO(fileObj.read())
 
         g = gzip.GzipFile(fileobj = fileObj, mode = 'r')
-        self.assertEquals(g.read(), 10 * 'ABCDEFGABCDEFGABCDEFGABCDEFG' + '\n')
+        self.assertEqual(g.read(), 10 * 'ABCDEFGABCDEFGABCDEFGABCDEFG' + '\n')
 
 class PythonEggsTest(rephelp.RepositoryHelper):
     def testBadPythonEggFile(self):
@@ -1495,11 +1495,11 @@ class PythonEggsTest(rephelp.RepositoryHelper):
         nvf = repos.findTrove(None, nvf)[0]
         fileDict = client.getFilesFromTrove(*nvf)
         ref = ['PKG-INFO', 'SOURCES.txt', 'top_level.txt', 'zip-safe']
-        fileList = sorted([os.path.basename(x) for x in fileDict.keys()])
+        fileList = sorted([os.path.basename(x) for x in list(fileDict.keys())])
         # rpl:2 python-setuptools is newer, and has an additional file
         if 'dependency_links.txt' in fileList:
             fileList.remove('dependency_links.txt')
-        self.assertEquals(fileList, ref)
+        self.assertEqual(fileList, ref)
 
     def testNonPackagePythonEgg(self):
         eggFile = self.makeEgg()
@@ -1530,8 +1530,8 @@ class PythonEggsTest(rephelp.RepositoryHelper):
         nvf = repos.findTrove(None, nvf)[0]
         fileDict = client.getFilesFromTrove(*nvf)
         ref = ['splat']
-        fileList = sorted([os.path.basename(x) for x in fileDict.keys()])
-        self.assertEquals(fileList, ref)
+        fileList = sorted([os.path.basename(x) for x in list(fileDict.keys())])
+        self.assertEqual(fileList, ref)
 
     def testExtractEggRequires(self):
         eggFile = self.makeEgg()
@@ -1559,7 +1559,7 @@ class PythonEggsTest(rephelp.RepositoryHelper):
                 mockedAddActionPathBuildRequires)
         output = self.captureOutput(cook.cookItem,
                 repos, self.cfg, 'egg-recipe')
-        self.assertEquals(self.buildReqs, set(['unzip']))
+        self.assertEqual(self.buildReqs, set(['unzip']))
 
     def testExtractEggException(self):
         eggFile = self.makeEgg()
@@ -1629,7 +1629,7 @@ missing2>=1.2,<=1.3\"\"\")
         ver = versions.VersionFromString(ver)
         trv = repos.getTrove(name, ver, flv)
         pyDeps = deps.ThawDependencySet('4#present1::python|4#present2::python')
-        self.assertEquals(trv.getRequires(), pyDeps)
+        self.assertEqual(trv.getRequires(), pyDeps)
 
     def testEggRequiresDestdir(self):
         recipeStr = """
@@ -1661,7 +1661,7 @@ missing1>=0.3\"\"\")
         ver = versions.VersionFromString(ver)
         trv = repos.getTrove(name, ver, flv)
         pyDeps = deps.ThawDependencySet('4#present::python')
-        self.assertEquals(trv.getRequires(), pyDeps)
+        self.assertEqual(trv.getRequires(), pyDeps)
 
     def testEggRequiresSymlink(self):
         recipeStr = """
@@ -1692,7 +1692,7 @@ class EggRequiresRecipe(PackageRecipe):
 
         pyDeps = deps.ThawDependencySet('4#symlink::python')
         self.assertEqual(trv.getRequires(), pyDeps)
-        self.assertEquals(trv.getRequires(), pyDeps)
+        self.assertEqual(trv.getRequires(), pyDeps)
 
     def testEggMissingPythonSetuptools(self):
         # when cooking into the repository, an .egg file requires that you
@@ -1720,7 +1720,7 @@ class EggRequiresRecipe(PackageRecipe):
         self.addDbComponent(self.openDatabase(), 'python-setuptools:python')
         err = self.assertRaises(policy.PolicyError, 
                 self.cookItem, self.openRepository(), self.cfg, 'egg-requires')
-        self.assertEquals(str(err), "Package Policy errors found:\nRequires: add 'python-setuptools:python' to buildRequires to inspect /usr/lib/python2.5/site-packages/eggtest-1-py2.5.egg-info/requires.txt")
+        self.assertEqual(str(err), "Package Policy errors found:\nRequires: add 'python-setuptools:python' to buildRequires to inspect /usr/lib/python2.5/site-packages/eggtest-1-py2.5.egg-info/requires.txt")
 
         self.addComponent('egg-requires:source=1-2', 
                           [('egg-requires.recipe', recipeStr.replace('#build', 'build'))])
@@ -1762,7 +1762,7 @@ class DocRecipe(PackageRecipe):
         self.logFilter.add()
         built, d = self.buildRecipe(recipeStr, 'DocRecipe')
         self.logFilter.remove()
-        self.assertEquals(self.logFilter.records,
+        self.assertEqual(self.logFilter.records,
                 ['warning: FixObsoletePaths: Path /usr/doc should not exist, '
                  'but is empty. removing.'])
 
@@ -1865,10 +1865,10 @@ class InitTest(PackageRecipe):
             'test:runtime', trove.getVersion(), trove.getFlavor(),
             withFiles=True):
             if path == '/etc/init.d/foo':
-                self.assertEquals(fileObj.requires(),
+                self.assertEqual(fileObj.requires(),
                     deps.ThawDependencySet('3#/etc/init.d/functions'))
         # dep on trove represents this change changed
-        self.assertEquals(trove.requires(),
+        self.assertEqual(trove.requires(),
             deps.ThawDependencySet('4#func::runtime'))
 
 

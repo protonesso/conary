@@ -29,7 +29,8 @@ _BUFFER_SIZE = 1024 * 256
 sha1Uncompress = None
 
 
-def sha1Copy((inFd, inStart, inSize), outFds):
+def sha1Copy(xxx_todo_changeme, outFds):
+    (inFd, inStart, inSize) = xxx_todo_changeme
     digest = hashlib.sha1()
     decomp = zlib.decompressobj(31)
     inStop = inSize + inStart

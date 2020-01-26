@@ -55,7 +55,7 @@ def protect(fn):
 
         return rv
 
-    protection.func_name = fn.func_name
+    protection.__name__ = fn.__name__
 
     return protection
 
@@ -126,7 +126,7 @@ class JournalTest(rephelp.RepositoryHelper):
             fileContents = [
                 ( '/a', rephelp.RegularFile(contents = "a1", pathId = "1") ),
                 ( '/b', rephelp.RegularFile(contents = "b1", pathId = "2",
-                                            perms = 0644) )
+                                            perms = 0o644) )
             ]
         )
 
@@ -137,7 +137,7 @@ class JournalTest(rephelp.RepositoryHelper):
         # files are removed in reverse path order, so /b is removed before
         # /a -- make sure it gets put back if removing /a fails
         self.updatePkg('foo:runtime=1.0-1-1')
-        os.chmod(self.rootDir + '/b', 0600)
+        os.chmod(self.rootDir + '/b', 0o600)
         os.unlink = lambda x: self.unlinkStub(x, [ 'a' ] )
         self.logCheck(self.assertRaises,
                   (OSError, self.updatePkg, 'foo:runtime=2.0-2-2'),
@@ -145,7 +145,7 @@ class JournalTest(rephelp.RepositoryHelper):
                     'error: /a could not be removed: Permission denied' ])
 
         self.verifyFile(self.rootDir + '/b', 'b1')
-        assert(os.stat(self.rootDir + '/b').st_mode & 0777 == 0600)
+        assert(os.stat(self.rootDir + '/b').st_mode & 0o777 == 0o600)
 
         assert(not os.path.exists(self.rootDir + self.cfg.dbPath + '/journal'))
 

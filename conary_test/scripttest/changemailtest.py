@@ -34,7 +34,7 @@ class ChangemailTest(rephelp.RepositoryHelper):
         self.mock(smtplib, 'SMTP', SMTP)
         changemail.sendMail(f, 'subject', 'from', 40, ['to'])
         f.seek(0)
-        self.assertEquals(
+        self.assertEqual(
             f.read(),
             ' '*34 + '\n...\n')
         SMTP().sendmail._mock.assertCalled(

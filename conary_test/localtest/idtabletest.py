@@ -54,10 +54,10 @@ class IdTableTest(dbstoretest.DBStoreTestBase):
         assert(itemTable["joe"] == 3)
         itemTable.addId("jacob")
         assert(itemTable["jacob"] == 4)
-        keys = itemTable.keys()
+        keys = list(itemTable.keys())
         keys.sort()
         assert(keys == ['jacob', 'jane', 'joe', 'john'])
-        assert(itemTable.values() == [ 1, 2, 3, 4 ])
+        assert(list(itemTable.values()) == [ 1, 2, 3, 4 ])
         assert(sorted(itemTable.items()) ==
                sorted([('john', 1), ('jane', 2), ('joe', 3), ('jacob', 4)] ))
         itemTable.addId("josh")
@@ -87,10 +87,10 @@ class IdTableTest(dbstoretest.DBStoreTestBase):
         itemTable.delId(itemTable["joe"])
         itemTable.addId("jacob")
         assert(itemTable["jacob"] == 4)
-        keys = itemTable.keys()
+        keys = list(itemTable.keys())
         keys.sort()
         assert(keys == [ "jacob", "jane" ])
-        assert(itemTable.values() == [ 2, 4 ])
+        assert(list(itemTable.values()) == [ 2, 4 ])
         assert(sorted(itemTable.items()) == [ ("jacob", 4), ("jane", 2) ])
         del itemTable["jane"]
         del itemTable["jabob"]
@@ -104,7 +104,7 @@ class IdTableTest(dbstoretest.DBStoreTestBase):
         del itemTable["jacob"]
         del itemTable["john"]
         del itemTable["josh"]
-        assert(not itemTable.keys())
+        assert(not list(itemTable.keys()))
 
         self.assertRaises(KeyError, itemTable.__getitem__, "josh")
 

@@ -18,10 +18,10 @@
 class EnumeratedType(dict):
 
     def __getattr__(self, item):
-        if self.has_key(item):
+        if item in self:
             return self[item]
-        raise AttributeError, "'EnumeratedType' object has no " \
-                    "attribute '%s'" % item
+        raise AttributeError("'EnumeratedType' object has no " \
+                    "attribute '%s'" % item)
 
     def __init__(self, name, *vals):
         for item in vals:

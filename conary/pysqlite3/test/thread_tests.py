@@ -4,7 +4,7 @@
 #
 
 import testsupport
-import os, sys, tempfile, time, unittest, thread
+import os, sys, tempfile, time, unittest, _thread
 import sqlite3 as sqlite
 
 class ThreadTests(unittest.TestCase):
@@ -16,7 +16,7 @@ class ThreadTests(unittest.TestCase):
                 l = [ x for x in cu.execute('SELECT * from foo') ]
                 if l == [ None ]:
                     break
-            thread.exit()
+            _thread.exit()
 
         fd, dbfile = tempfile.mkstemp()
         os.close(fd)
@@ -24,8 +24,8 @@ class ThreadTests(unittest.TestCase):
         cu = writer.cursor()
         cu.execute('CREATE TABLE foo(bar int)')
         writer.commit()
-        thread.start_new_thread(reader, (dbfile,))
-        for i in xrange(100):
+        _thread.start_new_thread(reader, (dbfile,))
+        for i in range(100):
             cu.execute('INSERT INTO foo values(?)', (i,))
             if i % 10 == 0:
                 writer.commit()

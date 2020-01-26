@@ -43,12 +43,12 @@ _cached_umask = None
 class AbstractDataStore:
 
     @staticmethod
-    def _fchmod(fd, mode=0666):
+    def _fchmod(fd, mode=0o666):
         global _cached_umask
         if _cached_umask is None:
             # The only way to get the current umask is to change the umask and
             # then change it back.
-            _cached_umask = os.umask(022)
+            _cached_umask = os.umask(0o22)
             os.umask(_cached_umask)
         util.fchmod(fd, mode & ~_cached_umask)
 
@@ -138,7 +138,7 @@ class DataStore(AbstractDataStore):
         if len(hash) < 40:
             hash = sha1helper.sha1ToString(hash)
         if (len(hash) < 5):
-            raise KeyError, ("invalid hash %s" % hash)
+            raise KeyError("invalid hash %s" % hash)
 
         return os.sep.join((self.top, hash[0:2], hash[2:4], hash[4:]))
 
@@ -157,7 +157,7 @@ class DataStore(AbstractDataStore):
         for _dir in (shortPath, d):
             try:
                 os.mkdir(_dir)
-            except OSError, e:
+            except OSError as e:
                 if e.errno != errno.EEXIST:
                     raise
 
@@ -203,7 +203,7 @@ class DataStore(AbstractDataStore):
         self.top = topPath
 
         if (not os.path.isdir(self.top)):
-            raise IOError, ("path is not a directory: %s" % topPath)
+            raise IOError("path is not a directory: %s" % topPath)
 
 class ShallowDataStore(DataStore):
 
@@ -213,7 +213,7 @@ class ShallowDataStore(DataStore):
         if len(hash) < 40:
             hash = sha1helper.sha1ToString(hash)
         if (len(hash) < 5):
-            raise KeyError, ("invalid hash %s" % hash)
+            raise KeyError("invalid hash %s" % hash)
 
         return os.sep.join((self.top, hash[0:2], hash[2:]))
 
@@ -221,7 +221,7 @@ class ShallowDataStore(DataStore):
         d = os.path.dirname(path)
         try:
             os.mkdir(d)
-        except OSError, e:
+        except OSError as e:
             if e.args[0] != errno.EEXIST:
                 raise
 
@@ -293,11 +293,11 @@ class DataStoreSet(AbstractDataStore):
     """
 
     def hashToPath(self, hash):
-        store = self.storeIter.next()
+        store = next(self.storeIter)
         return store.hashToPath(hash)
 
     def hasFile(self, hash):
-        store = self.storeIter.next()
+        store = next(self.storeIter)
         return store.hasFile(hash)
 
     def addFile(self, f, hash, precompressed = False):
@@ -329,11 +329,11 @@ class DataStoreSet(AbstractDataStore):
             store.addFileReference(hash)
 
     def openFile(self, hash, mode = "r"):
-        store = self.storeIter.next()
+        store = next(self.storeIter)
         return store.openFile(hash, mode = mode)
 
     def openRawFile(self, hash):
-        store = self.storeIter.next()
+        store = next(self.storeIter)
         return store.openRawFile(hash)
 
     def removeFile(self, hash):

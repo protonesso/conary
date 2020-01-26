@@ -196,8 +196,8 @@ class CfgInt(CfgType):
     def parseString(self, val):
         try:
             return int(val)
-        except ValueError, msg:
-            raise ParseError, 'expected integer'
+        except ValueError as msg:
+            raise ParseError('expected integer')
 
 class CfgBool(CfgType):
 
@@ -209,7 +209,7 @@ class CfgBool(CfgType):
         elif val.lower() in ('1', 'true'):
             return True
         else:
-            raise ParseError, "expected True or False"
+            raise ParseError("expected True or False")
 
 class CfgRegExp(CfgType):
     """ RegularExpression type.
@@ -222,8 +222,8 @@ class CfgRegExp(CfgType):
     def parseString(self, val):
         try:
             return (val, re.compile(val))
-        except sre_constants.error, e:
-            raise ParseError, str(e)
+        except sre_constants.error as e:
+            raise ParseError(str(e))
 
     def format(self, val, displayOptions=None):
         return val[0]
@@ -243,11 +243,11 @@ class CfgSignedRegExp(CfgRegExp):
         elif val[0] == "-":
             sense = -1
         else:
-            raise ParseError, "regexp value '%s' needs to start with + or -" % (val,)
+            raise ParseError("regexp value '%s' needs to start with + or -" % (val,))
         try:
             return (val, sense, re.compile(val[1:]))
-        except sre_constants.error, e:
-            raise ParseError, "regexp '%s' parse error\n" % (val[1:],) + str(e)
+        except sre_constants.error as e:
+            raise ParseError("regexp '%s' parse error\n" % (val[1:],) + str(e))
 
     def format(self, val, displayOptions=None):
         return "%s%s" % ("- +"[val[1]+1], val[0])
@@ -264,8 +264,8 @@ class CfgEnum(CfgType):
 
     def checkEntry(self, val):
         if val.lower() not in self.validValues:
-            raise ParseError, '%s not in (case insensitive): %s' % (str(val),
-                                                 '|'.join(self.validValues))
+            raise ParseError('%s not in (case insensitive): %s' % (str(val),
+                                                 '|'.join(self.validValues)))
 
     def parseString(self, val):
         self.checkEntry(val)
@@ -273,8 +273,8 @@ class CfgEnum(CfgType):
 
     def format(self, val, displayOptions):
         if val not in self.origName:
-            raise ParseError, "%s not in: %s" % (str(val),
-                                                 '|'.join([str(x) for x in self.origName]))
+            raise ParseError("%s not in: %s" % (str(val),
+                                                 '|'.join([str(x) for x in self.origName])))
         return self.origName[val]
 
     def __init__(self):
@@ -285,9 +285,9 @@ class CfgEnum(CfgType):
 
         else:
             self.origName = dict([(x[1], x[0]) \
-                                for x in self.validValues.iteritems()])
+                                for x in self.validValues.items()])
             self.validValues = dict([(x[0].lower(), x[1]) \
-                                     for x in self.validValues.iteritems()])
+                                     for x in self.validValues.items()])
 
 class CfgCallBack(CfgType):
 
@@ -447,11 +447,11 @@ class CfgDict(CfgType):
         if default is None:
             default = self.default
         return self.dictType((x,self.valueType.getDefault(y)) \
-                             for (x,y) in default.iteritems())
+                             for (x,y) in default.items())
 
 
     def toStrings(self, value, displayOptions):
-        for key in sorted(value.iterkeys()):
+        for key in sorted(value.keys()):
             val = value[key]
             for item in self.valueType.toStrings(val, displayOptions):
                 if displayOptions and displayOptions.get('prettyPrint', False):
@@ -459,7 +459,7 @@ class CfgDict(CfgType):
                 yield ' '.join((key, item))
 
     def copy(self, val):
-        return dict((k, self.valueType.copy(v)) for k,v in val.iteritems())
+        return dict((k, self.valueType.copy(v)) for k,v in val.items())
 
 class CfgEnumDict(CfgDict):
     validValues = {}
@@ -472,11 +472,11 @@ class CfgEnumDict(CfgDict):
         k = k.lower()
         v = v.lower()
         if k not in self.validValues:
-            raise ParseError, 'invalid key "%s" not in "%s"' % (k,
-                                        '|'.join(self.validValues.keys()))
+            raise ParseError('invalid key "%s" not in "%s"' % (k,
+                                        '|'.join(list(self.validValues.keys()))))
         if v not in self.validValues[k]:
-            raise ParseError, 'invalid value "%s" for key %s not in "%s"' % (v,
-                                k, '|'.join(self.validValues[k]))
+            raise ParseError('invalid value "%s" for key %s not in "%s"' % (v,
+                                k, '|'.join(self.validValues[k])))
 
     def parseString(self, val):
         self.checkEntry(val)

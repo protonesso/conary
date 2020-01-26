@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import testsupport
-import StringIO, unittest
+import io, unittest
 import sqlite3 as sqlite
 
 class LogFileTemplate:
@@ -48,7 +48,7 @@ class CommandLoggingTests(unittest.TestCase, testsupport.TestSupport):
             pass
 
     def CheckLoggingWorks(self):
-        logger = StringIO.StringIO()
+        logger = io.StringIO()
 
         expected_output = ";\n".join([
             sqlite.main._BEGIN, "CREATE TABLE TEST(FOO INTEGER)",

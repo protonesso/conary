@@ -57,8 +57,8 @@ class TestMultiPackage(CapsuleRecipe):
         trv = repos.getTrove(*nvf[0])
         fileMap = dict([(x[1], (x[0], x[2], x[3])) for x in
                         trv.iterFileList()])
-        fileObjMap = dict(zip(fileMap.keys(),
-                           repos.getFileVersions(fileMap.values())))
+        fileObjMap = dict(list(zip(list(fileMap.keys()),
+                           repos.getFileVersions(list(fileMap.values())))))
 
         # create a derived package
         derive.derive(repos, self.cfg, self.shadowLabel, pkgname)
@@ -88,8 +88,8 @@ class TestMultiPackage(DerivedCapsuleRecipe):
         dtrv = repos.getTrove(*dnvf[0])
         dfileMap = dict([(x[1], (x[0], x[2], x[3])) for x in
                          dtrv.iterFileList()])
-        dfileObjMap = dict(zip(dfileMap.keys(),
-                           repos.getFileVersions(dfileMap.values())))
+        dfileObjMap = dict(list(zip(list(dfileMap.keys()),
+                           repos.getFileVersions(list(dfileMap.values())))))
 
         # compare the troves
         self.assertEqual(trv.requires(), dtrv.requires())
@@ -149,8 +149,8 @@ class TestMultiPackage(DerivedCapsuleRecipe):
         d2trv = repos.getTrove(*d2nvf[0])
         d2fileMap = dict([(x[1], (x[0], x[2], x[3])) for x
                           in d2trv.iterFileList()])
-        d2fileObjMap = dict(zip(d2fileMap.keys(),
-                           repos.getFileVersions(d2fileMap.values())))
+        d2fileObjMap = dict(list(zip(list(d2fileMap.keys()),
+                           repos.getFileVersions(list(d2fileMap.values())))))
 
         # compare the troves
         self.assertEqual(dtrv.requires(), d2trv.requires())
@@ -225,8 +225,8 @@ class TestMultiPackage(CapsuleRecipe):
         trv = repos.getTrove(*nvf[0])
         fileMap = dict([(x[1], (x[0], x[2], x[3])) for x in
                         trv.iterFileList()])
-        fileObjMap = dict(zip(fileMap.keys(),
-                           repos.getFileVersions(fileMap.values())))
+        fileObjMap = dict(list(zip(list(fileMap.keys()),
+                           repos.getFileVersions(list(fileMap.values())))))
 
         # create a derived package
         derive.derive(repos, self.cfg, self.shadowLabel, pkgname)
@@ -254,8 +254,8 @@ class TestMultiPackage(DerivedCapsuleRecipe):
         dtrv = repos.getTrove(*dnvf[0])
         dfileMap = dict([(x[1], (x[0], x[2], x[3])) for x in
                          dtrv.iterFileList()])
-        dfileObjMap = dict(zip(dfileMap.keys(),
-                           repos.getFileVersions(dfileMap.values())))
+        dfileObjMap = dict(list(zip(list(dfileMap.keys()),
+                           repos.getFileVersions(list(dfileMap.values())))))
 
         # compare the troves
         self.assertEqual(trv.requires(), dtrv.requires())
@@ -369,6 +369,6 @@ class Test(DerivedCapsuleRecipe):
 
         self.updatePkg('%s=%s' % (pkgname, self.shadowLabel))
         self.verifyFile(self.rootDir + '/usr/share/with-config.txt',
-            'some other content\n', perms=0755)
+            'some other content\n', perms=0o755)
         self.verifyFile(self.rootDir + '/usr/share/new-content.txt',
-            'some new content\n', perms=0644)
+            'some new content\n', perms=0o644)

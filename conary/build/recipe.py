@@ -96,7 +96,7 @@ def loadMacros(paths):
         macroModule = imp.load_source('tmpmodule', path)
         if deleteCompiled:
             util.removeIfExists(compiledPath)
-        baseMacros.update(x for x in macroModule.__dict__.iteritems()
+        baseMacros.update(x for x in macroModule.__dict__.items()
                           if not x[0].startswith('__'))
 
     return baseMacros
@@ -181,7 +181,7 @@ class Recipe(object):
                 continue
             item = getattr(self, itemName)
             if inspect.ismethod(item):
-                if item.im_class == type:
+                if item.__self__.__class__ == type:
                     # classmethod
                     continue
                 className = self.__class__.__name__
@@ -189,7 +189,7 @@ class Recipe(object):
                     classItem = getattr(class_, itemName, None)
                     if classItem is None:
                         continue
-                    if classItem.im_func == item.im_func:
+                    if classItem.__func__ == item.__func__:
                         className = class_.__name__
                 if className in ['Recipe', 'AbstractPackageRecipe',
                                  'SourcePackageRecipe',
@@ -309,7 +309,7 @@ class Recipe(object):
         self.externalMethods[name] = _sourceHelper(item, self)
 
     def _loadSourceActions(self, test):
-        for name, item in source.__dict__.items():
+        for name, item in list(source.__dict__.items()):
             if (name[0:3] == 'add' and issubclass(item, action.Action)
                     and test(item)):
                 self._addSourceAction(name, item)
@@ -341,7 +341,7 @@ class Recipe(object):
         # first make sure we had no path conflicts:
         if self.pathConflicts:
             errlist = []
-            for basepath in self.pathConflicts.keys():
+            for basepath in list(self.pathConflicts.keys()):
                 errlist.extend([x for x in self.pathConflicts[basepath]])
             raise RecipeFileError("The following file names conflict "
                                   "(cvc does not currently support multiple"
@@ -599,22 +599,22 @@ class Recipe(object):
                               basePolicy = self.basePolicyClass)
         # create bucketless name->policy map for getattr
         policyList = []
-        for bucket in self._policies.keys():
+        for bucket in list(self._policies.keys()):
             policyList.extend(self._policies[bucket])
         self._policyMap = dict((x.__class__.__name__, x) for x in policyList)
         # Some policy needs to pass arguments to other policy at init
         # time, but that can't happen until after all policy has been
         # initialized
-        for name, policyObj in self._policyMap.iteritems():
+        for name, policyObj in self._policyMap.items():
             self.externalMethods[name] = _policyUpdater(policyObj)
         # must be a second loop so that arbitrary policy cross-reference
         # works; otherwise it is dependent on sort order whether or
         # not it works
-        for name, policyObj in self._policyMap.iteritems():
+        for name, policyObj in self._policyMap.items():
             policyObj.postInit()
 
         # returns list of policy files loaded
-        return self._policyPathMap.keys()
+        return list(self._policyPathMap.keys())
 
     def doProcess(self, bucketName, logFile = sys.stdout):
         policyBucket = policy.__dict__[bucketName]
@@ -835,14 +835,14 @@ class Recipe(object):
         if self.buildRequirementsOverride is not None:
             return db.getTroves(self.buildRequirementsOverride,
                                 withFiles=False)
-        return self.buildReqMap.values()
+        return list(self.buildReqMap.values())
 
     def getCrossRequirementTroves(self):
         if self.crossRequirementsOverride:
             db = database.Database(self.cfg.root, self.cfg.dbPath)
             return db.getTroves(self.crossRequirementsOverride,
                                      withFiles=False)
-        return self.crossRequires.values()
+        return list(self.crossRequires.values())
 
     def getRecursiveBuildRequirements(self, db, cfg):
         if self.buildRequirementsOverride is not None:
@@ -850,13 +850,13 @@ class Recipe(object):
         buildReqs = self.getBuildRequirementTroves(db)
         buildReqs = set((x.getName(), x.getVersion(), x.getFlavor())
                         for x in buildReqs)
-        packageReqs = [ x for x in self.buildReqMap.itervalues()
+        packageReqs = [ x for x in self.buildReqMap.values()
                         if trove.troveIsCollection(x.getName()) ]
         for package in packageReqs:
             childPackages = [ x for x in package.iterTroveList(strongRefs=True,
                                                                weakRefs=True) ]
             hasTroves = db.hasTroves(childPackages)
-            buildReqs.update(x[0] for x in itertools.izip(childPackages,
+            buildReqs.update(x[0] for x in zip(childPackages,
                                                           hasTroves) if x[1])
         buildReqs = self._getRecursiveRequirements(db, buildReqs, cfg.flavor)
         return buildReqs
@@ -875,7 +875,7 @@ class Recipe(object):
             seen.update(troveList)
             sols = db.getTrovesWithProvides(depSetList, splitByDep=True)
             troveList = set()
-            for depSetSols in sols.itervalues():
+            for depSetSols in sols.values():
                 for depSols in depSetSols:
                     bestChoices = []
                     # if any solution for a dep is satisfied by the installFlavor
@@ -1012,7 +1012,7 @@ class Recipe(object):
         yields a (filePath, capsulePath, 'package:component') tuple
         for each file in each capsule that has been added
         '''
-        for filePath, capsuleList in self._capsulePathMap.iteritems():
+        for filePath, capsuleList in self._capsulePathMap.items():
             for capsulePath in capsuleList:
                 yield filePath, capsulePath, \
                     self._getCapsulePackage(capsulePath)
@@ -1022,7 +1022,7 @@ class Recipe(object):
         yields a (filePath, package, user, group, mode, mtime) tuple
         for each file in each capsule that has been added
         '''
-        for fileName, fileData in self._capsuleDataMap.iteritems():
+        for fileName, fileData in self._capsuleDataMap.items():
             for fileDatum in fileData:
                 fileInfo, package = fileDatum
                 yield fileName, package, fileInfo[0], fileInfo[1], fileInfo[2], fileInfo[4]

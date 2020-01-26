@@ -19,7 +19,7 @@ import itertools
 import logging
 import os
 import time
-import urllib, urllib2
+import urllib.request, urllib.parse, urllib.error, urllib.request, urllib.error, urllib.parse
 import xml
 
 from conary import conarycfg, versions
@@ -57,7 +57,7 @@ class UserAuthorization:
                        (user, salt.encode('hex'), password))
             uid = cu.lastrowid
         except sqlerrors.ColumnNotUnique:
-            raise errors.UserAlreadyExists, 'user: %s' % user
+            raise errors.UserAlreadyExists('user: %s' % user)
 
         # make sure we don't conflict with another entry based on case; this
         # avoids races from other processes adding case differentiated
@@ -65,7 +65,7 @@ class UserAuthorization:
         cu.execute("SELECT userId FROM Users WHERE LOWER(userName)=LOWER(?)",
                    user)
         if len(cu.fetchall()) > 1:
-            raise errors.UserAlreadyExists, 'user: %s' % user
+            raise errors.UserAlreadyExists('user: %s' % user)
 
         return uid
 
@@ -92,13 +92,13 @@ class UserAuthorization:
         if self.pwCheckUrl:
             try:
                 url = "%s?user=%s;password=%s" \
-                        % (self.pwCheckUrl, urllib.quote(user),
-                           urllib.quote(challenge))
+                        % (self.pwCheckUrl, urllib.parse.quote(user),
+                           urllib.parse.quote(challenge))
 
                 if remoteIp is not None:
-                    url += ';remote_ip=%s' % urllib.quote(remoteIp)
+                    url += ';remote_ip=%s' % urllib.parse.quote(remoteIp)
 
-                f = urllib2.urlopen(url)
+                f = urllib.request.urlopen(url)
                 xmlResponse = f.read()
             except:
                 return False
@@ -255,19 +255,19 @@ class EntitlementAuthorization:
         if self.entCheckUrl:
             if entitlementClass is not None:
                 url = "%s?server=%s;class=%s;key=%s" \
-                        % (self.entCheckUrl, urllib.quote(serverName),
-                           urllib.quote(entitlementClass),
-                           urllib.quote(entitlement))
+                        % (self.entCheckUrl, urllib.parse.quote(serverName),
+                           urllib.parse.quote(entitlementClass),
+                           urllib.parse.quote(entitlement))
             else:
                 url = "%s?server=%s;key=%s" \
-                        % (self.entCheckUrl, urllib.quote(serverName),
-                           urllib.quote(entitlement))
+                        % (self.entCheckUrl, urllib.parse.quote(serverName),
+                           urllib.parse.quote(entitlement))
 
             if remoteIp is not None:
-                url += ';remote_ip=%s' % urllib.quote(remoteIp)
+                url += ';remote_ip=%s' % urllib.parse.quote(remoteIp)
 
             try:
-                f = urllib2.urlopen(url)
+                f = urllib.request.urlopen(url)
                 xmlResponse = f.read()
             except Exception:
                 return set()
@@ -363,13 +363,13 @@ class NetworkAuthorization:
                         cu, self.serverNameList[0], authToken.remote_ip,
                         entClass, entKey)
                 roleSet.update(rolesFromEntitlement)
-            except errors.EntitlementTimeout, e:
+            except errors.EntitlementTimeout as e:
                 timedOut += e.getEntitlements()
 
         if timedOut:
             raise errors.EntitlementTimeout(timedOut)
 
-        for roleId, acceptFlags in roleSet.items():
+        for roleId, acceptFlags in list(roleSet.items()):
             if authToken.flags is None:
                 authToken.flags = self._getFlags(authToken)
             if not authToken.flags.satisfies(acceptFlags):
@@ -485,7 +485,7 @@ class NetworkAuthorization:
         # we need to test for each label separately in case we have
         # mutiple troves living of multiple lables with different
         # permission settings
-        for label in checkDict.iterkeys():
+        for label in checkDict.keys():
             cu.execute(stmt, label)
             patterns = [ x[0] for x in cu ]
             for i in checkDict[label]:
@@ -642,8 +642,8 @@ class NetworkAuthorization:
             permissionId = cu.lastrowid
         except sqlerrors.ColumnNotUnique:
             self.db.rollback()
-            raise errors.PermissionAlreadyExists, "labelId: '%s', itemId: '%s'" %(
-                labelId, itemId)
+            raise errors.PermissionAlreadyExists("labelId: '%s', itemId: '%s'" %(
+                labelId, itemId))
         self.ri.addPermissionId(permissionId, roleId)
         self.db.commit()
 
@@ -676,8 +676,8 @@ class NetworkAuthorization:
             WHERE permissionId = ?""", (labelId, troveId, write, canRemove, permissionId))
         except sqlerrors.ColumnNotUnique:
             self.db.rollback()
-            raise errors.PermissionAlreadyExists, "labelId: '%s', itemId: '%s'" %(
-                labelId, troveId)
+            raise errors.PermissionAlreadyExists("labelId: '%s', itemId: '%s'" %(
+                labelId, troveId))
         if oldLabelId != labelId or oldTroveId != troveId:
             # a permission has changed the itemId or the labelId...
             self.ri.updatePermissionId(permissionId, roleId)
@@ -913,7 +913,7 @@ class NetworkAuthorization:
             ugid = cu.lastrowid
         except sqlerrors.ColumnNotUnique:
             self.db.rollback()
-            raise errors.RoleAlreadyExists, "role: %s" % role
+            raise errors.RoleAlreadyExists("role: %s" % role)
         self._checkDuplicates(cu, role)
         self.db.commit()
         return ugid
@@ -1249,7 +1249,7 @@ class NetworkAuthorization:
 
         # Get entitlement group ids
         placeholders = ','.join(['?' for x in classInfo])
-        names = classInfo.keys()
+        names = list(classInfo.keys())
         cu.execute("""SELECT entGroup, entGroupId FROM EntitlementGroups
                       WHERE entGroup IN (%s)""" %
             (placeholders,), names)
@@ -1258,7 +1258,7 @@ class NetworkAuthorization:
             raise errors.RoleNotFound
 
         # Get user group ids
-        rolesNeeded = list(set(itertools.chain(*classInfo.itervalues())))
+        rolesNeeded = list(set(itertools.chain(*iter(classInfo.values()))))
         if rolesNeeded:
             placeholders = ','.join(['?' for x in rolesNeeded])
             cu.execute("""SELECT userGroup, userGroupId FROM UserGroups
@@ -1271,13 +1271,13 @@ class NetworkAuthorization:
             raise errors.RoleNotFound
 
         # Clear any existing entries for the specified entitlement classes
-        entClassIds = ','.join(['%d' % x for x in entClassMap.itervalues()])
+        entClassIds = ','.join(['%d' % x for x in entClassMap.values()])
         cu.execute("""DELETE FROM EntitlementAccessMap
                       WHERE entGroupId IN (%s)""" %
                 (entClassIds,))
 
         # Add new entries.
-        for entClass, roles in classInfo.iteritems():
+        for entClass, roles in classInfo.items():
             for role in roles:
                 cu.execute("""INSERT INTO EntitlementAccessMap
                               (entGroupId, userGroupId) VALUES (?, ?)""",
@@ -1296,7 +1296,7 @@ class NetworkAuthorization:
 
     def setRoleFilters(self, roleFiltersMap):
         cu = self.db.cursor()
-        for role, flags in roleFiltersMap.iteritems():
+        for role, flags in roleFiltersMap.items():
             args = []
             for flag in flags:
                 if flag is not None:

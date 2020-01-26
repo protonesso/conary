@@ -84,14 +84,14 @@ class DerivedChangesetExploder(changeset.ChangesetExploder):
         # will call setModes after this call, which will
         # allow modifying the mode in the derived package.
         mode = fileObj.inode.perms()
-        os.chmod(fullPath, mode & 01777)
-        if fileObj.inode.perms() & 06000 != 0:
-            self.recipe.setModes(path, sidbits=(mode & 06000))
+        os.chmod(fullPath, mode & 0o1777)
+        if fileObj.inode.perms() & 0o6000 != 0:
+            self.recipe.setModes(path, sidbits=(mode & 0o6000))
 
         if isinstance(fileObj, files.Directory):
-            if (fileObj.inode.perms() & 0700) != 0700:
-                os.chmod(fullPath, (mode & 01777) | 0700)
-                self.recipe.setModes(path, userbits=(mode & 0700))
+            if (fileObj.inode.perms() & 0o700) != 0o700:
+                os.chmod(fullPath, (mode & 0o1777) | 0o700)
+                self.recipe.setModes(path, userbits=(mode & 0o700))
             # remember to include this directory in the derived package even
             # if the directory is empty
             self.recipe.ExcludeDirectories(exceptions=path,
@@ -148,7 +148,7 @@ class AbstractDerivedPackageRecipe(AbstractPackageRecipe):
         if self.parentVersion:
             try:
                 parentRevision = versions.Revision(self.parentVersion)
-            except conaryerrors.ParseError, e:
+            except conaryerrors.ParseError as e:
                 raise builderrors.RecipeFileError(
                             'Cannot parse parentVersion %s: %s' % \
                                     (self.parentVersion, str(e)))
@@ -213,7 +213,7 @@ class AbstractDerivedPackageRecipe(AbstractPackageRecipe):
         try:
             troveList = repos.findTrove(None,
                                    (self.name, parentVersion, self._buildFlavor))
-        except conaryerrors.TroveNotFound, err:
+        except conaryerrors.TroveNotFound as err:
             raise builderrors.RecipeFileError('Could not find package to derive from for this flavor: ' + str(err))
         if len(troveList) > 1:
             raise builderrors.RecipeFileError(
@@ -310,4 +310,4 @@ class AbstractDerivedPackageRecipe(AbstractPackageRecipe):
         self._addSourceAction('addPatch', source.addPatch)
         self._addSourceAction('addSource', source.addSource)
 
-exec defaultrecipes.DerivedPackageRecipe
+exec(defaultrecipes.DerivedPackageRecipe)

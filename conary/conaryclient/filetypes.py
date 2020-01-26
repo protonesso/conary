@@ -43,7 +43,7 @@ class _File(object):
     not be directly instantiated.
     """
     needSha1 = False
-    kwargs = {'perms': 0644,
+    kwargs = {'perms': 0o644,
             'tags': None,
             'requires': None,
             'provides': None,
@@ -63,7 +63,7 @@ class _File(object):
             if aliasedArg not in self.kwargs:
                 raise ParameterError("'%s' is not allowed for this class" % arg)
 
-        for key, val in self.aliasedArgs.iteritems():
+        for key, val in self.aliasedArgs.items():
             if key in kwargs and val in kwargs:
                 raise ParameterError( \
                         "'%s' and '%s' cannot be specified together" % \
@@ -71,7 +71,7 @@ class _File(object):
             elif key in kwargs:
                 kwargs[val] = kwargs[key]
 
-        for key, val in self.__class__.kwargs.iteritems():
+        for key, val in self.__class__.kwargs.items():
             setattr(self, key, kwargs.get(key, val))
 
         self.mtime = int(self.mtime or time.time())
@@ -102,7 +102,7 @@ class _File(object):
 
     def get(self, pathId):
         f = self.fileClass(pathId)
-        f.inode = files.InodeStream(self.perms & 07777, self.mtime,
+        f.inode = files.InodeStream(self.perms & 0o7777, self.mtime,
                 self.owner, self.group)
         self._touchupFileStream(f)
         if self.needSha1:
@@ -190,7 +190,7 @@ class Symlink(_File):
     def __init__(self, target, **kwargs):
         _File.__init__(self, **kwargs)
         self.target = target
-        self.perms = 0777
+        self.perms = 0o777
 
     def _touchupFileStream(self, f):
         f.target.set(self.target)
@@ -460,7 +460,7 @@ class Directory(_File):
     """
     fileClass = files.Directory
     kwargs = _File.kwargs.copy()
-    kwargs.update({'perms': 0755})
+    kwargs.update({'perms': 0o755})
 
     def __init__(self, **kwargs):
         _File.__init__(self, **kwargs)
@@ -528,7 +528,7 @@ class Socket(_File):
     """
     fileClass = files.Socket
     kwargs = _File.kwargs.copy()
-    kwargs.update({'perms': 0755})
+    kwargs.update({'perms': 0o755})
 
     def __init__(self, **kwargs):
         _File.__init__(self, **kwargs)
@@ -597,7 +597,7 @@ class NamedPipe(_File):
     """
     fileClass = files.NamedPipe
     kwargs = _File.kwargs.copy()
-    kwargs.update({'perms': 0755})
+    kwargs.update({'perms': 0o755})
 
     def __init__(self, **kwargs):
         _File.__init__(self, **kwargs)

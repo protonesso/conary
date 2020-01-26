@@ -69,7 +69,7 @@ def runproxy(**params):
                     server.reset()
                     obj.stopRepository(1)
 
-        dorunproxy.func_name = fn.func_name
+        dorunproxy.__name__ = fn.__name__
 
         return dorunproxy
 
@@ -218,8 +218,8 @@ class ProxyTest(rephelp.RepositoryHelper):
             protocolString = "protocolString", headers = {}, cfg = self.cfg,
             targetServerName = 'example.com', remoteIp = '5.6.7.8',
             isSecure = False, baseUrl = "http://blah", systemId='foo')
-        self.assertEquals(caller.url.scheme, 'https')
-        self.assertEquals(caller.url.hostport.port, 443)
+        self.assertEqual(caller.url.scheme, 'https')
+        self.assertEqual(caller.url.hostport.port, 443)
         # This whole thing points out a workaround for _not_ going through SSL
         # if you choose so: add a repositoryMap that explicitly adds :80 to
         # the server URL.
@@ -273,7 +273,7 @@ class ProxyTest(rephelp.RepositoryHelper):
             # the path to that using the file contents sha1 from the changeset
             # we fetched earlier.
             assert len(cs.files) == 1
-            sha1 = ThawFile(cs.files.values()[0], None).contents.sha1()
+            sha1 = ThawFile(list(cs.files.values())[0], None).contents.sha1()
             sha1 = sha1.encode('hex')
             path = os.path.join(reposServer.contents.getPath(),
                     sha1[:2], sha1[2:4], sha1[4:])
@@ -313,9 +313,9 @@ class ProxyTest(rephelp.RepositoryHelper):
                                               provides = True, requires = True)
         ti1 = proxyRepos.getTroveInfo(trove._TROVEINFO_TAG_SOURCENAME,
                                       [ trv.getNameVersionFlavor() ])
-        self.assertEquals(trv, trv1)
-        self.assertEquals(deps, deps1)
-        self.assertEquals(ti, ti1)
+        self.assertEqual(trv, trv1)
+        self.assertEqual(deps, deps1)
+        self.assertEqual(ti, ti1)
 
         # we reopen it for proper cleanup in the runproxy() decorator
         self.openRepository(1)

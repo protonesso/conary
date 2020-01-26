@@ -42,15 +42,15 @@ def checkFiles(c, names, data, tags):
         del names[0]
         s = gzip.GzipFile(None, "r", fileobj = f).read()
         if s != data[i]:
-            raise AssertionError, "bad data for %s" % names[i]
+            raise AssertionError("bad data for %s" % names[i])
         if tag != tags[i]:
-            raise AssertionError, "bad tag for %s" % names[i]
+            raise AssertionError("bad tag for %s" % names[i])
 
         i += 1
         rc = c.getNextFile()
 
     if names:
-        raise AssertionError, "files not found: %s" % " ".join(names)
+        raise AssertionError("files not found: %s" % " ".join(names))
 
 class FilecontainerTest(unittest.TestCase):
     def setUp(self):
@@ -67,7 +67,7 @@ class FilecontainerTest(unittest.TestCase):
 
         f.close()
         if (count != fileCount()):
-            raise AssertionError, "too many files are open %s" % count
+            raise AssertionError("too many files are open %s" % count)
 
         # create a new container
         f = util.ExtendedFile(self.fn, "w+", buffering = False)

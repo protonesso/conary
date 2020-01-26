@@ -94,10 +94,10 @@ class VersionsSqlTest(dbstoretest.DBStoreTestBase):
         sv.createBranch(itemId, branch)
 
         sv.createVersion(itemId, v10, 0, "foo:source")
-        assert(bTbl.has_key(branch))
-        assert(vTbl.has_key(v10))
+        assert(branch in bTbl)
+        assert(v10 in vTbl)
         assert(sv.hasVersion(itemId, vTbl[v10]))
-        assert(i.has_key("foo:source"))
+        assert("foo:source" in i)
         assert(not sv.hasVersion(2, vTbl[v10]))
 
         branchId = bTbl[branch]

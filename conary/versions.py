@@ -90,7 +90,7 @@ class SerialNumber(object):
 
         return self.numList == other.numList
 
-    def __nonzero__(self):
+    def __bool__(self):
         return self.numList and self.numList != [0]
 
     def __ne__(self, other):
@@ -928,7 +928,7 @@ class Version(VersionSequence):
         expectVersion = False
 
         iter = reversed(self.versions)
-        iter.next()
+        next(iter)
 
         for item in iter:
             if expectVersion and isinstance(item, AbstractRevision):
@@ -979,11 +979,11 @@ class Version(VersionSequence):
         # the same, this is a direct child
         iter = reversed(self.versions)
         # this skips the first one
-        item = iter.next()
-        item = iter.next()
+        item = next(iter)
+        item = next(iter)
         try:
             while not isinstance(item, AbstractRevision):
-                item = iter.next()
+                item = next(iter)
         except StopIteration:
             if (trailing.sourceCount.shadowCount() < self.shadowLength()
                 and trailing.buildCount.shadowCount() < self.shadowLength()):
@@ -1425,7 +1425,7 @@ def _parseVersionString(ver, frozen):
 def ThawVersion(ver):
     if ver == "@NEW@":
         return NewVersion()
-    elif isinstance(ver, unicode):
+    elif isinstance(ver, str):
         ver = ver.encode('ascii')
 
     v = thawedVersionCache.get(ver, None)
@@ -1441,7 +1441,7 @@ def ThawVersion(ver):
 def VersionFromString(ver, defaultBranch = None, timeStamps = []):
     if ver == "@NEW@":
         return NewVersion()
-    elif isinstance(ver, unicode):
+    elif isinstance(ver, str):
         ver = ver.encode('ascii')
 
     if timeStamps:

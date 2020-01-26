@@ -34,9 +34,9 @@ class CheckinCallback(updatecmd.UpdateCallback, callbacks.ChangesetCallback):
         callbacks.ChangesetCallback.__init__(self)
 
     def missingFiles(self, missingFiles):
-        print "Warning: The following files are missing:"
+        print("Warning: The following files are missing:")
         for mp in missingFiles:
-            print mp[4]
+            print(mp[4])
         return True
 
 def doCommit(cfg, changeSetFile, targetLabel):
@@ -68,8 +68,8 @@ def doCommit(cfg, changeSetFile, targetLabel):
         # add commitChangeSet method that takes a fd.
         try:
             repos.commitChangeSetFile(changeSetFile, callback=callback)
-        except errors.CommitError, e:
-            print e
+        except errors.CommitError as e:
+            print(e)
     finally:
         if targetLabel:
             os.unlink(changeSetFile)

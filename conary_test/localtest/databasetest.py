@@ -76,15 +76,15 @@ class Database(testhelp.TestCase):
         # CNY-2405
         d = tempfile.mkdtemp()
         try:
-            os.mkdir(d + '/var', 0400)
+            os.mkdir(d + '/var', 0o400)
             try:
                 db = database.Database(d, '/var/lib/conarydb/conarydb')
-            except database.OpenError, e:
+            except database.OpenError as e:
                 self.assertEqual(str(e),
                        'Unable to open database %s/var/lib/conarydb/conarydb: '
                        'cannot create directory %s/var/lib' % (d, d))
         finally:
-            os.chmod(d + '/var', 0755)
+            os.chmod(d + '/var', 0o755)
             shutil.rmtree(d)
 
     def testRootIsNotDir(self):
@@ -96,7 +96,7 @@ class Database(testhelp.TestCase):
             f.close()
             try:
                 db = database.Database(fn, '/var/lib/conarydb/conarydb')
-            except database.OpenError, e:
+            except database.OpenError as e:
                 self.assertEqual(str(e),
                        'Unable to open database %s/var/lib/conarydb/conarydb: '
                        '%s is not a directory' % (fn, fn))
@@ -111,7 +111,7 @@ class Database(testhelp.TestCase):
             f.close()
             try:
                 db = database.Database(d, '/var/lib/conarydb/conarydb')
-            except database.OpenError, e:
+            except database.OpenError as e:
                 self.assertEqual(str(e),
                        'Unable to open database %s/var/lib/conarydb/conarydb: '
                        '%s/var is not a directory' % (d, d))
@@ -129,7 +129,7 @@ class Database(testhelp.TestCase):
             db = database.Database(d, '/var/lib/conarydb/conarydb')
             try:
                 db.iterAllTroves()
-            except errors.DatabaseLockedError, e:
+            except errors.DatabaseLockedError as e:
                 self.assertEqual(str(e), "The local database is locked.  It is possible that a database journal file exists that needs to be rolled back, but you don't have write permission to the database.")
             except:
                 self.fail('unexpected exception')
@@ -172,11 +172,11 @@ class Database(testhelp.TestCase):
     def testCannotMakeDirs(self):
         d = tempfile.mkdtemp()
         try:
-            os.chmod(d, 0500)
+            os.chmod(d, 0o500)
             self.assertRaises(database.OpenError, database.Database,
                               d, '/foo/conarydb')
         finally:
-            os.chmod(d, 0700)
+            os.chmod(d, 0o700)
             shutil.rmtree(d)
 
     def testDbTimeout(self):
@@ -263,7 +263,7 @@ class UpdateFeaturesTest(testhelp.TestCase):
         self.assertEqual(ft.postRollbackScriptsOnRollbackStack, False)
 
         # Munge permissions back
-        os.chmod(fpath, 0644)
+        os.chmod(fpath, 0o644)
         ft.loadFromFile(fpath)
         self.assertEqual(ft.postRollbackScriptsOnRollbackStack, True)
 

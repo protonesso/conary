@@ -292,7 +292,7 @@ class TestPutFiles(PackageRecipe):
         self.logFilter.add()
         self.buildRecipe(recipestr, "TestPutFiles")
         self.logFilter.remove()
-        self.assertEquals(self.logFilter.records[0],
+        self.assertEqual(self.logFilter.records[0],
                 "warning: Copy: No files matched: '/foo/*'")
 
     def testUnmatchedPutFilesTest2(self):
@@ -357,9 +357,9 @@ class TestPutFiles(PackageRecipe):
         sl2 = util.joinPaths(self.workDir, '/dir2/foo2')
         # Test modes
         self.assertFalse(os.path.islink(sl755))
-        self.assertEqual(0755, os.lstat(sl755)[stat.ST_MODE] & 0755)
+        self.assertEqual(0o755, os.lstat(sl755)[stat.ST_MODE] & 0o755)
         self.assertFalse(os.path.islink(sl600))
-        self.assertEqual(0600, os.lstat(sl600)[stat.ST_MODE] & 0600)
+        self.assertEqual(0o600, os.lstat(sl600)[stat.ST_MODE] & 0o600)
 
         self.assertTrue(os.path.islink(sl1))
         self.assertTrue(os.path.islink(sl2))
@@ -627,7 +627,7 @@ class TestSugid(PackageRecipe):
             self.updatePkg(self.workDir, p[0], p[1])
         self.realRoot()
         a = os.lstat(util.joinPaths(self.workDir, 'bin/a'))
-        assert (a.st_mode & 07777 == 06755)
+        assert (a.st_mode & 0o7777 == 0o6755)
 
 
 
@@ -681,8 +681,8 @@ class TestCreate(PackageRecipe):
         assert (d == 'ABCDEFGABCDEFGABCDEFGABCDEFG\n')
         assert (e == '/bin\n')
         assert (f == '%(essentialbindir)s\n')
-        assert (g.st_mode & 0777 == 0755)
-        assert (h.st_mode & 0777 == 0755)
+        assert (g.st_mode & 0o777 == 0o755)
+        assert (h.st_mode & 0o777 == 0o755)
 
 
 
@@ -864,7 +864,7 @@ echo "$0: line 2000: foo: command not found"
 
         # now repeat with foo in the repository but not installed
         self.addComponent('foo:runtime', '1', fileContents = [
-            ('/usr/bin/foo', rephelp.RegularFile(contents="", perms=0755)),])
+            ('/usr/bin/foo', rephelp.RegularFile(contents="", perms=0o755)),])
         repos = self.openRepository()
         self.logFilter.add()
         reportedBuildReqs = set()
@@ -878,7 +878,7 @@ echo "$0: line 2000: foo: command not found"
             'warning: ./configure: line 2000: foo: command not found',
             "warning: Some missing buildRequires ['foo:runtime']",
         ])
-        self.assertEquals(reportedBuildReqs, set(['foo:runtime']))
+        self.assertEqual(reportedBuildReqs, set(['foo:runtime']))
         self.unmock()
 
         # now test with absolute path in error message
@@ -919,7 +919,7 @@ echo "$0: line 2000: foo: command not found"
             'warning: ./configure: line 2000: foo: command not found',
             "warning: Some missing buildRequires ['foo:runtime']",
         ])
-        self.assertEquals(reportedBuildReqs, set(['foo:runtime']))
+        self.assertEqual(reportedBuildReqs, set(['foo:runtime']))
 
 
     def testConfigureMissingReq2(self):
@@ -1085,7 +1085,7 @@ class TestRemove(PackageRecipe):
         self.logFilter.add()
         (built, d) = self.buildRecipe(recipestr, "TestRemove")
         self.logFilter.remove()
-        self.assertEquals(self.logFilter.records[0],
+        self.assertEqual(self.logFilter.records[0],
                 "warning: Remove: No files matched: '/a/*'")
 
 
@@ -1433,12 +1433,12 @@ Categories=Presentation;Java;
 
         self.updatePkg(self.rootDir, ["desktop-file-utils:runtime"])
         self.build(recipestr1, "TestDesktopfile")
-        self.assertEquals(reportedBuildReqs, set(('desktop-file-utils:runtime',)))
+        self.assertEqual(reportedBuildReqs, set(('desktop-file-utils:runtime',)))
 
         reportedBuildReqs = set()
         recipestr2 = recipestr1.replace('#buildR', 'buildR')
         self.build(recipestr2, "TestDesktopfile")
-        self.assertEquals(reportedBuildReqs, set())
+        self.assertEqual(reportedBuildReqs, set())
 
 
 
@@ -1725,8 +1725,8 @@ class TestSetModes(PackageRecipe):
         r.SetModes('/foo/bar', 0755)
 """
         built, d = self.buildRecipe(recipestr, "TestSetModes")
-        permMap = { '/usr/bin/foo': 04751,
-                    '/foo/bar': 0755 }
+        permMap = { '/usr/bin/foo': 0o4751,
+                    '/foo/bar': 0o755 }
         repos = self.openRepository()
         for troveName, troveVersion, troveFlavor in built:
             troveVersion = versions.VersionFromString(troveVersion)
@@ -1734,7 +1734,7 @@ class TestSetModes(PackageRecipe):
             for pathId, path, fileId, version, fileObj in repos.iterFilesInTrove(
                 trove.getName(), trove.getVersion(), trove.getFlavor(),
                 withFiles=True):
-                self.assertEquals(fileObj.inode.perms(), permMap[path])
+                self.assertEqual(fileObj.inode.perms(), permMap[path])
 
     def testSetModesTest2(self):
         """
@@ -1871,7 +1871,7 @@ class ActionSuggests(PackageRecipe):
                   lambda *args:
                     mockedUpdateArgs(args[0], reportedBuildReqs, *args[1:]))
         self.build(recipestr, 'ActionSuggests')
-        self.assertEquals(reportedBuildReqs, set(('fakemake:runtime',
+        self.assertEqual(reportedBuildReqs, set(('fakemake:runtime',
                                                   'true:runtime')))
 
         # Same deal, with buildRequires added
@@ -1880,7 +1880,7 @@ class ActionSuggests(PackageRecipe):
 
         reportedBuildReqs.clear()
         self.build(recipestr2, 'ActionSuggests')
-        self.assertEquals(reportedBuildReqs, set())
+        self.assertEqual(reportedBuildReqs, set())
 
     def testActionSuggestsBuildReqs2(self):
         # First, add a trove that provides tar and gz
@@ -1906,7 +1906,7 @@ class ActionSuggests(PackageRecipe):
                   lambda *args:
                     mockedUpdateArgs(args[0], reportedBuildReqs, *args[1:]))
         self.build(recipestr, 'ActionSuggests')
-        self.assertEquals(reportedBuildReqs, set(['fakegzip:runtime',
+        self.assertEqual(reportedBuildReqs, set(['fakegzip:runtime',
                                                   'faketar:runtime']))
 
         # Same deal, with buildRequires added
@@ -1915,4 +1915,4 @@ class ActionSuggests(PackageRecipe):
 
         reportedBuildReqs.clear()
         self.build(recipestr2, 'ActionSuggests')
-        self.assertEquals(reportedBuildReqs, set())
+        self.assertEqual(reportedBuildReqs, set())

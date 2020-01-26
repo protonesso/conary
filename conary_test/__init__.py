@@ -54,7 +54,7 @@ def rpm(func):
         else:
             return func(*args, **kwargs)
 
-    run.func_name = func.func_name
+    run.__name__ = func.__name__
     run._contexts = func._contexts
 
     return run
@@ -69,7 +69,7 @@ def installed_conarydb(func):
         else:
             raise testhelp.SkipTestException('Test requires system conary database')
 
-    run.func_name = func.func_name
+    run.__name__ = func.__name__
     run._contexts = func._contexts
 
     return run

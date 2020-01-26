@@ -25,14 +25,14 @@ class Flavors:
     def createFlavorMap(self, flavorId, flavor, cu = None):
         if cu is None:
             cu = self.db.cursor()
-        for depClass in flavor.getDepClasses().itervalues():
+        for depClass in flavor.getDepClasses().values():
             for dep in depClass.getDeps():
                 cu.execute("""INSERT INTO FlavorMap
                 (flavorId, base, depClass, sense, flag)
                 VALUES (?, ?, ?, ?, NULL)""",
                            flavorId, dep.name,
                            depClass.tag, deps.FLAG_SENSE_REQUIRED)
-                for (flag, sense) in dep.flags.iteritems():
+                for (flag, sense) in dep.flags.items():
                     cu.execute("""INSERT INTO FlavorMap
                     (flavorId, base, depClass, sense, flag)
                     VALUES (?, ?, ?, ?, ?)""",
@@ -51,7 +51,7 @@ class Flavors:
         val = self.get(flavor, None)
 
         if val is None:
-            raise KeyError, flavor
+            raise KeyError(flavor)
 
         return val
 
@@ -77,4 +77,4 @@ class Flavors:
         try:
             return deps.ThawFlavor(cu.next()[0])
         except StopIteration:
-            raise KeyError, flavorId
+            raise KeyError(flavorId)

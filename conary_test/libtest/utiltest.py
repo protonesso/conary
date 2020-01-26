@@ -19,7 +19,7 @@ from testrunner import testhelp
 import os
 import signal
 import stat
-import StringIO
+import io
 import tempfile
 import time
 import zlib
@@ -296,33 +296,33 @@ class UtilTest(testhelp.TestCase):
         self.assertEqual(f31.read(), '6')
 
     def testPushIterator(self):
-        p = util.PushIterator(x for x in xrange(3))
-        assert(p.next() == 0)
+        p = util.PushIterator(x for x in range(3))
+        assert(next(p) == 0)
         p.push(None)
-        assert(p.next() == None)
+        assert(next(p) == None)
         p.push(-1)
         p.push(-2)
-        assert(p.next() == -2)
-        assert(p.next() == -1)
-        assert(p.next() == 1)
-        assert(p.next() == 2)
-        self.assertRaises(StopIteration, p.next)
+        assert(next(p) == -2)
+        assert(next(p) == -1)
+        assert(next(p) == 1)
+        assert(next(p) == 2)
+        self.assertRaises(StopIteration, p.__next__)
 
     def testPeekIterator(self):
-        p = util.PeekIterator(x for x in xrange(5))
+        p = util.PeekIterator(x for x in range(5))
         assert(p.peek() == 0)
         assert(p.peek() == 0)
-        assert(p.next() == 0)
+        assert(next(p) == 0)
         assert(p.peek() == 1)
-        assert(p.next() == 1)
-        assert(p.next() == 2)
-        assert(p.next() == 3)
+        assert(next(p) == 1)
+        assert(next(p) == 2)
+        assert(next(p) == 3)
         assert(p.peek() == 4)
-        assert(p.next() == 4)
-        self.assertRaises(StopIteration, p.next)
+        assert(next(p) == 4)
+        self.assertRaises(StopIteration, p.__next__)
         self.assertRaises(StopIteration, p.peek)
         
-        p = util.PeekIterator(x for x in xrange(5))
+        p = util.PeekIterator(x for x in range(5))
         [ x for x in p ] == [ 0, 1, 2, 3, 4 ]
 
     def testIterableQueue(self):
@@ -357,9 +357,9 @@ class UtilTest(testhelp.TestCase):
         del cached
 
         self.assertTrue(obj1 in cache)
-        self.assertTrue(cache.has_key(obj1))
+        self.assertTrue(obj1 in cache)
         del obj1
-        self.assertFalse(cache.keys() != [])
+        self.assertFalse(list(cache.keys()) != [])
 
         obj2 = TestObject(2)
         cache[obj2] = obj2
@@ -371,7 +371,7 @@ class UtilTest(testhelp.TestCase):
         self.assertTrue(cached == obj3)
         del cached
         del obj3
-        self.assertFalse(cache.keys() != [])
+        self.assertFalse(list(cache.keys()) != [])
 
     def testRecurseDirectoryList(self):
         dirstruct = [
@@ -554,7 +554,7 @@ class UtilTest(testhelp.TestCase):
             s = util.pread(f.fileno(), 6, 3)
             self.assertEqual(s, 'lo, wo')
 
-            s = util.pread(f.fileno(), long(6), long(3))
+            s = util.pread(f.fileno(), int(6), int(3))
             self.assertEqual(s, 'lo, wo')
 
             # make sure that pread doesn't affect the current file pos
@@ -565,7 +565,7 @@ class UtilTest(testhelp.TestCase):
             tmp.close()
             try:
                 s = util.pread(badf, 1, 0)
-            except OSError, e:
+            except OSError as e:
                 self.assertEqual(str(e), '[Errno 9] Bad file descriptor')
 
             f.seek(0x80000001, 0)
@@ -627,14 +627,14 @@ class UtilTest(testhelp.TestCase):
     def testExecuteStatus(self):
         try:
             rc, s = self.captureOutput(util.execute, 'exit 1')
-        except RuntimeError, e:
+        except RuntimeError as e:
             self.assertEqual('Shell command "exit 1" exited with exit code 1',
                                  str(e))
         else:
             self.fail('expected exception')
         try:
             rc, s = self.captureOutput(util.execute, 'kill -9 $$')
-        except RuntimeError, e:
+        except RuntimeError as e:
             self.assertEqual('Shell command "kill -9 $$" killed with signal 9',
                                  str(e))
         else:
@@ -659,7 +659,7 @@ class UtilTest(testhelp.TestCase):
     def testBoundedStringIO(self):
         x = util.BoundedStringIO(maxMemorySize=256)
         self.assertEqual(x.getBackendType(), 'memory')
-        self.assertTrue(isinstance(x._backend, StringIO.StringIO))
+        self.assertTrue(isinstance(x._backend, io.StringIO))
 
         x.write("0123456789" * 30)
         self.assertEqual(x.getBackendType(), 'file')
@@ -674,7 +674,7 @@ class UtilTest(testhelp.TestCase):
         x.truncate(255)
 
         self.assertEqual(x.getBackendType(), 'memory')
-        self.assertTrue(isinstance(x._backend, StringIO.StringIO))
+        self.assertTrue(isinstance(x._backend, io.StringIO))
 
     def testProtectedTemplate(self):
         t = util.ProtectedTemplate("$foo is the new $bar", foo='a', bar='b')
@@ -710,7 +710,7 @@ class UtilTest(testhelp.TestCase):
         srcdata = ["abc\x80", util.ProtectedString("abc\x80")]
         data = util.xmlrpcDump((srcdata, ), methodresponse = True)
 
-        sio = StringIO.StringIO(data)
+        sio = io.StringIO(data)
         params, methodname = util.xmlrpcLoad(sio)
         self.assertEqual(params, (srcdata, ))
         self.assertEqual(methodname, None)
@@ -737,7 +737,7 @@ class UtilTest(testhelp.TestCase):
 
         try:
             util.xmlrpcLoad(repr1)
-        except util.xmlrpclib.Fault, x2:
+        except util.xmlrpclib.Fault as x2:
             self.assertEqual(x.faultCode, x2.faultCode)
             self.assertEqual(x.faultString, x2.faultString)
         except:
@@ -768,11 +768,11 @@ class UtilTest(testhelp.TestCase):
     def testDecompressStream(self):
         data = os.urandom(16 * 1024)
         compressed = zlib.compress(data)
-        fp = StringIO.StringIO(compressed)
+        fp = io.StringIO(compressed)
         dfo = util.decompressStream(fp)
         check = dfo.read()
         self.assertEqual(check, data)
-        fp = StringIO.StringIO(compressed)
+        fp = io.StringIO(compressed)
         dfo = util.decompressStream(fp)
         chunk = dfo.read(333)
         self.assertEqual(chunk,  data[:333])
@@ -780,14 +780,14 @@ class UtilTest(testhelp.TestCase):
         # test readline
         data = 'hello world\nhello world line 2\n'
         compressed = zlib.compress(data)
-        fp = StringIO.StringIO(compressed)
+        fp = io.StringIO(compressed)
         dfo = util.decompressStream(fp)
         line = dfo.readline()
         self.assertEqual(line, 'hello world\n')
         line = dfo.readline()
         self.assertEqual(line, 'hello world line 2\n')
 
-        fp = StringIO.StringIO(compressed)
+        fp = io.StringIO(compressed)
         dfo = util.decompressStream(fp)
         line = dfo.readline(5)
         self.assertEqual(line, 'hello')
@@ -881,7 +881,7 @@ class UtilTest(testhelp.TestCase):
         # Anything open by mkstemp should be closed
         try:
             os.close(ofds[0])
-        except OSError, e:
+        except OSError as e:
             self.assertEqual(e.errno, 9)
         else:
             self.fail("File descriptor open by mkstemp should have been closed")
@@ -924,8 +924,8 @@ class UtilTest(testhelp.TestCase):
                 'foobar': 'Foobar',
                 'foo-bar': 'FooBar'}
 
-        for input, expectedOutput in data.iteritems():
-            self.assertEquals(util.convertPackageNameToClassName(input),
+        for input, expectedOutput in data.items():
+            self.assertEqual(util.convertPackageNameToClassName(input),
                               expectedOutput)
 
 
@@ -957,8 +957,8 @@ class UtilTest(testhelp.TestCase):
         file(unlzmaPath, "w").write(scriptContents)
         data = "Feed dog to cat"
         file(dumbFilePath, "w").write(data)
-        os.chmod(xzPath, 0755)
-        os.chmod(unlzmaPath, 0755)
+        os.chmod(xzPath, 0o755)
+        os.chmod(unlzmaPath, 0o755)
 
         try:
             os.environ['PATH'] = workDir
@@ -1259,7 +1259,7 @@ class SystemIdFactoryTests(testhelp.TestCase):
         factory = util.SystemIdFactory(None)
         id1 = factory.getId()
         id2 = factory.getId()
-        self.assertEquals(id1, id2)
+        self.assertEqual(id1, id2)
 
     def _writeScript(self, script, systemId, exitCode=0):
         open(script, 'w').write("""\
@@ -1267,7 +1267,7 @@ class SystemIdFactoryTests(testhelp.TestCase):
 echo -n "%(systemId)s"
 exit %(exitCode)s
 """ % {'systemId': systemId, 'exitCode': exitCode})
-        os.chmod(script, 0755)
+        os.chmod(script, 0o755)
 
     def testScript(self):
         script = os.path.join(self.workDir, 'script.sh')
@@ -1275,7 +1275,7 @@ exit %(exitCode)s
 
         for systemId in ['abc', '123', 'asdfklajsdfasdgfalgklh']:
             self._writeScript(script, systemId)
-            self.assertEquals(factory.getId(), base64.b64encode(systemId))
+            self.assertEqual(factory.getId(), base64.b64encode(systemId))
             factory.systemId = None
 
     def testScriptFail(self):
@@ -1284,4 +1284,4 @@ exit %(exitCode)s
 
         self._writeScript(script, '12345', 1)
         systemId = factory.getId()
-        self.assertEquals(systemId, None)
+        self.assertEqual(systemId, None)

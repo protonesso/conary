@@ -21,7 +21,7 @@ import sys
 import tempfile
 
 from conary_test import rephelp
-import policytest
+from . import policytest
 
 from conary.build import cook, policy, trovefilter
 from conary.lib import util
@@ -66,8 +66,8 @@ class GroupConflict(GroupRecipe):
         self.addCollection('foo', '2', [':data'])
         try:
             self.build(groupRecipe, 'GroupConflict')
-        except policy.PolicyError, e:
-            self.assertEquals(str(e), '\n'.join((
+        except policy.PolicyError as e:
+            self.assertEqual(str(e), '\n'.join((
                 "Group Policy errors found:",
                 "Multiple versions of foo from localhost@rpl:linux were found:",
                 "",
@@ -113,8 +113,8 @@ class GroupConflict(GroupRecipe):
         self.addCollection('bar', '2', [':runtime'])
         try:
             self.build(groupRecipe, 'GroupConflict')
-        except policy.PolicyError, e:
-            self.assertEquals(str(e), '\n'.join((
+        except policy.PolicyError as e:
+            self.assertEqual(str(e), '\n'.join((
                 "Group Policy errors found:",
                 "Multiple versions of bar from localhost@rpl:linux were found:",
                 "",
@@ -163,11 +163,11 @@ class GroupConflict(GroupRecipe):
         self.addCollection('bar', '2', [':runtime'])
         try:
             self.build(groupRecipe, 'GroupConflict')
-        except policy.PolicyError, e:
-            self.assertEquals(str(e).splitlines()[-4:],
+        except policy.PolicyError as e:
+            self.assertEqual(str(e).splitlines()[-4:],
                     ['', 'Multiple versions of these troves were found:',
                     'bar:runtime', 'foo:data'])
-            self.assertEquals(str(e).count("Multiple versions of these " \
+            self.assertEqual(str(e).count("Multiple versions of these " \
                     "troves were found"), 1)
         else:
             self.fail("build should have raised PolicyError")
@@ -307,7 +307,7 @@ class GroupConflict(GroupRecipe):
 
         try:
             self.build(groupRecipe, 'GroupConflict')
-        except policy.PolicyError, e:
+        except policy.PolicyError as e:
             self.assertFalse("foo:runtime" in str(e))
             self.assertFalse("bar" in str(e))
             self.assertFalse("group-2" in str(e))
@@ -356,7 +356,7 @@ class GroupConflict(GroupRecipe):
 
         try:
             self.build(groupRecipe, 'GroupConflict')
-        except policy.PolicyError, e:
+        except policy.PolicyError as e:
             self.assertFalse("foo" in str(e))
             self.assertFalse("bar" not in str(e))
             self.assertFalse("bar:runtime" not in str(e))
@@ -408,7 +408,7 @@ class GroupConflict(GroupRecipe):
 
         try:
             self.build(groupRecipe, 'GroupConflict')
-        except policy.PolicyError, e:
+        except policy.PolicyError as e:
             self.assertFalse("foo" not in str(e))
             self.assertFalse("foo:runtime" not in str(e))
             self.assertFalse("foo:doc" not in str(e))
@@ -526,7 +526,7 @@ class GroupUnusedFilter(GroupRecipe):
         self.logFilter.add()
         self.build(groupRecipe, 'GroupUnusedFilter')
         self.logFilter.remove()
-        self.assertEquals(self.logFilter.records,
+        self.assertEqual(self.logFilter.records,
                 ["warning: VersionConflicts: Exception <TroveFilter: 'bar'> "
                  "for VersionConflicts was not used"])
 
@@ -541,7 +541,7 @@ class ManagedPolicyTest(rephelp.RepositoryHelper):
             mod = sys.modules.get(modname)
             if not mod:
                 continue
-            for klass in [x[0] for x in mod.__dict__.iteritems() \
+            for klass in [x[0] for x in mod.__dict__.items() \
                     if inspect.isclass(x[1])]:
                 del mod.__dict__[klass]
         rephelp.RepositoryHelper.tearDown(self)
@@ -573,8 +573,8 @@ class AlwaysError(policy.GroupEnforcementPolicy):
             self.registerPolicy(tmpDir, policyStr)
             try:
                 self.build(simpleGroupRecipe, 'GroupSimpleAdd')
-            except policy.PolicyError, e:
-                self.assertEquals(e.args,
+            except policy.PolicyError as e:
+                self.assertEqual(e.args,
                         ('Package Policy errors found:\nAutomatic error',))
             else:
                 self.fail("expected PolicyError to be raised")
@@ -903,10 +903,10 @@ class TestTroveWalk(rephelp.RepositoryHelper):
         pol.inclusionFilters = []
         pol.exceptionFilters = []
         pol.do()
-        self.assertEquals(pol.troveSets, [])
+        self.assertEqual(pol.troveSets, [])
         pol.checkImageGroups = True
         pol.do()
-        self.assertEquals(pol.troveSets, [])
+        self.assertEqual(pol.troveSets, [])
 
     def testTroveWalk(self):
         recipe = self.getRecipe()
@@ -932,7 +932,7 @@ class TestTroveWalk(rephelp.RepositoryHelper):
         pol.exceptionFilters = []
         pol.checkImageGroups = True
         pol.do()
-        self.assertEquals(pol.troveSets, [])
+        self.assertEqual(pol.troveSets, [])
         pol.checkImageGroups = False
         pol.do()
         fooPath = ([dummyGroup.getNameVersionFlavor(),
@@ -944,8 +944,8 @@ class TestTroveWalk(rephelp.RepositoryHelper):
                 foo.getNameVersionFlavor(),
                 fooDebuginfo.getNameVersionFlavor()], False, False)
         troveSets = [[fooPath, fooDataPath, fooDebuginfoPath]]
-        self.assertEquals(pol.troveSets, troveSets)
-        self.assertEquals([x[0] for x in troveSets[0]],
+        self.assertEqual(pol.troveSets, troveSets)
+        self.assertEqual([x[0] for x in troveSets[0]],
                 [x for x in pol.walkTrove([], cache, dummyGroup)])
 
     def testMultiTroveWalk(self):
@@ -1015,4 +1015,4 @@ class TestTroveWalk(rephelp.RepositoryHelper):
                 barDebuginfo.getNameVersionFlavor()], False, False)
         troveSets = sorted([[fooPath, fooDataPath, fooDebuginfoPath],
                     [barPath, barDataPath, barDebuginfoPath]])
-        self.assertEquals(sorted(pol.troveSets), troveSets)
+        self.assertEqual(sorted(pol.troveSets), troveSets)

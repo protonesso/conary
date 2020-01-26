@@ -60,7 +60,7 @@ class TestUser(UserInfoRecipe):
         # do one test with logBuild because this code path is important
         # and has broken more than once
         (built, d) = self.buildRecipe(recipestr1, "TestUser", logBuild=True)
-        self.assertEquals(len(built), 2)
+        self.assertEqual(len(built), 2)
 
         for p in built:
             self.updatePkg(self.workDir, p[0], p[1])
@@ -98,12 +98,12 @@ class TestUser(UserInfoRecipe):
                 req = str(fileObj.requires())
                 pathsFound.append(path)
                 if path == '/etc/conary/userinfo/foo':
-                    self.failUnless(prov.find('userinfo: foo') != -1)
-                    self.failUnless(req.find('groupinfo: bar') != -1)
+                    self.assertTrue(prov.find('userinfo: foo') != -1)
+                    self.assertTrue(req.find('groupinfo: bar') != -1)
                 elif path == '/etc/conary/groupinfo/bar':
-                    self.failUnless(prov.find('groupinfo: bar') != -1)
-        self.failUnless('/etc/conary/userinfo/foo' in pathsFound)
-        self.failUnless('/etc/conary/groupinfo/bar' in pathsFound)
+                    self.assertTrue(prov.find('groupinfo: bar') != -1)
+        self.assertTrue('/etc/conary/userinfo/foo' in pathsFound)
+        self.assertTrue('/etc/conary/groupinfo/bar' in pathsFound)
 
 
         # now test installing the info-foo package along with a package
@@ -516,8 +516,8 @@ class TestUserInfo(UserInfoRecipe):
         r.PackageSpec('manpage', '.*')
 """
         built, d = self.buildRecipe(recipestr1, "TestUserInfo")
-        self.assertEquals(built[0][0], 'info-foo:group')
-        self.assertEquals(built[1][0], 'info-foo:user')
+        self.assertEqual(built[0][0], 'info-foo:group')
+        self.assertEqual(built[1][0], 'info-foo:user')
 
     def testUserPolicyInvocation2(self):
         recipestr1 = r"""
@@ -534,8 +534,8 @@ class TestUserInfo(UserInfoRecipe):
 """
 
         built, d = self.buildRecipe(recipestr1, "TestUserInfo")
-        self.assertEquals(built[0][0], 'info-foo:group')
-        self.assertEquals(built[1][0], 'info-foo:user')
+        self.assertEqual(built[0][0], 'info-foo:group')
+        self.assertEqual(built[1][0], 'info-foo:user')
 
     def testUserMissingParams(self):
         recipestr1 = r"""
@@ -608,6 +608,6 @@ class TestGroupInfo(GroupInfoRecipe):
         class DummyPolicy(policy.UserGroupBasePolicy):
             def __init__(x): pass
             def error(x, msg):
-                self.assertEquals(msg, 'Do not directly invoke DummyPolicy')
+                self.assertEqual(msg, 'Do not directly invoke DummyPolicy')
         pol = DummyPolicy()
         pol.updateArgs('test')

@@ -40,7 +40,7 @@ except ImportError:
 
 BUFFER=1024*4096
 
-MARKER, FREETEXT, NEWLINE, CARRIAGE_RETURN, COMMAND, CLOSE = range(6)
+MARKER, FREETEXT, NEWLINE, CARRIAGE_RETURN, COMMAND, CLOSE = list(range(6))
 
 LINEBREAKS = ('\r', '\n')
 
@@ -50,7 +50,7 @@ def callable(func):
 
 def makeRecord(d):
     res = "<record>"
-    for key, val in sorted(d.iteritems()):
+    for key, val in sorted(d.items()):
         res += "<%s>%s</%s>" % (key, val, key)
     res += "</record>"
     return res
@@ -61,7 +61,7 @@ def getTime():
     Return a formatted time string which is ISO8601 compliant.
     Time is expressed in UTC"""
     curTime = time.time()
-    msecs = 1000 * (curTime - long(curTime))
+    msecs = 1000 * (curTime - int(curTime))
     fmtStr = "%Y-%m-%dT%H:%M:%S.%%03dZ"
     return time.strftime(fmtStr, time.gmtime(curTime)) % msecs
 
@@ -263,7 +263,7 @@ class LogWriter(object):
                 # possible to debug the problem
                 self.freetext('\nERROR: failed attempt to call'
                     ' function %s with arguments %s\n' %(cmd, repr(args)))
-            except Exception, e:
+            except Exception as e:
                 # Unknown problem; provide information so that we can
                 # debug it and fix it later
                 self.freetext('\nERROR: unhandled exception %s: %s'
@@ -289,9 +289,8 @@ class XmlLogWriter(LogWriter):
 
     def start(self):
         self.stream = openPath(self.path)
-        print >> self.stream, '<?xml version="1.0"?>'
-        print >> self.stream, \
-                "<log xmlns='http://www.rpath.com/permanent/log-v1.xsd'>"
+        print('<?xml version="1.0"?>', file=self.stream)
+        print("<log xmlns='http://www.rpath.com/permanent/log-v1.xsd'>", file=self.stream)
         self.log('begin log', 'DEBUG')
         self.stream.flush()
         self.logging = True
@@ -312,7 +311,7 @@ class XmlLogWriter(LogWriter):
         del self._getDescriptorStack()[:]
         self._getRecordData().clear()
         self.log('end log', 'DEBUG')
-        print >> self.stream, "</log>"
+        print("</log>", file=self.stream)
         self.stream.flush()
         self.stream.close()
 
@@ -349,7 +348,7 @@ class XmlLogWriter(LogWriter):
         descriptor = self._getDescriptor()
         if descriptor:
             macros['descriptor'] = descriptor
-        print >> self.stream, makeRecord(macros)
+        print(makeRecord(macros), file=self.stream)
 
     @callable
     def pushDescriptor(self, descriptor):
@@ -379,7 +378,7 @@ class XmlLogWriter(LogWriter):
                 not re.match('^\w[a-zA-Z0-9_.-]*$', key,
                     flags = re.LOCALE | re.UNICODE):
             raise RuntimeError("'%s' is not a legal XML name" % key)
-        if isinstance(val, (str, unicode)):
+        if isinstance(val, str):
             val = saxutils.escape(val)
         recordData = self._getRecordData()
         recordData[key] = val
@@ -895,7 +894,7 @@ class _ChildLogger:
         while True:
             try:
                 read = [ x[0] for x in pollObj.poll() ]
-            except select.error, msg:
+            except select.error as msg:
                 if msg.args[0] != 4:
                     raise
                 read = []
@@ -906,7 +905,7 @@ class _ChildLogger:
 
                 try:
                     output = os.read(ptyFd, BUFFER)
-                except OSError, msg:
+                except OSError as msg:
                     if msg.errno == errno.EIO:
                         # input/output error - pty closed
                         # shut down logger
@@ -923,7 +922,7 @@ class _ChildLogger:
                 # pseudo tty
                 try:
                     input = os.read(stdin, BUFFER)
-                except OSError, msg:
+                except OSError as msg:
                     if msg.errno == errno.EIO:
                         # input/output error - stdin closed
                         # shut down logger

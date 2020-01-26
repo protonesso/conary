@@ -102,14 +102,14 @@ class DepsTest(unittest.TestCase):
 
         dict = {}
         dict[first] = True
-        assert(dict.has_key(first))
-        assert(dict.has_key(second))
+        assert(first in dict)
+        assert(second in dict)
 
         second = Dependency("some", [ ("flag1", FLAG_SENSE_REQUIRED),
                                       ("flag2", FLAG_SENSE_REQUIRED),
                                       ("flag3", FLAG_SENSE_REQUIRED) ] )
 
-        assert(not dict.has_key(second))
+        assert(second not in dict)
         dict[second] = False
         assert(dict[first])
         assert(first != second)
@@ -318,7 +318,7 @@ class DepsTest(unittest.TestCase):
                 dict.__init__(self, otherdict)
 
             def iteritems(self):
-                items = self.items()
+                items = list(self.items())
                 items.reverse()
                 for key, value in items:
                     yield key, value
@@ -337,7 +337,7 @@ class DepsTest(unittest.TestCase):
         s = DependencySet()
         s.addDep(FileDependencies, Dependency('/bin/foo'));
         s.addDep(TroveDependencies, Dependency('bar') )
-        self.assertEquals(str(s), 'file: /bin/foo\ntrove: bar')
+        self.assertEqual(str(s), 'file: /bin/foo\ntrove: bar')
 
         self.assertRaises(KeyError, s.removeDeps,
                           SonameDependencies, [ Dependency('foo') ])
@@ -347,17 +347,17 @@ class DepsTest(unittest.TestCase):
                      missingOkay = True)
         s.removeDeps(FileDependencies, [ Dependency('foo') ],
                      missingOkay = True)
-        self.assertEquals(str(s), 'file: /bin/foo\ntrove: bar')
+        self.assertEqual(str(s), 'file: /bin/foo\ntrove: bar')
 
         s.removeDeps(FileDependencies, [ Dependency('/bin/foo') ],
                      missingOkay = True)
-        self.assertEquals(str(s), 'trove: bar')
+        self.assertEqual(str(s), 'trove: bar')
         s2 = ThawDependencySet(s.freeze())
         assert(s2.freeze() == s.freeze())
 
         s.removeDeps(TroveDependencies, [ Dependency('bar') ],
                      missingOkay = True)
-        self.assertEquals(str(s), '')
+        self.assertEqual(str(s), '')
 
         s2 = ThawDependencySet(s.freeze())
         assert(s2.freeze() == s.freeze())
@@ -379,14 +379,14 @@ class DepsTest(unittest.TestCase):
         try:
             one = parseFlavor('foo bar', raiseError=True)
             assert(0)
-        except errors.ParseError, msg:
+        except errors.ParseError as msg:
             assert(str(msg) == "invalid flavor 'foo bar'")
 
     def testUnicodeFlavor(self):
         # CNY-3381
-        flv = u"is: x86"
+        flv = "is: x86"
         self.assertEqual(parseFlavor(flv).freeze(), "1#x86")
-        flv = u"is: \u0163"
+        flv = "is: \u0163"
         self.assertRaises(errors.ParseError, parseFlavor, flv)
 
     def testStrongFlavor(self):
@@ -839,7 +839,7 @@ class DepsTest(unittest.TestCase):
             filterList = [ parseFlavor(x, raiseError=True) for x in filterList]
             flavor = parseFlavor(flavor, raiseError=True)
             filteredFlavor = filterFlavor(flavor, filterList)
-            self.assertEquals(str(filteredFlavor), result)
+            self.assertEqual(str(filteredFlavor), result)
         _test('is:x86', '', '')
         _test('is:x86', 'is:x86(i586)', 'is: x86')
         _test('readline,!ssl is: x86', ['!readline','ssl'], 'readline,!ssl')
@@ -849,7 +849,7 @@ class DepsTest(unittest.TestCase):
             flavor = parseFlavor(flavor, raiseError=True)
             flavorToMatch = parseFlavor(flavorToMatch, raiseError=True)
             minimalMatch = getMinimalCompatibleChanges(flavor, flavorToMatch)
-            self.assertEquals(str(minimalMatch), result)
+            self.assertEqual(str(minimalMatch), result)
         _test('is:x86', '', '')
         _test('', 'is:x86', 'is: x86')
         _test('', 'use:', '')
@@ -887,9 +887,9 @@ class DepsTest(unittest.TestCase):
         flavor = parseFlavor("is: x86(mmx)").freeze()
         a = ThawFlavor(flavor)
         b = ThawFlavor(flavor)
-        assert(a.members[1].members.values()[0] ==
-               b.members[1].members.values()[0])
-        assert(a.members[1].members.values()[0] ==
+        assert(list(a.members[1].members.values())[0] ==
+               list(b.members[1].members.values())[0])
+        assert(list(a.members[1].members.values())[0] ==
                dependencyCache['x86:mmx'])
         del a
         assert(dependencyCache)
@@ -901,7 +901,7 @@ class DepsTest(unittest.TestCase):
             flavorList = [parseFlavor(x) for x in flavorList]
             results = getShortFlavorDescriptors(flavorList)
             results = [ str(results[x]) for x in flavorList]
-            self.assertEquals(results, resultingList)
+            self.assertEqual(results, resultingList)
         _test(['!foo', ''], ['!foo', ''])
         _test(['!foo', '~!foo'], ['!foo', '~!foo'], False)
         _test(['foo', '~foo'], ['foo', '~foo'], False)
@@ -917,11 +917,11 @@ class DepsTest(unittest.TestCase):
     def testPickleDeps(self):
         for text in ('', '~foo.bar target: sparc is: x86_64'):
             flavor = parseFlavor(text)
-            self.assertEquals(flavor, pickle.loads(pickle.dumps(flavor)))
+            self.assertEqual(flavor, pickle.loads(pickle.dumps(flavor)))
 
         for text in ('', '4#blam|4#foo'):
             dep = ThawDependencySet(text)
-            self.assertEquals(dep, pickle.loads(pickle.dumps(dep)))
+            self.assertEqual(dep, pickle.loads(pickle.dumps(dep)))
 
     def testIterRawDeps(self):
         dep = ThawDependencySet('4#blam|4#foo:!bar')

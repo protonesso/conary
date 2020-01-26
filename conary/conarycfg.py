@@ -26,7 +26,7 @@ import re
 import tempfile
 import textwrap
 import traceback
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 from conary.deps import deps, arch
 from conary.lib import util, api
@@ -111,13 +111,13 @@ class ServerGlobList(object):
         del self._globs[:]
 
     def __iter__(self):
-        for serverGlob, infoList in sorted(self._exact.iteritems()):
+        for serverGlob, infoList in sorted(self._exact.items()):
             for info in infoList:
                 yield self._caseMap[serverGlob], info
         for serverGlob, info in self._globs:
             yield self._caseMap[serverGlob], info
 
-    def __nonzero__(self):
+    def __bool__(self):
         return bool(self._exact) or bool(self._globs)
 
     def __eq__(self, other):
@@ -234,8 +234,8 @@ class CfgLabel(CfgType):
     def parseString(self, val):
         try:
             return versions.Label(val)
-        except versions.ParseError, e:
-            raise ParseError, e
+        except versions.ParseError as e:
+            raise ParseError(e)
 
 class CfgDependencyClass(CfgType):
 
@@ -259,7 +259,7 @@ class CfgRepoMapEntry(CfgType):
         match = re.match('https?://([^:]*):[^@]*@([^/:]*)(?::.*)?/.*', val[1])
         if match is not None:
             user, server = match.groups()
-            raise ParseError, ('repositoryMap entries should not contain '
+            raise ParseError('repositoryMap entries should not contain '
                                'user names and passwords; use '
                                '"user %s %s <password>" instead' %
                                (server, user))
@@ -287,7 +287,7 @@ class RepoMap(ServerGlobList):
         return True
 
     def update(self, other):
-        for key, val in other.iteritems():
+        for key, val in other.items():
             self.append((key, val))
 
     def iteritems(self):
@@ -341,10 +341,10 @@ class CfgFlavor(CfgType):
     def parseString(self, val):
         try:
             f = deps.parseFlavor(val)
-        except Exception, e:
-            raise ParseError, e
+        except Exception as e:
+            raise ParseError(e)
         if f is None:
-            raise ParseError, 'Invalid flavor %s' % val
+            raise ParseError('Invalid flavor %s' % val)
         return f
 
     def format(self, val, displayOptions=None):
@@ -363,8 +363,8 @@ class CfgFingerPrintMapItem(CfgType):
         try:
             # compile label to verify that it is valid
             re.compile(label)
-        except Exception, e:
-            raise ParseError, "Invalid regexp: '%s': " % label + str(e)
+        except Exception as e:
+            raise ParseError("Invalid regexp: '%s': " % label + str(e))
 
         if len(val) == 1 or not val[1] or val[1].lower() == 'none':
             fingerprint = None
@@ -768,7 +768,7 @@ class ConaryConfiguration(SectionedConfigFile):
 
     def readFiles(self):
         self.read("/etc/conaryrc", exception=False)
-        if os.environ.has_key("HOME"):
+        if "HOME" in os.environ:
             self.read(os.environ["HOME"] + "/" + ".conaryrc", exception=False)
         self.read("conaryrc", exception=False)
 
@@ -782,7 +782,7 @@ class ConaryConfiguration(SectionedConfigFile):
         self.context = name
         context = self.getSection(name)
 
-        for key, ctxval in context._values.iteritems():
+        for key, ctxval in context._values.items():
             if ctxval.isDefault():
                 continue
             newval = self._cow(key)
@@ -812,7 +812,7 @@ class ConaryConfiguration(SectionedConfigFile):
         # NOTE - conary doesn't use this check anymore.  Kept for
         # backwards compatibility.
         if not self.installLabelPath:
-            print >> sys.stderr, "installLabelPath is not set"
+            print("installLabelPath is not set", file=sys.stderr)
             sys.exit(1)
 
     def _resetSigMap(self):
@@ -958,7 +958,7 @@ def loadEntitlementFromString(xmlContent, *args, **kw):
             raise errors.ConaryError("Entitlement incomplete.  Entitlements"
                                      " must include 'server', 'class', and"
                                      " 'key' values")
-    except Exception, err:
+    except Exception as err:
         raise errors.ConaryError("Malformed entitlement at %s:"
                                  " %s" % (source, err))
 
@@ -1104,7 +1104,7 @@ def getProxyFromConfig(cfg):
 
     # Is there a conaryProxy defined?
     proxy = {}
-    for k, v in cfg.conaryProxy.iteritems():
+    for k, v in cfg.conaryProxy.items():
         # Munge http.* to conary.* to flag the transport layer that
         # we're using a Conary proxy
         v = 'conary' + v[4:]
@@ -1127,7 +1127,7 @@ def getProxyMap(cfg):
     proxyDict = urllib.getproxies()
     proxyDict.update(cfg.proxy)
     if hasattr(cfg, 'conaryProxy'):
-        for scheme, url in cfg.conaryProxy.items():
+        for scheme, url in list(cfg.conaryProxy.items()):
             if url.startswith('http:'):
                 url = 'conary:' + url[5:]
             elif url.startswith('https:'):

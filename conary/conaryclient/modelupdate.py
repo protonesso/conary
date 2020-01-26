@@ -60,7 +60,7 @@ class CMLTroveCache(trovecache.TroveCache):
 
             gotTups = []
             gotTrvs = []
-            for troveTup, trv in itertools.izip(local, troves):
+            for troveTup, trv in zip(local, troves):
                 if trv is None:
                     continue
 
@@ -75,7 +75,7 @@ class CMLTroveCache(trovecache.TroveCache):
                      "one of which is %s", len(troveTupList), troveTupList[0])
 
     def _cached(self, troveTupList, troveList):
-        for tup, trv in itertools.izip(troveTupList, troveList):
+        for tup, trv in zip(troveTupList, troveList):
             for name, version, flavor in trv.iterTroveList(strongRefs = True,
                                                            weakRefs = True):
                 if not trove.troveIsComponent(name):
@@ -166,9 +166,9 @@ class CMLFindAction(troveset.FindAction):
             optionalSet = set()
 
             for troveTup, inInstall in ( itertools.chain(
-                    itertools.izip( action.outSet.installSet,
+                    zip( action.outSet.installSet,
                                     itertools.repeat(True)),
-                    itertools.izip( action.outSet.optionalSet,
+                    zip( action.outSet.optionalSet,
                                     itertools.repeat(True)) ) ):
 
                 assert(data.troveCache.troveIsCached(troveTup))
@@ -229,12 +229,11 @@ class CMLFindAction(troveset.FindAction):
                 continue
 
             matches = data.repos.findTroves([], targets, data.cfg.flavor)
-            for matchList in matches.itervalues():
+            for matchList in matches.values():
                 for match in matchList:
                     if match in seen:
-                        raise update.UpdateError, \
-                            "Redirect loop found which includes " \
-                            "troves %s, %s" % (troveTup[0], match[0])
+                        raise update.UpdateError("Redirect loop found which includes " \
+                            "troves %s, %s" % (troveTup[0], match[0]))
 
                     seen.add(match)
                     q.add((match, inInstall))
@@ -444,7 +443,7 @@ class CMLClient(object):
         newTroveSizes = troveCache.getTroveInfo(
                                 trove._TROVEINFO_TAG_SIZE, newTroves)
         missingSize = [ troveTup for (troveTup, size) in
-                            itertools.izip(newTroves, newTroveSizes)
+                            zip(newTroves, newTroveSizes)
                             if size is None ]
 
         scripts = troveCache.getTroveInfo(trove._TROVEINFO_TAG_SCRIPTS,
@@ -455,14 +454,14 @@ class CMLClient(object):
         capsuleInfo = troveCache.getTroveInfo(trove._TROVEINFO_TAG_CAPSULE,
                 newTroves)
         neededTroves = [ troveTup for (troveTup, script, compatClass)
-                         in itertools.izip(newTroves, scripts,
+                         in zip(newTroves, scripts,
                                            compatibilityClasses)
                          if script is not None or compatClass is not None ]
 
         if hasattr(troveCache, 'cacheTroves'):
             troveCache.cacheTroves(set(missingSize + neededTroves))
 
-        for job, newTroveTup, scripts, compatClass, capInfo in itertools.izip(
+        for job, newTroveTup, scripts, compatClass, capInfo in zip(
                 jobList, newTroves, scripts, compatibilityClasses,
                 capsuleInfo):
             if newTroveTup in missingSize:
@@ -532,7 +531,7 @@ class CMLClient(object):
         troveInfo = troveCache.getTroveInfo(
                         trove._TROVEINFO_TAG_PATHCONFLICTS, troveInfoNeeded)
         troveInfoDict = dict( (tt, ti) for (tt, ti) in
-                                itertools.izip(troveInfoNeeded, troveInfo) )
+                                zip(troveInfoNeeded, troveInfo) )
 
         uJob.setAllowedPathConflicts(
             self.db.buildPathConflictExceptions(jobList, troveInfoDict.get))
@@ -693,7 +692,7 @@ class CMLClient(object):
                     del phantomsByName[name]
             # Discard any unmatched phantom troves from the old set so that
             # they will be left alone.
-            for tups in phantomsByName.itervalues():
+            for tups in phantomsByName.values():
                 for tup in tups:
                     existsTrv.delTrove(missingOkay=False, *tup)
 
@@ -835,12 +834,12 @@ class CMLClient(object):
 
         # remove things from the suggMap which are in the already installed
         # set
-        for neededSet in suggMap.itervalues():
+        for neededSet in suggMap.values():
             for troveTup in set(neededSet):
                 if existsTrv.hasTrove(*troveTup):
                     neededSet.remove(troveTup)
 
-        for needingTroveTup, neededSet in suggMap.items():
+        for needingTroveTup, neededSet in list(suggMap.items()):
             if not neededSet:
                 del suggMap[needingTroveTup]
 

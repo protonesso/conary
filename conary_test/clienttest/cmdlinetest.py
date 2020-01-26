@@ -17,7 +17,7 @@
 
 import sys
 
-from StringIO import StringIO
+from io import StringIO
 
 #testsuite
 from conary_test import rephelp

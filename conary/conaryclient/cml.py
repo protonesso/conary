@@ -482,7 +482,7 @@ class CM:
                 l = newOps.setdefault(newSpec, [])
                 l.append(item)
 
-        allOpSpecs = list(origOps) + newOps.keys()
+        allOpSpecs = list(origOps) + list(newOps.keys())
 
         if not allOpSpecs:
             return
@@ -625,7 +625,7 @@ class CM:
                 for spec in op:
                     byName.setdefault(spec.name, []).append((op, spec))
 
-        for troveName, opList in byName.iteritems():
+        for troveName, opList in byName.items():
             for (oldIdx, newIdx, simplifyClass) in \
                                         self._simplificationCandidate(opList):
                 oldOp, oldSpec = opList[oldIdx]
@@ -788,7 +788,7 @@ class CML(CM):
                 # Handle it if quoted, but it doesn't need to be
                 try:
                     nouns = ' '.join(shlex.split(nouns, comments=True))
-                except ValueError, e:
+                except ValueError as e:
                     raise CMError('%s: %s' %(
                         CMLocation(index, self.context), str(e)))
                 try:
@@ -798,7 +798,7 @@ class CML(CM):
                     try:
                         searchOp = SearchTrove(text=nouns,
                            modified=False, index=index, context=self.context)
-                    except cmdline.TroveSpecError, e:
+                    except cmdline.TroveSpecError as e:
                         raise CMError('%s: %s' %(
                             CMLocation(index, self.context), str(e)))
                 self.appendOp(searchOp)
@@ -807,13 +807,13 @@ class CML(CM):
                 # Handle it if quoted, but it doesn't need to be
                 try:
                     nouns = ' '.join(shlex.split(nouns, comments=True))
-                except ValueError, e:
+                except ValueError as e:
                     raise CMError('%s: %s' %(
                         CMLocation(index, self.context), str(e)))
                 try:
                     includeOp = IncludeOperation(text=nouns,
                        modified=False, index=index, context=self.context)
-                except cmdline.TroveSpecError, e:
+                except cmdline.TroveSpecError as e:
                     raise CMError('%s: %s' %(
                         CMLocation(index, self.context), str(e)))
                 self.appendOp(includeOp)
@@ -823,7 +823,7 @@ class CML(CM):
                     self.appendOpByName(verb,
                         text=shlex.split(nouns, comments=True),
                         modified=False, index=index, context=self.context)
-                except ValueError, e:
+                except ValueError as e:
                     raise CMError('%s: %s' %(
                         CMLocation(index, self.context), str(e)))
 

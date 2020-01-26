@@ -16,7 +16,7 @@
 
 
 import base64
-import cPickle
+import pickle
 import errno
 import itertools
 import os
@@ -52,7 +52,7 @@ from conary.errors import InvalidRegex
 # one in the list is the lowest protocol version we support and th
 # last one is the current server protocol version. Remember that range stops
 # at MAX - 1
-SERVER_VERSIONS = range(36, 73 + 1)
+SERVER_VERSIONS = list(range(36, 73 + 1))
 
 # We need to provide transitions from VALUE to KEY, we cache them as we go
 
@@ -228,12 +228,12 @@ class NetworkRepositoryServer(xmlshims.NetworkConvertors):
 
     # does the actual method calling and the retry when hitting deadlocks
     def _callWrapper(self, method, authToken, orderedArgs, kwArgs):
-        methodname = method.im_func.__name__
+        methodname = method.__func__.__name__
         attempt = 1
         while True:
             try:
                 return method(authToken, *orderedArgs, **kwArgs)
-            except sqlerrors.DatabaseLocked, e:
+            except sqlerrors.DatabaseLocked as e:
                 # deadlock occurred; we rollback and try again
                 log.error("Deadlock id %d while calling %s: %s",
                           attempt, methodname, str(e.args))
@@ -286,7 +286,7 @@ class NetworkRepositoryServer(xmlshims.NetworkConvertors):
                 # Commit if someone left a transaction open (or the
                 # DB doesn't have a way to tell)
                 self.db.commit()
-        except Exception, e:
+        except Exception as e:
             # on exceptions we rollback the database
             if self.db.inTransaction(default=True):
                 self.db.rollback()
@@ -446,7 +446,7 @@ class NetworkRepositoryServer(xmlshims.NetworkConvertors):
             raise errors.InsufficientPermission
         self.log(2, authToken[0], roles)
         ret = self.auth.getRoleFilters(roles)
-        for role, flags in ret.iteritems():
+        for role, flags in ret.items():
             ret[role] = [self.fromFlavor(x) for x in flags]
         return ret
 
@@ -455,7 +455,7 @@ class NetworkRepositoryServer(xmlshims.NetworkConvertors):
         if not self.auth.authCheck(authToken, admin = True):
             raise errors.InsufficientPermission
         self.log(2, authToken[0], roleFiltersMap)
-        for role, flags in roleFiltersMap.iteritems():
+        for role, flags in roleFiltersMap.items():
             roleFiltersMap[role] = [self.toFlavor(x) for x in flags]
         self.auth.setRoleFilters(roleFiltersMap)
         return True
@@ -767,7 +767,7 @@ class NetworkRepositoryServer(xmlshims.NetworkConvertors):
     def _setupFlavorFilter(self, cu, flavorSet):
         self.log(3, flavorSet)
         schema.resetTable(cu, 'tmpFlavorMap')
-        for i, flavor in enumerate(flavorSet.iterkeys()):
+        for i, flavor in enumerate(flavorSet.keys()):
             flavorId = i + 1
             flavorSet[flavor] = flavorId
             if flavor is '':
@@ -778,13 +778,13 @@ class NetworkRepositoryServer(xmlshims.NetworkConvertors):
                     flavorId, deps.FLAG_SENSE_REQUIRED, deps.DEP_CLASS_USE),
                            start_transaction = False)
                 continue
-            for depClass in self.toFlavor(flavor).getDepClasses().itervalues():
+            for depClass in self.toFlavor(flavor).getDepClasses().values():
                 for dep in depClass.getDeps():
                     cu.execute("""INSERT INTO tmpFlavorMap
                     (flavorId, base, sense, depClass) VALUES (?, ?, ?, ?)""", (
                         flavorId, dep.name, deps.FLAG_SENSE_REQUIRED, depClass.tag),
                                start_transaction = False)
-                    for (flag, sense) in dep.flags.iteritems():
+                    for (flag, sense) in dep.flags.items():
                         cu.execute("""INSERT INTO tmpFlavorMap
                         (flavorId, base, sense, depClass, flag)
                         VALUES (?, ?, ?, ?, ?)""", (
@@ -795,11 +795,11 @@ class NetworkRepositoryServer(xmlshims.NetworkConvertors):
     def _setupTroveFilter(self, cu, troveSpecs, flavorIndices):
         self.log(3, troveSpecs, flavorIndices)
         schema.resetTable(cu, 'tmpGTVL')
-        for troveName, versionDict in troveSpecs.iteritems():
+        for troveName, versionDict in troveSpecs.items():
             if type(versionDict) is list:
                 versionDict = dict.fromkeys(versionDict, [ None ])
 
-            for versionSpec, flavorList in versionDict.iteritems():
+            for versionSpec, flavorList in versionDict.items():
                 if flavorList is None:
                     cu.execute("INSERT INTO tmpGTVL VALUES (?, ?, NULL)",
                                cu.encode(troveName), cu.encode(versionSpec),
@@ -845,11 +845,11 @@ class NetworkRepositoryServer(xmlshims.NetworkConvertors):
         if troveSpecs:
             # populate flavorIndices with all of the flavor lookups we
             # need; a flavor of 0 (numeric) means "None"
-            for versionDict in troveSpecs.itervalues():
-                for flavorList in versionDict.itervalues():
+            for versionDict in troveSpecs.values():
+                for flavorList in versionDict.values():
                     if flavorList is not None:
                         flavorIndices.update({}.fromkeys(flavorList))
-            if flavorIndices.has_key(0):
+            if 0 in flavorIndices:
                 del flavorIndices[0]
         if flavorIndices:
             self._setupFlavorFilter(cu, flavorIndices)
@@ -857,9 +857,9 @@ class NetworkRepositoryServer(xmlshims.NetworkConvertors):
         coreQdict = {}
         coreQdict["localFlavor"] = "0"
         if not troveSpecs or (len(troveSpecs) == 1 and
-                                 troveSpecs.has_key(None) and
+                                 None in troveSpecs and
                                  len(troveSpecs[None]) == 1 and
-                                 troveSpecs[None].has_key(None)):
+                                 None in troveSpecs[None]):
             # None or { None:None} case
             coreQdict["trove"] = "Items"
             assert(versionType == self._GTL_VERSION_TYPE_NONE)
@@ -868,7 +868,7 @@ class NetworkRepositoryServer(xmlshims.NetworkConvertors):
                 # no trove names, and a single version spec (multiple ones
                 # are disallowed)
                 coreQdict["trove"] = "Items"
-                singleVersionSpec = troveSpecs[None].keys()[0]
+                singleVersionSpec = list(troveSpecs[None].keys())[0]
             else:
                 self._setupTroveFilter(cu, troveSpecs, flavorIndices)
                 coreQdict["trove"] = "Items CROSS JOIN tmpGTVL"
@@ -1126,14 +1126,14 @@ class NetworkRepositoryServer(xmlshims.NetworkConvertors):
         if latestFilter == self._GET_TROVE_VERY_LATEST or \
                     flavorFilter == self._GET_TROVE_BEST_FLAVOR:
             newTroveVersions = {}
-            for troveName, versionDict in troveVersions.iteritems():
+            for troveName, versionDict in troveVersions.items():
                 if withFlavors:
                     l = {}
                 else:
                     l = []
 
                 for (finalTimestamp, flavorScore, versionStr, timeStamps,
-                     flavor) in versionDict.itervalues():
+                     flavor) in versionDict.values():
                     version = self.versionStringToFrozen(versionStr, timeStamps)
                     if withFlavors:
                         flist = l.setdefault(version, [])
@@ -1201,7 +1201,7 @@ class NetworkRepositoryServer(xmlshims.NetworkConvertors):
                             troveTypes = TROVE_QUERY_PRESENT):
         self.log(2, troveSpecs)
         troveFilter = {}
-        for name, flavors in troveSpecs.iteritems():
+        for name, flavors in troveSpecs.items():
             if len(name) == 0:
                 name = None
 
@@ -1227,7 +1227,7 @@ class NetworkRepositoryServer(xmlshims.NetworkConvertors):
                           troveTypes = TROVE_QUERY_PRESENT):
         self.log(2, troveSpecs)
         troveFilter = {}
-        for name, flavors in troveSpecs.iteritems():
+        for name, flavors in troveSpecs.items():
             if len(name) == 0:
                 name = None
             if type(flavors) is list:
@@ -1282,12 +1282,12 @@ class NetworkRepositoryServer(xmlshims.NetworkConvertors):
         self.log(3, troveSpecs)
         hasFlavors = False
         d = {}
-        for (name, labels) in troveSpecs.iteritems():
+        for (name, labels) in troveSpecs.items():
             if not name:
                 name = None
 
             d[name] = {}
-            for label, flavors in labels.iteritems():
+            for label, flavors in labels.items():
                 if type(flavors) == list:
                     d[name][label] = flavors
                     hasFlavors = True
@@ -1421,7 +1421,7 @@ class NetworkRepositoryServer(xmlshims.NetworkConvertors):
 
         if authCheckOnly:
             for stream, (encFileId, encVersion) in \
-                                itertools.izip(rawStreams, fileList):
+                                zip(rawStreams, fileList):
                 if stream is None:
                     raise errors.FileStreamNotFound(
                                     self.toFileId(encFileId),
@@ -1435,7 +1435,7 @@ class NetworkRepositoryServer(xmlshims.NetworkConvertors):
         exception = None
 
         for stream, (encFileId, encVersion) in \
-                            itertools.izip(rawStreams, fileList):
+                            zip(rawStreams, fileList):
             if stream is None:
                 # return an exception if we couldn't find one of
                 # the streams
@@ -1455,7 +1455,7 @@ class NetworkRepositoryServer(xmlshims.NetworkConvertors):
                             preserveFile=True,
                             offset=0,
                             )
-                except OSError, e:
+                except OSError as e:
                     if e.errno != errno.ENOENT:
                         raise
                     exception = errors.FileContentsNotFound
@@ -1492,7 +1492,7 @@ class NetworkRepositoryServer(xmlshims.NetworkConvertors):
         elif len(r[pkgName]) != 1:
             return 0
 
-        return r[pkgName].keys()[0]
+        return list(r[pkgName].keys())[0]
 
     def _checkPermissions(self, authToken, chgSetList, hidden=False):
         trvList = self._lookupTroves(authToken,
@@ -1542,7 +1542,7 @@ class NetworkRepositoryServer(xmlshims.NetworkConvertors):
             # dedup jobs here; duplicates confuse the createChangeSet
             # iterator.
             jobDict = dict.fromkeys(jobs)
-            jobOrder = jobDict.keys()
+            jobOrder = list(jobDict.keys())
             for result in self.repos.createChangeSet(jobOrder, **kwargs):
                 job = jobOrder.pop(0)
                 jobDict[job] = result
@@ -1669,7 +1669,7 @@ class NetworkRepositoryServer(xmlshims.NetworkConvertors):
 
         sigCount = 0
         finalFingerprints = []
-        for origJob, fullJob in itertools.izip(chgSetList, newJobList):
+        for origJob, fullJob in zip(chgSetList, newJobList):
             if fullJob is None:
                 # uncachable job
                 finalFingerprints.append('')
@@ -1803,7 +1803,7 @@ class NetworkRepositoryServer(xmlshims.NetworkConvertors):
             # raise InsufficientPermission if we can't read the changeset
             try:
                 cs = changeset.ChangeSetFromFile(path)
-            except Exception, e:
+            except Exception as e:
                 raise HiddenException(e, errors.CommitError(
                                 "server cannot open change set to commit"))
             # because we have a temporary file we need to delete, we
@@ -1813,7 +1813,7 @@ class NetworkRepositoryServer(xmlshims.NetworkConvertors):
                 ret = self._commitChangeSet(authToken, cs,
                                             mirror=mirror, hidden=hidden,
                                             statusPath=statusPath)
-            except sqlerrors.DatabaseLocked, e:
+            except sqlerrors.DatabaseLocked as e:
                 # deadlock occurred; we rollback and try again
                 log.error("Deadlock id %d: %s", attempt, str(e.args))
                 self.log(1, "Deadlock id %d: %s" %(attempt, str(e.args)))
@@ -1822,7 +1822,7 @@ class NetworkRepositoryServer(xmlshims.NetworkConvertors):
                     attempt += 1
                     continue
                 break
-            except Exception, e:
+            except Exception as e:
                 break
             else: # all went well
                 util.removeIfExists(path)
@@ -1865,7 +1865,7 @@ class NetworkRepositoryServer(xmlshims.NetworkConvertors):
             items.setdefault((version, flavor), []).append(name)
 
         self.log(2, authToken[0], 'mirror=%s' % (mirror,),
-                 [ (x[1], x[0][0].asString(), x[0][1]) for x in items.iteritems() ])
+                 [ (x[1], x[0][0].asString(), x[0][1]) for x in items.items() ])
         self.repos.commitChangeSet(cs, mirror = mirror,
                                    hidden = hidden,
                                    serialize = self.serializeCommits,
@@ -1875,7 +1875,7 @@ class NetworkRepositoryServer(xmlshims.NetworkConvertors):
             return True
 
         userName = authToken[0]
-        if not isinstance(userName, basestring):
+        if not isinstance(userName, str):
             if userName.username:
                 # A ValidUser token with a username specified.
                 userName = userName.username
@@ -1894,13 +1894,13 @@ class NetworkRepositoryServer(xmlshims.NetworkConvertors):
                                          troveCs.getNewVersion().asString(),
                                          deps.formatFlavor(troveCs.getNewFlavor())))
             p.close()
-        except (IOError, RuntimeError), e:
+        except (IOError, RuntimeError) as e:
             # util.popen raises RuntimeError on error.  p.write() raises
             # IOError on error (broken pipe, etc)
             # FIXME: use a logger for this
             sys.stderr.write('commitaction failed: %s\n' %e)
             sys.stderr.flush()
-        except Exception, e:
+        except Exception as e:
             sys.stderr.write('unexpected exception occurred when running '
                              'commitaction: %s\n' %e)
             sys.stderr.flush()
@@ -1922,7 +1922,7 @@ class NetworkRepositoryServer(xmlshims.NetworkConvertors):
         path = "%s/%s" % (self.tmpPath, fileName)
         try:
             buf = file(path).read()
-            return cPickle.loads(buf)
+            return pickle.loads(buf)
         except IOError:
             return False
 
@@ -1947,7 +1947,7 @@ class NetworkRepositoryServer(xmlshims.NetworkConvertors):
         i = 0               # protect against empty fileIdGen
         for i, fileId in enumerate(fileIdGen):
             fileIdMap.setdefault(fileId, []).append(i)
-        uniqIdList = fileIdMap.keys()
+        uniqIdList = list(fileIdMap.keys())
 
         # now i+1 is how many items we shall return
         # None in streamMap means the stream wasn't found.
@@ -2006,7 +2006,7 @@ class NetworkRepositoryServer(xmlshims.NetworkConvertors):
             raise errors.FileStreamMissing(fileId)
 
         streamMap = [ None ] * len(fileList)
-        for i,  (stream, (pathId, fileId)) in enumerate(itertools.izip(rawStreams, fileList)):
+        for i,  (stream, (pathId, fileId)) in enumerate(zip(rawStreams, fileList)):
             # XXX the only thing we use the pathId for is to set it in
             # the file object; we should just pass the stream back and
             # let the client set it to avoid sending it back and forth
@@ -2133,7 +2133,7 @@ class NetworkRepositoryServer(xmlshims.NetworkConvertors):
                 ids[encodedPath] = newVal
         # prepare for return
         ids = dict([(k, (self.fromPathId(v[0]), v[1], self.fromFileId(v[2])))
-                    for k,v in ids.iteritems()])
+                    for k,v in ids.items()])
         return ids
 
     def _lookupTroves(self, authToken, troveList, hidden = False):
@@ -2219,7 +2219,7 @@ class NetworkRepositoryServer(xmlshims.NetworkConvertors):
 
         schema.resetTable(cu, 'tmpFilePaths')
         for row, path in enumerate(pathList):
-            if not isinstance(path, basestring):
+            if not isinstance(path, str):
                 # Somebody's broken script sends requests where the paths are
                 # lists, so handle that without throwing an exception.
                 return {}
@@ -2269,14 +2269,14 @@ class NetworkRepositoryServer(xmlshims.NetworkConvertors):
             retl = results[idx].setdefault((name, branch, flavor), [])
             retl.append(self.freezeVersion(version))
         def _iterAll(resList):
-            for (n,b,f), verList in resList.iteritems():
+            for (n,b,f), verList in resList.items():
                 for v in verList:
                     yield (n,v,f)
         if all:
             return [ list(_iterAll(x)) for x in results ]
         # otherwise, the version stored first is the most recent and
         # is the one that needs to be returned
-        return [ [ (n, vl[0], f) for (n,b,f),vl in x.iteritems() ]
+        return [ [ (n, vl[0], f) for (n,b,f),vl in x.items() ]
                  for x in results ]
 
     @accessReadOnly
@@ -2396,7 +2396,7 @@ class NetworkRepositoryServer(xmlshims.NetworkConvertors):
         if missing: # report the first one
             n,v,f = itemList[missing[0]][0]
             raise errors.TroveMissing(n, v)
-        for (troveTup, item), (presence, existing) in itertools.izip(itemList, metadata):
+        for (troveTup, item), (presence, existing) in zip(itemList, metadata):
             m = trove.Metadata(base64.decodestring(existing))
             mi = trove.MetadataItem(base64.b64decode(item))
             # don't allow items which don't have digests
@@ -2588,7 +2588,7 @@ class NetworkRepositoryServer(xmlshims.NetworkConvertors):
     def setMirrorMark(self, authToken, clientVersion, host, mark):
         # need to treat the mark as long
         try:
-            mark = long(mark)
+            mark = int(mark)
         except: # deny invalid marks
             raise errors.InsufficientPermission
         # Need both mirror and write permissions.
@@ -2611,7 +2611,7 @@ class NetworkRepositoryServer(xmlshims.NetworkConvertors):
     def getNewSigList(self, authToken, clientVersion, mark):
         # only show troves the user is allowed to see
         try:
-            mark = long(mark)
+            mark = int(mark)
         except: # deny invalid marks
             raise errors.InsufficientPermission
         self.log(2, mark)
@@ -2663,7 +2663,7 @@ class NetworkRepositoryServer(xmlshims.NetworkConvertors):
 
         # only show troves the user is allowed to see
         try:
-            mark = long(mark)
+            mark = int(mark)
         except: # deny invalid marks
             raise errors.InsufficientPermission
         self.log(2, mark)
@@ -2809,7 +2809,7 @@ class NetworkRepositoryServer(xmlshims.NetworkConvertors):
         cu.execute('select instanceId from tmpInstanceId order by idx')
         def _trvInfoIter(instanceIds, iList):
             i = -1
-            for (instanceId,), (trvTuple, trvInfo) in itertools.izip(instanceIds, iList):
+            for (instanceId,), (trvTuple, trvInfo) in zip(instanceIds, iList):
                 for infoType, data in streams.splitFrozenStreamSet(trvInfo):
                     # make sure that only signatures and metadata
                     # are modified
@@ -2887,7 +2887,7 @@ class NetworkRepositoryServer(xmlshims.NetworkConvertors):
     @accessReadOnly
     def getNewPGPKeys(self, authToken, clientVersion, mark):
         try:
-            mark = long(mark)
+            mark = int(mark)
         except: # deny invalid marks
             raise errors.InsufficientPermission
         if not self.auth.authCheck(authToken, mirror = True):
@@ -2915,7 +2915,7 @@ class NetworkRepositoryServer(xmlshims.NetworkConvertors):
     @accessReadOnly
     def getNewTroveList(self, authToken, clientVersion, mark):
         try:
-            mark = long(mark)
+            mark = int(mark)
         except: # deny invalid marks
             raise errors.InsufficientPermission
         if not self.auth.authCheck(authToken, mirror = True):
@@ -3081,7 +3081,7 @@ class NetworkRepositoryServer(xmlshims.NetworkConvertors):
 
         roleIds = self.auth.getAuthRoles(cu, authToken)
         if not roleIds:
-            return zip(prov, req)
+            return list(zip(prov, req))
 
         tblList = []
 
@@ -3136,7 +3136,7 @@ class NetworkRepositoryServer(xmlshims.NetworkConvertors):
                 dsList[last[0]].setdefault((last[1], last[2]), []).extend(flags)
             flagMap = [ None, '', '~', '~!', '!' ]
             for i, itemList in enumerate(dsList):
-                depList = itemList.items()
+                depList = list(itemList.items())
                 depList.sort()
 
                 if not depList:
@@ -3158,7 +3158,7 @@ class NetworkRepositoryServer(xmlshims.NetworkConvertors):
 
                 dsList[i] = frz
 
-        result = zip(prov, req)
+        result = list(zip(prov, req))
         return result
 
     @accessReadOnly
@@ -3172,7 +3172,7 @@ class NetworkRepositoryServer(xmlshims.NetworkConvertors):
         1 = valueattached
         """
         # infoType should be valid
-        if infoType not in trove.TroveInfo.streamDict.keys():
+        if infoType not in list(trove.TroveInfo.streamDict.keys()):
             raise errors.RepositoryError("Unknown trove infoType requested", infoType)
 
         self.log(2, infoType, troveList)
@@ -3390,7 +3390,7 @@ class NetworkRepositoryServer(xmlshims.NetworkConvertors):
 # this has to be at the end to get the publicCalls list correct; the proxy
 # uses the publicCalls list, so maintaining it
 NetworkRepositoryServer.publicCalls = set()
-for attr, val in NetworkRepositoryServer.__dict__.iteritems():
+for attr, val in NetworkRepositoryServer.__dict__.items():
     if type(val) == types.FunctionType:
         if hasattr(val, '_accessType'):
             NetworkRepositoryServer.publicCalls.add(attr)
@@ -3404,8 +3404,8 @@ class ManifestWriter(object):
             self.fobj.write('resumeOffset=%d\n' % resumeOffset)
 
     def append(self, path, expandedSize, isChangeset, preserveFile, offset):
-        print >> self.fobj, "%s %d %d %d %d" % (path, expandedSize,
-                isChangeset, preserveFile, offset)
+        print("%s %d %d %d %d" % (path, expandedSize,
+                isChangeset, preserveFile, offset), file=self.fobj)
 
     def close(self):
         name = os.path.basename(self.fobj.name)[:-4]

@@ -31,7 +31,7 @@ from ctypes import c_int, c_size_t, c_long, c_void_p
 
 
 def _fileno(fobj):
-    if isinstance(fobj, (int, long)):
+    if isinstance(fobj, int):
         return fobj
     else:
         try:
@@ -60,7 +60,7 @@ def fopenIfExists(path, mode):
 def lexists(path):
     try:
         os.lstat(path)
-    except OSError, err:
+    except OSError as err:
         if err.errno in (errno.ENOENT, errno.ENOTDIR, errno.ENAMETOOLONG,
                 errno.EACCES):
             return False
@@ -83,7 +83,7 @@ def massCloseFileDescriptors(start, count, end):
 
         try:
             os.close(i)
-        except OSError, err:
+        except OSError as err:
             if err.errno == errno.EBADF:
                 # FD was not in use
                 to_close -= 1
@@ -97,8 +97,8 @@ def massCloseFileDescriptors(start, count, end):
 
 def mkdirIfMissing(path):
     try:
-        os.mkdir(path, 0777)
-    except OSError, err:
+        os.mkdir(path, 0o777)
+    except OSError as err:
         if err.errno == errno.EEXIST:
             return False
         raise
@@ -144,7 +144,7 @@ def pwrite(fobj, data, offset):
 def removeIfExists(path):
     try:
         os.unlink(path)
-    except OSError, err:
+    except OSError as err:
         if err.errno in (errno.ENOENT, errno.ENAMETOOLONG):
             return False
         raise

@@ -32,7 +32,7 @@ class ErrorOutputTest(rephelp.RepositoryHelper):
         try:
             db2 = self.openDatabase()
             db2.writeAccess()
-        except schema.NewDatabaseSchema, err:
+        except schema.NewDatabaseSchema as err:
             assert(str(err) == '''The conary database on this system is too new.  You may have multiple versions of conary installed and be running the wrong one, or your conary may have been downgraded.  Please visit http://wiki.rpath.com for information on how to get support.''')
         else:
             assert(0)
@@ -40,11 +40,11 @@ class ErrorOutputTest(rephelp.RepositoryHelper):
         cu.execute('update databaseVersion set version=1')
         db.db.db.commit()
 
-        os.chmod(self.rootDir + self.cfg.dbPath + '/conarydb', 0400)
+        os.chmod(self.rootDir + self.cfg.dbPath + '/conarydb', 0o400)
         try:
             db2 = self.openDatabase()
             db2.writeAccess()
-        except schema.OldDatabaseSchema, err:
+        except schema.OldDatabaseSchema as err:
             assert(str(err) == '''\
 The Conary database on this system is too old.  It will be 
 automatically converted as soon as you run Conary with 
@@ -54,7 +54,7 @@ as root).
         else:
             assert(0)
 
-        os.chmod(self.rootDir + self.cfg.dbPath + '/conarydb', 0600)
+        os.chmod(self.rootDir + self.cfg.dbPath + '/conarydb', 0o600)
 
         cu.execute('drop table databaseVersion')
 
@@ -62,7 +62,7 @@ as root).
         try:
             db2 = self.openDatabase()
             db2.writeAccess()
-        except schema.OldDatabaseSchema, err:
+        except schema.OldDatabaseSchema as err:
             assert(str(err) == '''\
 The Conary database on this system is too old. For information on how to
 convert this database, please visit http://wiki.rpath.com/ConaryConversion.''')

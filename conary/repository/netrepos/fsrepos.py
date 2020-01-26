@@ -17,7 +17,7 @@
 
 # implements a db-based repository
 
-import cPickle
+import pickle
 import errno
 import itertools
 import os
@@ -138,7 +138,7 @@ class UpdateCallback(callbacks.UpdateCallback):
             # for atomicity
             (fd, path) = tempfile.mkstemp(dir = self.tmpDir,
                                           suffix = '.commit-status')
-            buf = cPickle.dumps(args)
+            buf = pickle.dumps(args)
             os.write(fd, buf)
             os.close(fd)
             os.rename(path, self.path)
@@ -320,9 +320,9 @@ class FilesystemRepository(DataStoreRepository, AbstractRepository):
             self.troveStore.rollback()
             raise
         except:
-            print >> sys.stderr, "exception occurred while committing change set"
-            print >> sys.stderr, ''.join(traceback.format_exception(*sys.exc_info()))
-            print >> sys.stderr, "attempting rollback"
+            print("exception occurred while committing change set", file=sys.stderr)
+            print(''.join(traceback.format_exception(*sys.exc_info())), file=sys.stderr)
+            print("attempting rollback", file=sys.stderr)
             self.troveStore.rollback()
             raise
         else:
@@ -341,7 +341,7 @@ class FilesystemRepository(DataStoreRepository, AbstractRepository):
         for sha1 in sha1s:
             try:
                 self.contentsStore.removeFile(sha1)
-            except OSError, e:
+            except OSError as e:
                 if e.errno != errno.ENOENT:
                     raise
 
@@ -615,7 +615,7 @@ class FilesystemRepository(DataStoreRepository, AbstractRepository):
 
 class _TroveListWrapper:
     def _handleJob(self, job, recursed, idx):
-        t = self.trvIterator.next()
+        t = next(self.trvIterator)
 
         if t is not None:
             if self.withFiles:
@@ -642,7 +642,7 @@ class _TroveListWrapper:
 
         return t, streams
 
-    def next(self):
+    def __next__(self):
         if not self.l and self.new:
             # self.l (and self.trvIterator) are empty; look to
             # self.new for new jobs we need
@@ -705,7 +705,7 @@ class _TroveListWrapper:
 
     def __iter__(self):
         while True:
-            yield self.next()
+            yield next(self)
 
     def append(self, item, recurse):
         self.new.append((item, recurse))

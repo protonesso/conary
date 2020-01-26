@@ -17,7 +17,7 @@
 
 #python
 import atexit
-import BaseHTTPServer
+import http.server
 import copy
 import errno
 import inspect
@@ -30,7 +30,7 @@ import shlex
 import signal
 import socket
 import stat
-import StringIO
+import io
 import subprocess
 import sys
 import time
@@ -165,7 +165,7 @@ class IdGen0(cook._IdGen):
     formatStr = "%s"
 
     def __call__(self, path, version, flavor):
-        if self.map.has_key(path):
+        if path in self.map:
             return self.map[path]
 
         fileid = sha1helper.md5String(self.formatStr % path)
@@ -237,15 +237,15 @@ class ServerCache(object):
         return server
 
     def resetAllServers(self):
-        for server in self.servers.values():
+        for server in list(self.servers.values()):
             server.reset()
 
     def resetAllServersIfNeeded(self):
-        for server in self.servers.values():
+        for server in list(self.servers.values()):
             server.resetIfNeeded()
 
     def stopAllServers(self):
-        for server in self.servers.values():
+        for server in list(self.servers.values()):
             server.stop()
             server.reset()
         self.servers = {}
@@ -258,13 +258,13 @@ class ServerCache(object):
 
     def getMap(self):
         servers = {}
-        for server in self.servers.values():
+        for server in list(self.servers.values()):
             servers.update(server.getMap())
         return servers
 
     def getServerNames(self):
         names = set()
-        for server in self.servers.values():
+        for server in list(self.servers.values()):
             names.update(server.nameList)
         return names
 
@@ -339,7 +339,7 @@ class RepositoryHelper(testhelp.TestCase):
 
         self.cfg.root = self.rootDir
         self.cfg.lookaside = self.cacheDir
-        os.umask(0022)
+        os.umask(0o022)
 
         # set up the flavor based on the defaults in use
         self.initializeFlavor()
@@ -415,9 +415,9 @@ class RepositoryHelper(testhelp.TestCase):
         trove.TROVE_VERSION_1_1 = self.origTroveVersion[1]
         self.logFilter.clear()
         # restore the environment
-        for key in os.environ.keys():
+        for key in list(os.environ.keys()):
             del os.environ[key]
-        for key, value in self.origEnv.iteritems():
+        for key, value in self.origEnv.items():
             os.environ[key] = value
         self.cfg = None
 
@@ -458,8 +458,8 @@ class RepositoryHelper(testhelp.TestCase):
 
     def printRepMap(self):
         rmap = self.servers.getMap()
-        for name, url in rmap.items():
-            print 'repositoryMap %s %s' %(name, url)
+        for name, url in list(rmap.items()):
+            print('repositoryMap %s %s' %(name, url))
 
     def openDatabase(self, root=None):
         if root is None:
@@ -506,7 +506,7 @@ class RepositoryHelper(testhelp.TestCase):
             requireSigs=requireSigs,
             )
         configValues = dict(configValues)
-        for key, value in defaultValues.items():
+        for key, value in list(defaultValues.items()):
             if value is None:
                 continue
             if key in configValues:
@@ -543,7 +543,7 @@ class RepositoryHelper(testhelp.TestCase):
         if not proxies:
             return {}
         values = {}
-        for key, value in proxies.items():
+        for key, value in list(proxies.items()):
             if value.startswith('conary'):
                 values.setdefault('conaryProxy', []).append(
                         '%s http%s' % (key, value[6:]))
@@ -675,7 +675,7 @@ class RepositoryHelper(testhelp.TestCase):
 
     def markRemovedCmd(self, trvSpec):
         oldStdin = sys.stdin
-        sys.stdin = StringIO.StringIO("Y\n")
+        sys.stdin = io.StringIO("Y\n")
         try:
             self.discardOutput(cvccmd.sourceCommand, self.cfg,
                                [ 'markremoved', trvSpec ], {} )
@@ -684,7 +684,7 @@ class RepositoryHelper(testhelp.TestCase):
 
     def markRemoved(self, trvSpec, repos = None):
         oldStdin = sys.stdin
-        sys.stdin = StringIO.StringIO("Y\n")
+        sys.stdin = io.StringIO("Y\n")
         if not repos:
             repos = self.openRepository()
         try:
@@ -953,7 +953,7 @@ class RepositoryHelper(testhelp.TestCase):
         if os.path.exists(self.workDir):
             util.rmtree(self.workDir)
         if os.path.exists(self.workDir):
-            raise IOError, '%s exists but must not!' %self.workDir
+            raise IOError('%s exists but must not!' %self.workDir)
         util.mkdirChain(self.workDir)
 
     def resetRoot(self):
@@ -1125,10 +1125,10 @@ class RepositoryHelper(testhelp.TestCase):
                                           deps.DEP_MERGE_TYPE_DROP_CONFLICTS)
 
         if not hasWeakRefs:
-            collList = [ x for x in fullList.iteritems() if trove.troveIsCollection(x[0][0])]
+            collList = [ x for x in fullList.items() if trove.troveIsCollection(x[0][0])]
             troves = repos.getTroves([x[0] for x in collList], withFiles=False)
 
-            for (troveTup, (byDefault, _)), trv in itertools.izip(collList,
+            for (troveTup, (byDefault, _)), trv in zip(collList,
                                                                   troves):
                 for childInfo in trv.iterTroveList(strongRefs=True,
                                                    weakRefs=True):
@@ -1175,7 +1175,7 @@ class RepositoryHelper(testhelp.TestCase):
 
         coll.setIsCollection(True)
         coll.setSize(0)         # None is widely used as a shortcut
-        for info, (byDefault, weakRef) in fullList.iteritems():
+        for info, (byDefault, weakRef) in fullList.items():
             coll.addTrove(*info, **dict(byDefault=byDefault, weakRef=weakRef))
         if not sourceName:
             sourceName = name + ':source'
@@ -1612,7 +1612,7 @@ class RepositoryHelper(testhelp.TestCase):
         f.close()
 
         fl = []
-        for path, mode, flags, linksTo, fileColor, rdev in itertools.izip(
+        for path, mode, flags, linksTo, fileColor, rdev in zip(
                         h[rpmhelper.OLDFILENAMES],
                         h[rpmhelper.FILEMODES], h[rpmhelper.FILEFLAGS],
                         h[rpmhelper.FILELINKTOS],
@@ -1730,7 +1730,7 @@ class RepositoryHelper(testhelp.TestCase):
 
     def createMetadataItem(self, **kw):
         mi = trove.MetadataItem()
-        for key, value in kw.items():
+        for key, value in list(kw.items()):
             if isinstance(value, (list, tuple)):
                 for val in value:
                     getattr(mi, key).set(val)
@@ -1767,12 +1767,12 @@ class RepositoryHelper(testhelp.TestCase):
                 self.fail("contents incorrect for %s" % path)
             assert(other == contents)
         if perms is not None:
-            assert(os.stat(path)[stat.ST_MODE] & 0777 == perms)
+            assert(os.stat(path)[stat.ST_MODE] & 0o777 == perms)
 
     def verifyNoFile(self, file):
         try:
             f = open(file, "r")
-        except IOError, err:
+        except IOError as err:
             if err.errno == 2:
                 return
             else:
@@ -1802,12 +1802,12 @@ class RepositoryHelper(testhelp.TestCase):
         for n in ideal: dict[n] = 1
 
         for n in actual:
-            if dict.has_key(n):
+            if n in dict:
                 del dict[n]
             else:
                 self.fail("unexpected file %s" % n)
         if dict:
-            self.fail("files missing %s" % " ".join(dict.keys()))
+            self.fail("files missing %s" % " ".join(list(dict.keys())))
 
         assert(not dict)
 
@@ -1825,13 +1825,13 @@ class RepositoryHelper(testhelp.TestCase):
                 if fullPath == "/var/log/conary": continue
 
                 if fullPath.startswith("/var/lib/conarydb/"): continue
-                if paths.has_key(fullPath):
+                if fullPath in paths:
                     del paths[fullPath]
                 else:
                     self.fail("unexpected file %s" % fullPath)
 
         if paths:
-            self.fail("files missing %s" % " ".join(paths.keys()))
+            self.fail("files missing %s" % " ".join(list(paths.keys())))
 
     def cookItem(self, *args, **kw):
         return self.discardOutput(cook.cookItem, *args, **kw)
@@ -2064,13 +2064,13 @@ class RepositoryHelper(testhelp.TestCase):
                                        **k)
                 finally:
                     sys.argv = oldSysArgv
-            except conaryclient.DependencyFailure, msg:
+            except conaryclient.DependencyFailure as msg:
                 if raiseError:
                     raise
-                print msg
-            except errors.InternalConaryError, err:
+                print(msg)
+            except errors.InternalConaryError as err:
                 raise
-            except errors.ConaryError, msg:
+            except errors.ConaryError as msg:
                 if raiseError:
                     raise
                 log.error(msg)
@@ -2108,13 +2108,13 @@ class RepositoryHelper(testhelp.TestCase):
                 finally:
                     updJob.close()
                     cl.close()
-            except conaryclient.DependencyFailure, msg:
+            except conaryclient.DependencyFailure as msg:
                 if raiseError:
                     raise
-                print msg
-            except errors.InternalConaryError, err:
+                print(msg)
+            except errors.InternalConaryError as err:
                 raise
-            except errors.ConaryError, err:
+            except errors.ConaryError as err:
                 if raiseError:
                     raise
                 log.error(err)
@@ -2194,9 +2194,9 @@ class RepositoryHelper(testhelp.TestCase):
                                    updateByDefault = False, test = test,
                                    recurse=recurse, callback=callback,
                                    skipCapsuleOps = skipCapsuleOps)
-        except conaryclient.DependencyFailure, msg:
-            print msg
-        except errors.ClientError, msg:
+        except conaryclient.DependencyFailure as msg:
+            print(msg)
+        except errors.ClientError as msg:
             log.error(msg)
         db.close()
 
@@ -2285,7 +2285,7 @@ class RepositoryHelper(testhelp.TestCase):
 
         recipe = loader.getRecipe()
 
-        for name in vars.iterkeys():
+        for name in vars.keys():
             setattr(recipe, name, vars[name])
 
         level = log.getVerbosity()
@@ -2316,7 +2316,7 @@ class RepositoryHelper(testhelp.TestCase):
     def overrideBuildFlavor(self, flavorStr):
         flavor = deps.parseFlavor(flavorStr)
         if flavor is None:
-            raise RuntimeError, 'Invalid flavor %s' % flavorStr
+            raise RuntimeError('Invalid flavor %s' % flavorStr)
         buildFlavor = self.cfg.buildFlavor.copy()
         if (deps.DEP_CLASS_IS in flavor.getDepClasses() and
             deps.DEP_CLASS_IS in buildFlavor.getDepClasses()):
@@ -2384,7 +2384,7 @@ class RepositoryHelper(testhelp.TestCase):
         sections = []
         sectionNum = None
 
-        for line in open(rootDir + os.path.sep + self.cfg.logFile[0]).xreadlines():
+        for line in open(rootDir + os.path.sep + self.cfg.logFile[0]):
             # strip off the timestamps and any extra whitespace
             line = line[line.index(']') + 1 :].strip()
 
@@ -2537,7 +2537,7 @@ class RepositoryHelper(testhelp.TestCase):
                     else:
                         raise RuntimeError('failed to find job for %s.  Jobs: %s' % (n, jobList))
                 if len(troveList) > 1:
-                    raise RuntimeError, (
+                    raise RuntimeError(
                         '(%s,%s,%s) matched multiple erased troves' \
                         % (n, oldInfo[0], oldInfo[1]))
                 oldVer, oldFla = troveList[0][1:]
@@ -2549,7 +2549,7 @@ class RepositoryHelper(testhelp.TestCase):
                     raise RuntimeError('failed to find install for %s.  Jobs involving %s found: %s' % (jobStr, n, [x for x in jobList if x[0] == n]))
 
                 if len(troveList) > 1:
-                    raise RuntimeError, (
+                    raise RuntimeError(
                         '(%s,%s,%s) matched multiple installed troves' \
                         % (n, newInfo[0], newInfo[1]))
                 newVer, newFla = troveList[0][1:]
@@ -2581,7 +2581,7 @@ class RepositoryHelper(testhelp.TestCase):
                                                               jobStr))
 
         if exactMatch and jobList:
-            raise RuntimeError, 'update performed extra jobs %s' % (jobList,)
+            raise RuntimeError('update performed extra jobs %s' % (jobList,))
 
     def getSearchSource(self):
         return searchsource.NetworkSearchSource(self.openRepository(),
@@ -2615,7 +2615,7 @@ class RepositoryHelper(testhelp.TestCase):
                     assert arg == expectedArg, \
                            "%s != %s" % (repr(arg), repr(expectedArg))
 
-            for key, expectedVal in expectedKw.iteritems():
+            for key, expectedVal in expectedKw.items():
                 val = kw.pop(key)
                 if isinstance(expectedVal, _NoneArg):
                     assert val is None, \
@@ -2639,7 +2639,7 @@ class RepositoryHelper(testhelp.TestCase):
             for arg in args:
                 if isinstance(arg, cfgmod.ConfigFile):
                     found = True
-                    for cfgKey, cfgValue in cfgValues.iteritems():
+                    for cfgKey, cfgValue in cfgValues.items():
                         assert arg[cfgKey] == cfgValue, \
                                "%s: %s != %s" % (
                                     cfgKey, repr(arg[cfgKey]), repr(cfgValue))
@@ -2716,9 +2716,9 @@ class RepositoryHelper(testhelp.TestCase):
         troveSpecs = [cmdline.parseTroveSpec(x) for x in troveSpecs ]
         results = repos.findTroves(self.cfg.installLabelPath,
                                    troveSpecs, self.cfg.flavor)
-        troveTupList = list(itertools.chain(*results.values()))
+        troveTupList = list(itertools.chain(*list(results.values())))
         troves = repos.getTroves(troveTupList, **kw)
-        troves = dict(itertools.izip(troveTupList, troves))
+        troves = dict(zip(troveTupList, troves))
 
         finalResult = []
         for troveSpec in troveSpecs:
@@ -3004,7 +3004,7 @@ visible_hostname localhost.localdomain
                 os.kill(self.pid, 15)
                 time.sleep(1)
                 os.kill(self.pid, 9)
-            except OSError, e:
+            except OSError as e:
                 if e.errno != 3: # No such process
                     raise
             if os.path.exists(self.pidFile):
@@ -3066,7 +3066,7 @@ class HTTPServerController(base_server.BaseServer):
                     ctx.load_cert_chain(sslCert, sslKey)
                     args = (ctx,)
                 else:
-                    klass = BaseHTTPServer.HTTPServer
+                    klass = http.server.HTTPServer
                     args = ()
                 # Sorry for modifying a stdlib class, but this is in a dead-end
                 # forked process after all! Need to bind to "IPv6 all" so that
@@ -3099,7 +3099,7 @@ class HTTPServerController(base_server.BaseServer):
             os.kill(self.childPid, sendsig)
             try:
                 pid = os.waitpid(self.childPid, os.WNOHANG)[0]
-            except OSError, err:
+            except OSError as err:
                 if err.errno == errno.EINTR:
                     # Interrupted.
                     continue

@@ -225,8 +225,8 @@ class RpmCapsuleOperation(SingleCapsuleOperation):
             ts.addInstall(hdr, (hdr, localPath), "i")
             hasTransaction = True
 
-            if (rpm.__dict__.has_key('RPMTAG_LONGARCHIVESIZE') and
-                rpm.RPMTAG_LONGARCHIVESIZE in hdr.keys()):
+            if ('RPMTAG_LONGARCHIVESIZE' in rpm.__dict__ and
+                rpm.RPMTAG_LONGARCHIVESIZE in list(hdr.keys())):
                 thisSize = hdr[rpm.RPMTAG_LONGARCHIVESIZE]
             else:
                 thisSize = hdr[rpm.RPMTAG_ARCHIVESIZE]
@@ -339,7 +339,7 @@ class RpmCapsuleOperation(SingleCapsuleOperation):
 
         # things which aren't change, new, or removed are unchanged
         unchangedByPathId = (set(x[0] for x in trv.iterFileList()) -
-                             set(changedByPathId.iterkeys()) -
+                             set(changedByPathId.keys()) -
                              set(x[0] for x in troveCs.getNewFileList()) -
                              set(troveCs.getOldFileList()))
 
@@ -356,7 +356,7 @@ class RpmCapsuleOperation(SingleCapsuleOperation):
         fileObjs = self.db.getFileVersions(l)
         fileObjsByPathId = dict(
                 [ (x[0], y) for x, y in
-                    itertools.izip(l, fileObjs) ] )
+                    zip(l, fileObjs) ] )
 
         for fileInfo in trv.iterFileList():
             pathId, path, fileId, version = fileInfo
@@ -550,7 +550,7 @@ class RpmCapsuleOperation(SingleCapsuleOperation):
                         [ (x[0], x[2], x[3]) for x in trv.iterFileList() ] )
 
             for (pathId, path, fileId, version), fileObj in \
-                    itertools.izip(trv.iterFileList(), dbFileObjs):
+                    zip(trv.iterFileList(), dbFileObjs):
                 hasCapsule = trv.troveInfo.capsule.type() or False
                 fullPath = util.joinPaths(self.root,  path)
                 if not os.path.exists(fullPath):
@@ -579,7 +579,7 @@ class RpmCapsulePlugin(BaseCapsulePlugin):
 
     @staticmethod
     def _digest(rpmlibHeader):
-        if rpmhelper.SIG_SHA1 in rpmlibHeader.keys():
+        if rpmhelper.SIG_SHA1 in list(rpmlibHeader.keys()):
             return sha1helper.sha1FromString(
                     rpmlibHeader[rpmhelper.SIG_SHA1])
         else:
@@ -629,7 +629,7 @@ class RpmCapsulePlugin(BaseCapsulePlugin):
     def _addPhantomContents(self, changeSet, trv, header):
         """Fabricate files for the given RPM header"""
         for (path, owner, group, mode, size, rdev, flags, vflags, linkto,
-                mtime) in itertools.izip(
+                mtime) in zip(
                         header[rpmhelper.OLDFILENAMES],
                         header[rpmhelper.FILEUSERNAME],
                         header[rpmhelper.FILEGROUPNAME],
@@ -773,7 +773,7 @@ class FakeStat(namedtuple('FakeStat', 'st_mode st_ino st_dev st_nlink st_uid '
         for n, arg in enumerate(args):
             out[n] = arg
             names.remove(cls._fields[n])
-        for key, arg in kwargs.items():
+        for key, arg in list(kwargs.items()):
             out[cls._fields.index(key)] = arg
             names.remove(key)
         return tuple.__new__(cls, out)

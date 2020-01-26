@@ -17,7 +17,7 @@
 
 from testrunner import testhelp
 import os
-import StringIO
+import io
 import tempfile
 
 from conary.lib import util
@@ -49,7 +49,7 @@ class DebHelperTest(testhelp.TestCase):
             ' .',
             ' Line4',
         ]
-        sio = StringIO.StringIO('\n'.join(lines))
+        sio = io.StringIO('\n'.join(lines))
         sio.seek(0)
 
         ret = parser.parse(sio)

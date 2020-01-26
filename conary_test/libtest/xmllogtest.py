@@ -100,7 +100,7 @@ class XmlLogParseTest(testhelp.TestCase):
         ts = logger.getTime()
         # test timestamp for ISO8601 based on UTC
         # this is the preferred dateTime format in XML
-        self.assertEquals(ts, '2000-01-01T12:00:00.536Z')
+        self.assertEqual(ts, '2000-01-01T12:00:00.536Z')
         # unmock now, or else the test suite timings can get wonky
         # (the end time is recorded before the unmock happens)
         self.unmock()
@@ -141,7 +141,7 @@ class XmlLogParseTest(testhelp.TestCase):
 
     def testMakeRecord(self):
         record = logger.makeRecord({'foo': 'bar', 'test': 'case', 'baz': 1})
-        self.assertEquals(record,
+        self.assertEqual(record,
                 "<record><baz>1</baz><foo>bar</foo><test>case</test></record>")
 
     def testClose(self):
@@ -150,8 +150,8 @@ class XmlLogParseTest(testhelp.TestCase):
         data = open(self.logfile).read().splitlines()
         self.hdlr = xmllog.XmlHandler(self.logfile)
         self.logger.addHandler(self.hdlr)
-        self.assertEquals(len(data), 5)
-        self.assertEquals(data[-1], '</log>')
+        self.assertEqual(len(data), 5)
+        self.assertEqual(data[-1], '</log>')
         self.assertSubstring('<message>end log</message>', data[-2])
 
     def testFmtdLog(self):
@@ -177,8 +177,8 @@ class XmlLogParseTest(testhelp.TestCase):
 
             self.assertFalse('bad_descriptor' in data[-2],
                     "descriptor stack wasn't cleared on log close.")
-            self.assertEquals(data[-1], '</log>')
-            self.assertEquals(len(data), 9)
+            self.assertEqual(data[-1], '</log>')
+            self.assertEqual(len(data), 9)
             self.assertSubstring('<level>DEBUG</level>', data[2])
             self.assertSubstring('<message>begin log</message>', data[2])
             self.assertSubstring('<level>DEBUG</level>', data[-2])
@@ -225,8 +225,8 @@ class XmlLogParseTest(testhelp.TestCase):
             gzData = gzip.GzipFile(gzPath, 'r').read().splitlines()[:2]
             bzData = bz2.BZ2File(bz2Path, 'r').read().splitlines()[:2]
             self.assertFalse(not logData, "expected log content")
-            self.assertEquals(logData, gzData)
-            self.assertEquals(logData, bzData)
+            self.assertEqual(logData, gzData)
+            self.assertEqual(logData, bzData)
         finally:
             util.rmtree(tmpDir)
 

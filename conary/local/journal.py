@@ -121,7 +121,7 @@ class JobJournal(NoopJobJournal):
         if create:
             self.immutable = False
             self.fd = os.open(path,
-                              os.O_RDWR | os.O_CREAT | os.O_TRUNC, 0600)
+                              os.O_RDWR | os.O_CREAT | os.O_TRUNC, 0o600)
             os.write(self.fd, struct.pack("!H", JOURNAL_VERSION))
         else:
             self.immutable = True
@@ -151,7 +151,7 @@ class JobJournal(NoopJobJournal):
         s.inode.mtime.set(statBuf.st_mtime)
         s.inode.uid.set(statBuf.st_uid)
         s.inode.gid.set(statBuf.st_gid)
-        s.inode.perms.set(statBuf.st_mode & 07777)
+        s.inode.perms.set(statBuf.st_mode & 0o7777)
 
         frz = s.freeze()
         os.write(self.fd, frz + struct.pack("!BH", kind, len(frz)))
@@ -243,7 +243,7 @@ class JobJournal(NoopJobJournal):
                     pass
                 else:
                     self.callback.warning('unknown journal entry %d', kind)
-            except OSError, e:
+            except OSError as e:
                 self.callback.warning('could not %s file %s: %s',
                                       what, self.root + entry.new(), e.strerror)
         self.close()

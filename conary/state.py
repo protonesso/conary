@@ -101,7 +101,7 @@ class ConaryState:
 
     def getSourceState(self):
         if not self.source:
-            raise ConaryStateError, 'No source state defined in CONARY'
+            raise ConaryStateError('No source state defined in CONARY')
         return self.source
 
     def setSourceState(self, sourceState):
@@ -299,7 +299,7 @@ class ConaryStateFromFile(ConaryState):
             try:
                 self.source = SourceStateFromLines(lines, stateVersion,
                                                    repos=repos)
-            except ConaryStateError, err:
+            except ConaryStateError as err:
                 raise ConaryStateError('Cannot parse state file %s: %s' % (filename, err))
             if stateVersion != self.stateVersion:
                 # update this state w/ the new information
@@ -378,7 +378,7 @@ class SourceStateFromLines(SourceState):
             assert(stateVersion == 0)
             fileObjs = repos.getFileVersions(configFlagNeeded)
             for (pathId, fileId, version), fileObj in \
-                            itertools.izip(configFlagNeeded, fileObjs):
+                            zip(configFlagNeeded, fileObjs):
                 self.fileIsConfig(pathId, set = fileObj.flags.isConfig())
 
         if autoSourceFlagNeeded:
@@ -387,7 +387,7 @@ class SourceStateFromLines(SourceState):
             assert(stateVersion < 2)
             fileObjs = repos.getFileVersions(autoSourceFlagNeeded)
             for (pathId, fileId, version), fileObj in \
-                            itertools.izip(autoSourceFlagNeeded, fileObjs):
+                            zip(autoSourceFlagNeeded, fileObjs):
                 self.fileIsAutoSource(pathId,
                                       set = fileObj.flags.isAutoSource())
 
@@ -403,7 +403,7 @@ class SourceStateFromLines(SourceState):
             del lines[0]
 
             what = fields[0]
-            assert(not kwargs.has_key(what))
+            assert(what not in kwargs)
             if what not in self.fields:
                 raise ConaryStateError('Invalid field "%s"' % what)
 
@@ -414,7 +414,7 @@ class SourceStateFromLines(SourceState):
             else:
                 kwargs[what] = fields[1]
 
-        required = set([ x[0] for x in self.fields.items() if x[1][1] ])
+        required = set([ x[0] for x in list(self.fields.items()) if x[1][1] ])
         assert((set(kwargs.keys()) & required) == required)
 
         SourceState.__init__(self, **kwargs)

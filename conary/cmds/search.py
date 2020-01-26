@@ -45,7 +45,7 @@ class ModelData(object):
                                               client.getRepos(), client.cfg))
 
         self.troveTups = set()
-        for withFiles, trv in troveCache.cache.values():
+        for withFiles, trv in list(troveCache.cache.values()):
             for nvf in trv.iterTroveList(strongRefs = True, weakRefs = True):
                 self.troveTups.add(nvf)
 
@@ -66,6 +66,6 @@ def search(client, searchArgs):
     db = client.getDatabase()
     for arg in searchArgs:
         matches = data.search(globMap(arg))
-        for trvTuple, present in itertools.izip(matches, db.hasTroves(matches)):
+        for trvTuple, present in zip(matches, db.hasTroves(matches)):
             installed = (present and "installed") or "available"
-            print "%s=%s[%s] (%s)" % (trvTuple + (installed,))
+            print("%s=%s[%s] (%s)" % (trvTuple + (installed,)))

@@ -28,29 +28,29 @@ class ErrorOutputTest(rephelp.RepositoryHelper):
     def testIntegrityError(self):
         try:
             raise errors.TroveIntegrityError('foo', VFS('/localhost@rpl:1/1.0-1-1'), deps.parseFlavor('~!foo'))
-        except Exception, err:
+        except Exception as err:
             assert(str(err) == 'Trove Integrity Error: foo=/localhost@rpl:1/1.0-1-1[~!foo] checksum does not match precalculated value')
         try:
             raise errors.TroveIntegrityError(error='')
-        except Exception, err:
+        except Exception as err:
             assert(not str(err))
 
     def testTroveSchemaError(self):
         try:
             raise errors.TroveSchemaError('foo', VFS('/localhost@rpl:1/1.0-1-1'), deps.parseFlavor('~!foo'), 10, 5)
-        except Exception, err:
+        except Exception as err:
             assert(str(err) == 'Trove Schema Error: attempted to commit foo=/localhost@rpl:1/1.0-1-1[~!foo] with version 10, but repository only supports 5')
 
     def testChecksumMissingError(self):
         try:
             raise errors.TroveChecksumMissing('foo', VFS('/localhost@rpl:1/1.0-1-1'), deps.parseFlavor('~!foo'))
-        except Exception, err:
+        except Exception as err:
             assert(str(err) == 'Checksum Missing Error: Trove foo=/localhost@rpl:1/1.0-1-1[~!foo] has no sha1 checksum calculated, so it was rejected.  Please upgrade conary.')
 
     def testRepositoryMismatch(self):
         try:
             raise errors.RepositoryMismatch('right', 'wrong')
-        except Exception, err:
+        except Exception as err:
             assert(str(err) ==
                    'Repository name mismatch.  The correct repository name '
                    'is "right", but it was accessed as "wrong".  Check for '
@@ -75,7 +75,7 @@ class ErrorOutputTest(rephelp.RepositoryHelper):
             self.addComponent("test:doc", "1.0-1-1", flavor)
             try:
                 self.addComponent("test:doc", "1.0-1-1", flavor)
-            except Exception, err:
+            except Exception as err:
                 assert(isinstance(err, errors.CommitError))
                 assert(str(err) ==
                        'version /localhost@rpl:linux/1.0-1-1 '
@@ -96,7 +96,7 @@ class ErrorOutputTest(rephelp.RepositoryHelper):
         cs.newTrove(t.diff(None)[0])
         try:
             repos.commitChangeSet(cs)
-        except errors.TroveChecksumMissing, err:
+        except errors.TroveChecksumMissing as err:
              assert(str(err) == 'Checksum Missing Error: Trove foo=/localhost@rpl:1/1.0-1-1[~!foo] has no sha1 checksum calculated, so it was rejected.  Please upgrade conary.')
         else:
             assert(0)
@@ -107,7 +107,7 @@ class ErrorOutputTest(rephelp.RepositoryHelper):
         cs.newTrove(t.diff(None)[0])
         try:
             repos.commitChangeSet(cs)
-        except errors.TroveIntegrityError, err:
+        except errors.TroveIntegrityError as err:
             assert(str(err) == 'Trove Integrity Error: foo=/localhost@rpl:1/1.0-1-1[~!foo] checksum does not match precalculated value')
         else:
             assert(0)
@@ -118,7 +118,7 @@ class ErrorOutputTest(rephelp.RepositoryHelper):
         cs.newTrove(t.diff(None)[0])
         try:
             repos.commitChangeSet(cs)
-        except errors.TroveSchemaError, err:
+        except errors.TroveSchemaError as err:
             assert(str(err) == 'Trove Schema Error: attempted to commit foo=/localhost@rpl:1/1.0-1-1[~!foo] with version 100000, but repository only supports %s' % trove.TROVE_VERSION)
         else:
             assert(0)
@@ -132,7 +132,7 @@ class ErrorOutputTest(rephelp.RepositoryHelper):
         repos.commitChangeSet(cs)
 
         # access the server with a bad name
-        repos.c.map['badserver'] = repos.c.map.values()[0]
+        repos.c.map['badserver'] = list(repos.c.map.values())[0]
         try:
             repos.createChangeSet([('foo', (None, None),
                                     (VFS('/badserver@rpl:devel/1.0-1-1'), deps.parseFlavor('')), 0 )] )

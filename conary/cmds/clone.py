@@ -37,7 +37,7 @@ def displayCloneJob(cs):
         if not flavor.isEmpty():
             newInfo += '[%s]' % flavor
 
-        print "%sClone  %-20s (%s)" % (indent, csTrove.getName(), newInfo)
+        print("%sClone  %-20s (%s)" % (indent, csTrove.getName(), newInfo))
 
 def CloneTrove(cfg, targetBranch, troveSpecList, updateBuildInfo = True,
                info = False, cloneSources = False, message = None,
@@ -61,7 +61,7 @@ def CloneTrove(cfg, targetBranch, troveSpecList, updateBuildInfo = True,
     trovesToClone = repos.findTroves(cfg.installLabelPath,
                                     troveSpecs, cfg.flavor,
                                     exactFlavors = exactFlavors)
-    trovesToClone = list(set(itertools.chain(*trovesToClone.itervalues())))
+    trovesToClone = list(set(itertools.chain(*iter(trovesToClone.values()))))
 
     if not client.cfg.quiet:
         callback = client_callbacks.CloneCallback(client.cfg, message)
@@ -104,7 +104,7 @@ def _convertLabelOrBranch(lblStr, template):
         elif lblStr[-1] == '@':
             lblStr = '%s%s:%s' % (lblStr, nameSpace, tag)
         return versions.Label(lblStr)
-    except Exception, msg:
+    except Exception as msg:
         raise errors.ParseError('Error parsing %r: %s' % (lblStr, msg))
 
 def promoteTroves(cfg, troveSpecs, targetList, skipBuildInfo=False,
@@ -149,7 +149,7 @@ def promoteTroves(cfg, troveSpecs, targetList, skipBuildInfo=False,
                                       exactFlavors=exactFlavors)
     if allFlavors:
         trovesToClone = []
-        for troveSpec, troveTups in results.items():
+        for troveSpec, troveTups in list(results.items()):
             specFlavors = troveSpecFlavors[troveSpec]
             for specFlavor in specFlavors:
                 if specFlavor is None:
@@ -164,7 +164,7 @@ def promoteTroves(cfg, troveSpecs, targetList, skipBuildInfo=False,
                 matchingTups = [ x for x in matchingTups if x[1] == latest ]
                 trovesToClone.extend(matchingTups)
     else:
-        trovesToClone = itertools.chain(*results.itervalues())
+        trovesToClone = itertools.chain(*iter(results.values()))
     trovesToClone = list(set(trovesToClone))
 
     if not client.cfg.quiet:
@@ -189,14 +189,14 @@ def _finishClone(client, cfg, cs, callback, info=False, test=False,
                  ignoreConflicts=False, targetFile=None):
     repos = client.repos
     if cfg.interactive or info:
-        print 'The following clones will be created:'
+        print('The following clones will be created:')
         displayCloneJob(cs)
 
     if info:
         return
 
     if cfg.interactive:
-        print
+        print()
         okay = cmdline.askYn('continue with clone? [y/N]', default=False)
         if not okay:
             return

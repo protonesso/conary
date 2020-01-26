@@ -28,11 +28,11 @@ class TroveSpecTest(testhelp.TestCase):
     def compare(self, spec, asStr, name, version, flavor, **kwargs):
         t = trovetup.TroveSpec(spec, **kwargs)
         r = "TroveSpec('%s')" % asStr
-        self.assertEquals(str(t), asStr)
-        self.assertEquals(repr(t), r)
-        self.assertEquals(t.name, name)
-        self.assertEquals(t.version, version)
-        self.assertEquals(str(t.flavor), str(flavor))
+        self.assertEqual(str(t), asStr)
+        self.assertEqual(repr(t), r)
+        self.assertEqual(t.name, name)
+        self.assertEqual(t.version, version)
+        self.assertEqual(str(t.flavor), str(flavor))
 
     def testParse(self):
         self.compare('foo', 'foo', 'foo', None, None)
@@ -44,19 +44,19 @@ class TroveSpecTest(testhelp.TestCase):
 
     def testEmptyName(self):
         t = trovetup.TroveSpec('', version='1.2')
-        self.assertEquals(str(t), '=1.2')
-        self.assertEquals(t.name, '')
-        self.assertEquals(t.version, '1.2')
-        self.assertEquals(t.flavor, None)
+        self.assertEqual(str(t), '=1.2')
+        self.assertEqual(t.name, '')
+        self.assertEqual(t.version, '1.2')
+        self.assertEqual(t.flavor, None)
 
         self.assertRaises(TroveSpecError,
             trovetup.TroveSpec, '', allowEmptyName=False)
     
     def testFromTuple(self):
         def check(t):
-            self.assertEquals(t.name, 'a')
-            self.assertEquals(t.version, 'b')
-            self.assertEquals(str(t.flavor), 'c')
+            self.assertEqual(t.name, 'a')
+            self.assertEqual(t.version, 'b')
+            self.assertEqual(str(t.flavor), 'c')
 
         t = trovetup.TroveSpec(('a', 'b', 'c'))
         check(t)
@@ -79,14 +79,14 @@ class TroveTupleTest(testhelp.TestCase):
         expect = "TroveTuple(%r)" % (ex_str,)
 
         p = trovetup.TroveTuple
-        self.assertEquals(repr(p(n, v, f)), expect)
-        self.assertEquals(repr(p((n, v, f))), expect)
-        self.assertEquals(repr(p(ex_str)), expect)
-        self.assertEquals(repr(p(ex_str.decode('ascii'))), expect)
-        self.assertEquals(repr(p(n, vo, fo)), expect)
-        self.assertEquals(repr(p((n, vo, fo))), expect)
+        self.assertEqual(repr(p(n, v, f)), expect)
+        self.assertEqual(repr(p((n, v, f))), expect)
+        self.assertEqual(repr(p(ex_str)), expect)
+        self.assertEqual(repr(p(ex_str.decode('ascii'))), expect)
+        self.assertEqual(repr(p(n, vo, fo)), expect)
+        self.assertEqual(repr(p((n, vo, fo))), expect)
 
-        self.assertEquals(repr(p('%s=%s' % (n, v))),
+        self.assertEqual(repr(p('%s=%s' % (n, v))),
                 "TroveTuple('%s=%s[]')" % (n, v))
 
     def testParser(self):
@@ -103,13 +103,13 @@ class TroveTupleTest(testhelp.TestCase):
             self.assertRaises(ParseError, p, 'spam=foo[bar')
             self.assertRaises(ParseError, p, 'spam=foo]')
             self.assertRaises(ParseError, p, 'spam=foo[bar]x')
-            self.assertRaises(ParseError, p, u'spam\xFF=foo[bar]')
+            self.assertRaises(ParseError, p, 'spam\xFF=foo[bar]')
         finally:
             p._thawVerFunc = tv
 
     def testStringify(self):
         tt = trovetup.TroveTuple(self.sample)
-        self.assertEquals(str(tt), 'tmpwatch=/conary.rpath.com@rpl:devel//2/'
+        self.assertEqual(str(tt), 'tmpwatch=/conary.rpath.com@rpl:devel//2/'
                 '2.9.10-2-0.1[is: x86_64]')
 
 
@@ -159,7 +159,7 @@ class JobTupleTest(testhelp.TestCase):
 
     def testParser(self):
         p = trovetup.JobTuple
-        self.assertRaises(ParseError, p, u'spam\xFF=foo[bar]')
+        self.assertRaises(ParseError, p, 'spam\xFF=foo[bar]')
         self.assertEqual(p('tmpwatch=/conary.rpath.com@rpl:devel//2/1200000000.000:3.0.00-1-0.1[is: x86_64]'),
                 ('tmpwatch', (None, None), self.new, True))
         self.assertEqual(p('tmpwatch=/conary.rpath.com@rpl:devel//2/1000000000.000:2.9.10-2-0.1[is: x86_64]'

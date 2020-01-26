@@ -16,7 +16,7 @@
 
 
 import unittest
-import cPickle
+import pickle
 
 SEEK_SET = 0
 SEEK_CUR = 1
@@ -48,7 +48,7 @@ class VersionsTest(unittest.TestCase):
     def testRevision(self):
         try:
             Revision("-")
-        except ParseError, e:
+        except ParseError as e:
             assert(str(e) == "bad release string: -")
         else:
             self.fail("ParseError expected")
@@ -212,8 +212,8 @@ class VersionsTest(unittest.TestCase):
 
         # test that cPickle works on a Version object (the changeset cache
         # database pickles versions)
-        vpickled = cPickle.dumps(v)
-        vunpickled = cPickle.loads(vpickled)
+        vpickled = pickle.dumps(v)
+        vunpickled = pickle.loads(vpickled)
         assert(vunpickled.asString() == v.asString())
 
         v2 = VersionFromString("/foo.com@spc:bar/1.2-3/bang.com@spc:branch/2.4-5",

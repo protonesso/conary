@@ -116,19 +116,19 @@ class CapsuleTest(rephelp.RepositoryHelper):
 
         self.writeFile(self.rootDir + '/config', 'config\nlocal config\n')
         rc, str = self.captureOutput(self.updatePkg, 'simple:rpm=1.1')
-        self.assertEquals(str, 'warning: /config saved as /config.rpmsave\n')
+        self.assertEqual(str, 'warning: /config saved as /config.rpmsave\n')
         self.verifyFile(self.rootDir + '/config', 'changed-config\n')
         self.rollback(self.rootDir, 1)
         self.verifyFile(self.rootDir + '/config', 'config\nlocal config\n')
 
         rc, str = self.captureOutput(self.erasePkg, self.rootDir, 'simple:rpm')
-        self.assertEquals(str, 'warning: /config saved as /config.rpmsave\n')
+        self.assertEqual(str, 'warning: /config saved as /config.rpmsave\n')
         assert(not os.path.exists(self.rootDir + '/config'))
         self.rollback(self.rootDir, 1)
         self.verifyFile(self.rootDir + '/config', 'config\nlocal config\n')
 
         rc, str = self.captureOutput(self.rollback, self.rootDir, 0)
-        self.assertEquals(str, 'warning: /config saved as /config.rpmsave\n')
+        self.assertEqual(str, 'warning: /config saved as /config.rpmsave\n')
         assert(not os.path.exists(self.rootDir + "/dir"))
         assert(not os.path.exists(self.rootDir + "/config"))
         assert(not os.path.exists(self.rootDir + "/normal"))
@@ -178,7 +178,7 @@ class CapsuleTest(rephelp.RepositoryHelper):
 
             # if job splitting happens you get "Job 1 of 2" here because of the
             # small updateThreashold
-            self.assertEquals(txt, '    Install ownerships:rpm=1.0-1-1\n'
+            self.assertEqual(txt, '    Install ownerships:rpm=1.0-1-1\n'
                                    '    Install simple:rpm=1.0-1-1\n')
 
             # make sure having a critical update doesn't make the splitting
@@ -200,7 +200,7 @@ class CapsuleTest(rephelp.RepositoryHelper):
         self.addComponent("info-disk:user=1.0")
         rc, txt = self.captureOutput(self.updatePkg,
                         [ 'simple:rpm', 'info-disk:user' ], info = True )
-        self.assertEquals(txt,
+        self.assertEqual(txt,
             'Job 1 of 2:\n'
             '    Install info-disk:user=1.0-1-1\n'
             'Job 2 of 2:\n'
@@ -297,11 +297,11 @@ class CapsuleTest(rephelp.RepositoryHelper):
                 (queryrep.displayTroves, (self.cfg, [ "simple:rpm" ]) ),
                 (query.displayTroves, (db, self.cfg, [ "simple:rpm" ]) ) ]:
             rc, res = self.captureOutput(method, ls = True, *args)
-            self.assertEquals(res, '/config\n/dir\n/normal\n')
+            self.assertEqual(res, '/config\n/dir\n/normal\n')
 
             rc, res = self.captureOutput(method, capsules = True, ls = True,
                                          *args)
-            self.assertEquals(res, 'simple-1.0-1.i386.rpm\n')
+            self.assertEqual(res, 'simple-1.0-1.i386.rpm\n')
 
     @conary_test.rpm
     def test09_CapsuleInstallFlags(self):
@@ -318,28 +318,28 @@ class CapsuleTest(rephelp.RepositoryHelper):
         assert(len(self.owners('/normal')) == 1)
         assert(not os.path.exists(self.rootDir + '/normal'))
         str = os.popen('rpm --root %s -qa' % self.rootDir).readlines()
-        self.assertEquals(str, [ 'simple-1.0-1.i386\n' ])
+        self.assertEqual(str, [ 'simple-1.0-1.i386\n' ])
         rc, str = self.captureOutput(self.erasePkg, self.rootDir,
                                      'simple:rpm',
                                      justDatabase = True)
-        self.assertEquals(str,
+        self.assertEqual(str,
             'warning: cannot remove /normal: No such file or directory\n'
             'warning: cannot remove /config: No such file or directory\n'
             'warning: cannot remove /dir: No such file or directory\n')
         str = os.popen('rpm --root %s -qa' % self.rootDir).readlines()
-        self.assertEquals(str, [])
+        self.assertEqual(str, [])
         assert(not self.owners('/normal'))
 
         self.writeFile(self.rootDir + '/normal', 'placeholder')
         rc, str = self.captureOutput(self.updatePkg, 'simple:rpm')
-        self.assertEquals(str,
+        self.assertEqual(str,
                 'error: changeset cannot be applied:\n'
                 'applying update would cause errors:\n'
                 '/normal is in the way of a newly created file in '
                         'simple:rpm=/localhost@rpl:linux/1.0-1-1[]\n')
         rc, str = self.captureOutput(self.updatePkg, 'simple:rpm',
                                      replaceUnmanagedFiles = True)
-        self.assertEquals(str, '')
+        self.assertEqual(str, '')
         self.verifyFile(self.rootDir + '/normal', 'normal\n')
 
         self.resetRoot()
@@ -348,7 +348,7 @@ class CapsuleTest(rephelp.RepositoryHelper):
         assert(len(self.owners('/normal')) == 1)
         assert(not os.path.exists(self.rootDir + '/normal'))
         str = os.popen('rpm --root %s -qa' % self.rootDir).readlines()
-        self.assertEquals(str, [ ])
+        self.assertEqual(str, [ ])
         # syncCapsuleDatabase would helpfully erase the trove before we get a
         # chance to do the same thing, so turn it off for this test
         self.cfg.syncCapsuleDatabase = 'false'
@@ -359,12 +359,12 @@ class CapsuleTest(rephelp.RepositoryHelper):
                                      skipCapsuleOps = True)
         finally:
             self.cfg.resetToDefault('syncCapsuleDatabase')
-        self.assertEquals(str,
+        self.assertEqual(str,
             'warning: cannot remove /normal: No such file or directory\n'
             'warning: cannot remove /config: No such file or directory\n'
             'warning: cannot remove /dir: No such file or directory\n')
         str = os.popen('rpm --root %s -qa' % self.rootDir).readlines()
-        self.assertEquals(str, [])
+        self.assertEqual(str, [])
         assert(not self.owners('/normal'))
 
     @conary_test.rpm
@@ -433,7 +433,7 @@ class CapsuleTest(rephelp.RepositoryHelper):
              simple10.getNameVersionFlavor()[1:], True) ])
         changeset.ChangesetExploder(cs, self.rootDir)
         assert(os.path.isdir(self.rootDir + '/dir'))
-        self.assertEquals(
+        self.assertEqual(
             os.stat(self.rootDir + '/normal').st_size, 7)
 
     @conary_test.rpm
@@ -566,13 +566,13 @@ class HardLinks(CapsuleRecipe):
         self.updatePkg('setup:rpm', replaceFiles = True)
 
         p = open(self.rootDir + '/etc/passwd').readlines()
-        self.assertEquals(p[0], 'root:*:0:0:root:/root:/bin/bash\n')
-        self.assertEquals(p[-1], 'passwd junk\n')
+        self.assertEqual(p[0], 'root:*:0:0:root:/root:/bin/bash\n')
+        self.assertEqual(p[-1], 'passwd junk\n')
         assert(not os.path.exists(self.rootDir + '/etc/passwd.rpmnew'))
 
         p = open(self.rootDir + '/etc/group').readlines()
-        self.assertEquals(p[0], 'root::0:root\n')
-        self.assertEquals(p[-1], 'group junk\n')
+        self.assertEqual(p[0], 'root::0:root\n')
+        self.assertEqual(p[-1], 'group junk\n')
         assert(not os.path.exists(self.rootDir + '/etc/group.rpmnew'))
 
     @conary_test.rpm
@@ -598,10 +598,10 @@ class HardLinks(CapsuleRecipe):
         self.verifyFile(self.rootDir + '/dummy/aaa_first')
         util.mkdirChain(self.rootDir+'/var/tmp')
         rc, str = self.captureOutput(self.updatePkg, 'failpost:rpm=1.0-1-1')
-        self.assertEquals(str,
+        self.assertEqual(str,
             'warning: %post(failpost-1.0-1.noarch) scriptlet failed, exit status 127\n')
         self.checkOrdering('failpost-1.0-1.noarch')
-        self.assertEquals(rc, None)
+        self.assertEqual(rc, None)
         self.verifyFile(self.rootDir + '/dummy/file')
         self.updatePkg('zzz_last:rpm=1.0-1-1')
         self.checkOrdering('zzz_last-1.0-1.noarch')
@@ -613,9 +613,9 @@ class HardLinks(CapsuleRecipe):
                        ['aaa_first:rpm=1.0-1-1',
                         'failpost:rpm=1.0-1-1',
                         'zzz_last:rpm=1.0-1-1'])
-        self.assertEquals(str,
+        self.assertEqual(str,
             'warning: %post(failpost-1.0-1.noarch) scriptlet failed, exit status 127\n')
-        self.assertEquals(rc, None)
+        self.assertEqual(rc, None)
         self.checkOrdering('aaa_first-1.0-1.noarch'
                            ' failpost-1.0-1.noarch'
                            ' zzz_last-1.0-1.noarch')
@@ -634,7 +634,7 @@ class HardLinks(CapsuleRecipe):
                            ' zzz_last-1.0-1.noarch')
         rc, str = self.captureOutput(self.erasePkg, self.rootDir,
             'failpostun:rpm=1.0-1-1')
-        self.assertEquals(str,
+        self.assertEqual(str,
             'warning: %postun(failpostun-1.0-1.noarch) scriptlet failed, exit status 127\n')
         self.verifyNoFile(self.rootDir + '/dummy/file')
         self.verifyFile(self.rootDir + '/dummy/zzz_last')
@@ -644,12 +644,12 @@ class HardLinks(CapsuleRecipe):
                         ['aaa_first:rpm=1.0-1-1',
                         'failpre:rpm=1.0-1-1',
                         'zzz_last:rpm=1.0-1-1'])
-        self.assertEquals(str, '\n'.join((
+        self.assertEqual(str, '\n'.join((
           'error: %pre(failpre-1.0-1.noarch) scriptlet failed, exit status 127',
           'error: install: %pre scriptlet failed (2), skipping failpre-1.0-1',
           'error: RPM failed to install requested packages: failpre-1.0-1.noarch',
           '')))
-        self.assertEquals(rc, None)
+        self.assertEqual(rc, None)
         self.checkOrdering('aaa_first-1.0-1.noarch'
                            ' failpre-1.0-1.noarch'
                            ' zzz_last-1.0-1.noarch')
@@ -662,8 +662,8 @@ class HardLinks(CapsuleRecipe):
                        ['aaa_first:rpm=1.0-1-1',
                         'failpreun:rpm=1.0-1-1',
                         'zzz_last:rpm=1.0-1-1'])
-        self.assertEquals(rc, None)
-        self.assertEquals(str, '')
+        self.assertEqual(rc, None)
+        self.assertEqual(str, '')
         self.checkOrdering('aaa_first-1.0-1.noarch'
                            ' failpreun-1.0-1.noarch'
                            ' zzz_last-1.0-1.noarch')
@@ -672,7 +672,7 @@ class HardLinks(CapsuleRecipe):
         self.verifyFile(self.rootDir + '/dummy/zzz_last')
         rc, str = self.captureOutput(self.erasePkg,
             self.rootDir, 'failpreun:rpm=1.0-1-1')
-        self.assertEquals(str,
+        self.assertEqual(str,
             'error: %preun(failpreun-1.0-1.noarch) scriptlet failed, exit status 127\n')
         self.verifyNoFile(self.rootDir + '/dummy/file')
 
@@ -688,7 +688,7 @@ class HardLinks(CapsuleRecipe):
                        ['aaa_first:rpm=1.0-1-1',
                         'dev:rpm=1.0-1-1'])
         warning = str.strip().split('\n')[-1]
-        self.assertEquals(warning,
+        self.assertEqual(warning,
                           'warning: RPM failed to unpack dev-1.0-1.noarch')
         self.verifyFile(self.rootDir + '/dummy/aaa_first')
 
@@ -765,10 +765,10 @@ class TestPackage(CapsuleRecipe):
 
         self.updatePkg('%s=0.1-1-1' % pkgname)
         self.verifyFile(self.rootDir + '/usr/share/with-config-special.txt',
-            'Some extra data\n', perms=0644)
+            'Some extra data\n', perms=0o644)
         # File additions should be honored
         self.verifyFile(self.rootDir + '/usr/share/new-content.txt',
-            'some new content\n', perms=0644)
+            'some new content\n', perms=0o644)
 
     @conary_test.rpm
     def testFileModeChanges(self):
@@ -793,7 +793,7 @@ class TestPackage(CapsuleRecipe):
         self.updatePkg('%s=0.1-1-1' % pkgname)
         # Make sure we DO NOT change the mode here (see CNY-3590)
         self.verifyFile(self.rootDir + '/usr/share/with-config-special.txt',
-            'Some extra data\n', perms=0644)
+            'Some extra data\n', perms=0o644)
 
     @conary_test.rpm
     def testUnchangedRPM(self):
@@ -812,11 +812,11 @@ class TestPackage(CapsuleRecipe):
         self.addRPMComponent("file-type-change:rpm=2-1-1",
                              'file-type-change-2-1.i386.rpm')
         self.updatePkg('file-type-change:rpm=1')
-        self.assertEquals(os.readlink(self.rootDir + '/test'), 'foo')
+        self.assertEqual(os.readlink(self.rootDir + '/test'), 'foo')
         self.updatePkg('file-type-change:rpm=2')
         self.verifyFile(self.rootDir + '/test', '')
         self.rollback(1)
-        self.assertEquals(os.readlink(self.rootDir + '/test'), 'foo')
+        self.assertEqual(os.readlink(self.rootDir + '/test'), 'foo')
 
     @conary_test.rpm
     def testChangingSharedUpdateRPM(self):
@@ -858,7 +858,7 @@ class TestPackage(CapsuleRecipe):
         rc, txt = self.captureOutput(self.updatePkg,
             [ 'foo:rpm', ], resolve=True, raiseError=True, info=True)
 
-        self.assertEquals(txt, 'Job 1 of 3:\n'
+        self.assertEqual(txt, 'Job 1 of 3:\n'
                                '    Install baz:rpm=1.0-1-1\n'
                                'Job 2 of 3:\n'
                                '    Install bar:runtime=1.0-1-1\n'
@@ -908,7 +908,7 @@ class TestPackage(CapsuleRecipe):
 
     def checkMd5(self, path, md5):
         d = md5String(open(self.rootDir + path).read())
-        self.assertEquals(md5ToString(d), md5)
+        self.assertEqual(md5ToString(d), md5)
 
     def owners(self, path):
         db = self.openDatabase()
@@ -919,7 +919,7 @@ class TestPackage(CapsuleRecipe):
         lastOrder = [x[22:].strip() for x in
                      file(self.rootDir + '/var/log/conary').readlines()
                      if 'RPM install order' in x][-1]
-        self.assertEquals(lastOrder.split(': ', 1)[1], troves)
+        self.assertEqual(lastOrder.split(': ', 1)[1], troves)
 
     def checkOwners(self, path, troves):
         assert(self.owners(path) ==

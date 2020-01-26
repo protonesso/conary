@@ -65,7 +65,7 @@ class AbstractSearchSource(object):
         raise NotImplementedError
 
     def _filterSpecsForSource(self, troveSpecs):
-        return [], dict(zip(troveSpecs, [[x] for x in troveSpecs]))
+        return [], dict(list(zip(troveSpecs, [[x] for x in troveSpecs])))
 
     def findTrove(self, troveSpec, useAffinity=False, **kw):
         raise NotImplementedError
@@ -170,8 +170,8 @@ class NetworkSearchSource(SearchSource):
         if firstChar == '/':
             try:
                 version = versions.VersionFromString(versionStr)
-            except baseerrors.ParseError, e:
-                raise errors.TroveNotFound, 'Error parsing version "%s": %s' % (versionStr, str(e))
+            except baseerrors.ParseError as e:
+                raise errors.TroveNotFound('Error parsing version "%s": %s' % (versionStr, str(e)))
             if isinstance(version, versions.Branch):
                 label = version.label()
             else:
@@ -405,7 +405,7 @@ def createSearchPathFromStrings(searchPath):
             elif '@' in item:
                 try:
                     item = versions.Label(item)
-                except baseerrors.ParseError, err:
+                except baseerrors.ParseError as err:
                     raise baseerrors.ParseError(
                                             'Error parsing label "%s": %s' % (item, err))
                 labelList.append(item)
@@ -435,7 +435,7 @@ def createSearchSourceStackFromStrings(searchSource, searchPath, flavor,
         searchPath = createSearchPathFromStrings(searchPath)
         return createSearchSourceStack(searchSource, searchPath, flavor, db,
                                        fallBackToRepos=fallBackToRepos)
-    except baseerrors.ConaryError, err:
+    except baseerrors.ConaryError as err:
         raise baseerrors.ConaryError('Could not create search path "%s": %s' % (
                                      ' '.join(strings), err))
 
@@ -475,7 +475,7 @@ def createSearchSourceStack(searchSource, searchPath, flavor, db=None,
         elif isinstance(item[0], (list, tuple)):
             if not isinstance(item[0][1], versions.Version):
                 item = searchSource.findTroves(item, useAffinity=useAffinity)
-                item = list(itertools.chain(*item.itervalues()))
+                item = list(itertools.chain(*iter(item.values())))
             s = TroveSearchSource(searchSource.getTroveSource(), item, flavor)
             searchStack.addSource(s)
         else:

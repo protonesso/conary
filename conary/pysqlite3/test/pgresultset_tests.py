@@ -21,7 +21,7 @@ class PgResultSetTests(unittest.TestCase, testsupport.TestSupport):
     def getResult(self):
         try:
             self.cur.execute("DROP TABLE TEST")
-        except sqlite.DatabaseError, reason:
+        except sqlite.DatabaseError as reason:
             pass
 
         self.cur.execute("CREATE TABLE TEST (id, name, age)")
@@ -65,11 +65,11 @@ class PgResultSetTests(unittest.TestCase, testsupport.TestSupport):
 
     def Check_haskey(self):
         res = self.getResult()
-        if not res.has_key("id"):
+        if "id" not in res:
             self.fail("resultset should have key 'id'")
-        if not res.has_key("ID"):
+        if "ID" not in res:
             self.fail("resultset should have key 'ID'")
-        if not res.has_key("Id"):
+        if "Id" not in res:
             self.fail("resultset should have key 'Id'")
 
     def Check_len(self):
@@ -79,17 +79,17 @@ class PgResultSetTests(unittest.TestCase, testsupport.TestSupport):
 
     def Check_keys(self):
         res = self.getResult()
-        if res.keys() != ["id", "name", "age"]:
+        if list(res.keys()) != ["id", "name", "age"]:
             self.fail("keys() should return %s, returns %s" %
-                        (["id", "name", "age"], res.keys()))
+                        (["id", "name", "age"], list(res.keys())))
 
     def Check_values(self):
-        val = self.getResult().values()
+        val = list(self.getResult().values())
         if val != (5, 'Alice', 29):
             self.fail("Wrong values(): %s" % val)
 
     def Check_items(self):
-        it = self.getResult().items()
+        it = list(self.getResult().items())
         if it != [("id", 5), ("name", 'Alice'), ("age", 29)]:
             self.fail("Wrong items(): %s" % it)
 

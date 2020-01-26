@@ -16,7 +16,7 @@
 
 
 import copy
-import cPickle
+import pickle
 import pickle
 from testrunner import testhelp
 from conary.lib import networking
@@ -43,12 +43,12 @@ class NetworkingTest(testhelp.TestCase):
                 ('deepcopy', copy.deepcopy),
                 ('pickle v0', lambda x: pickle.loads(pickle.dumps(x, 0))),
                 ('pickle v2', lambda x: pickle.loads(pickle.dumps(x, 2))),
-                ('cPickle v0', lambda x: cPickle.loads(cPickle.dumps(x, 0))),
-                ('cPickle v2', lambda x: cPickle.loads(cPickle.dumps(x, 2))),
+                ('cPickle v0', lambda x: pickle.loads(pickle.dumps(x, 0))),
+                ('cPickle v2', lambda x: pickle.loads(pickle.dumps(x, 2))),
                 ]:
             try:
                 mangled = [str(mangler(networking.HostPort(x))) for x in things]
                 self.assertEqual(mangled, things)
             except:
-                print 'Error testing pickling using %r' % (name,)
+                print('Error testing pickling using %r' % (name,))
                 raise

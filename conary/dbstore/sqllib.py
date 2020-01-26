@@ -27,7 +27,7 @@ class DBversion:
         self.major = major
         self.minor = minor
 
-    def __nonzero__(self):
+    def __bool__(self):
         return self != 0
 
     def __cmp__(self, other):
@@ -61,7 +61,7 @@ class CaselessDict(dict):
             self.update(d)
     # lowercase the key
     def __l(self, s):
-        if isinstance(s, basestring):
+        if isinstance(s, str):
             return s.lower()
         return s
     def __getitem__(self, key):
@@ -88,7 +88,7 @@ class CaselessDict(dict):
     def setdefault(self, key, val):
         return dict.setdefault(self, self.__l(key), (key, val))[1]
     def update(self, other):
-        for item in other.iteritems():
+        for item in other.items():
             self.__setitem__(*item)
     def pop(self, key, default=_SIGIL):
         key = self.__l(key)
@@ -112,7 +112,7 @@ class CaselessDict(dict):
             return False
         if dict.__len__(self) != len(other):
             return False
-        for k, v in other.iteritems():
+        for k, v in other.items():
             lk = self.__l(k)
             if not dict.has_key(self, lk):
                 return False
@@ -155,7 +155,7 @@ def toDatabaseTimestamp(secsSinceEpoch=None, offset=0):
         secsSinceEpoch = time.time()
 
     timeToGet = time.gmtime(secsSinceEpoch + float(offset))
-    return long(time.strftime('%Y%m%d%H%M%S', timeToGet))
+    return int(time.strftime('%Y%m%d%H%M%S', timeToGet))
 
 
 class Row(object):
@@ -224,7 +224,7 @@ class Row(object):
         return list(self.data)
 
     def items(self):
-        return zip(self.fields, self.data)
+        return list(zip(self.fields, self.data))
 
     __SIGIL = []
     def pop(self, key, default=__SIGIL):
@@ -243,7 +243,7 @@ class Row(object):
 
     # But the item slot is magic
     def __getitem__(self, key):
-        if isinstance(key, (int, long, slice)):
+        if isinstance(key, (int, slice)):
             # Used as a sequence
             return self.data[key]
         else:
@@ -251,7 +251,7 @@ class Row(object):
             return self.data[self._indexOf(key)]
 
     def __setitem__(self, key, value):
-        if isinstance(key, (int, long, slice)):
+        if isinstance(key, (int, slice)):
             # Used as a sequence
             self.data[key] = value
         else:
@@ -263,7 +263,7 @@ class Row(object):
     def __delitem__(self, key):
         if isinstance(key, slice):
             raise TypeError("Delete by slice is not implemented")
-        elif isinstance(key, (int, long)):
+        elif isinstance(key, int):
             if key >= len(self.fields):
                 raise IndexError(key)
             index = key

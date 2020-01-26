@@ -35,7 +35,7 @@ class RoleTable:
 
     def getWhereArgs(self, cond = "where", **kw):
         where = []
-        for key, val in kw.items():
+        for key, val in list(kw.items()):
             if val is None:
                 continue
             where.append("%s = %d" % (key, val))
@@ -231,7 +231,7 @@ class RolePermissions(RoleTable):
         cu.execute(sql)
         where = set()
         for itemId, item in cu:
-            for patternId, pattern in patterns.iteritems():
+            for patternId, pattern in patterns.items():
                 if pattern == 'ALL':
                     # This is by far the most common case, so instead of
                     # enumerating every trove with its own filter, just select

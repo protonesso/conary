@@ -19,7 +19,7 @@ from testrunner import testhelp
 
 import gzip
 import os
-import StringIO
+import io
 
 from conary import rpmhelper
 from conary.lib import util
@@ -43,7 +43,7 @@ class RPMHelperTest(testhelp.TestCase):
             ])
         for rpmName, expectedSize in archives:
             fileobj = file(os.path.join(self.archiveDir, rpmName))
-            sio = StringIO.StringIO()
+            sio = io.StringIO()
             rpmhelper.extractRpmPayload(fileobj, sio)
             sio.seek(0, 2)
             self.assertEqual(sio.tell(), expectedSize)
@@ -64,7 +64,7 @@ class RPMHelperTest(testhelp.TestCase):
         # No payload compressor defined we should detect gzip or
         # assume uncompressed
         header = {rpmhelper.PAYLOADFORMAT: "cpio"}
-        fileIn = StringIO.StringIO()
+        fileIn = io.StringIO()
         fileIn.write('\x1f\x8bThis should be some gziped data')
         fileIn.seek(0)
 
@@ -73,7 +73,7 @@ class RPMHelperTest(testhelp.TestCase):
         self.mock(util, "GzipFile", gzipFunc)
         self.assertEqual(rpmhelper.UncompressedRpmPayload(fileIn),
                              'Gzip File')
-        fileIn = StringIO.StringIO()
+        fileIn = io.StringIO()
         fileIn.write('This is just some uncompressed data')
         fileIn.seek(0)
         self.assertEqual(rpmhelper.UncompressedRpmPayload(fileIn),
@@ -117,13 +117,13 @@ class RPMHelperTest(testhelp.TestCase):
         fileObj = file(rpmPath)
         header = rpmhelper.readHeader(fileObj)
         reqset, provset = header.getDeps(enableRPMVersionDeps=False)
-        self.assertEquals(str(reqset), '\n'.join((
+        self.assertEqual(str(reqset), '\n'.join((
             'file: /bin/sh',
             'rpm: ld-linux.so.2(GLIBC_PRIVATE)',
             'rpm: libc.so.6(GLIBC_2.0 GLIBC_2.1.3)',
             'rpmlib: CompressedFileNames',
             'rpmlib: PayloadFilesHavePrefix')))
-        self.assertEquals(str(provset), '\n'.join((
+        self.assertEqual(str(provset), '\n'.join((
             'rpm: depstest',
             'rpm: depstest[x86-64]',
             'rpm: libm.so.6(GLIBC_2.0 GLIBC_2.1 GLIBC_2.2 GLIBC_2.4)')))
@@ -134,13 +134,13 @@ class RPMHelperTest(testhelp.TestCase):
         fileObj = file(rpmPath)
         header = rpmhelper.readHeader(fileObj)
         reqset, provset = header.getDeps()
-        self.assertEquals(str(reqset), '\n'.join((
+        self.assertEqual(str(reqset), '\n'.join((
             'file: /bin/sh',
             'rpm: ld-linux.so.2(GLIBC_PRIVATE)',
             'rpm: libc.so.6(GLIBC_2.0 GLIBC_2.1.3)',
             'rpmlib: CompressedFileNames',
             'rpmlib: PayloadFilesHavePrefix')))
-        self.assertEquals(str(provset), '\n'.join((
+        self.assertEqual(str(provset), '\n'.join((
             'rpm: depstest',
             'rpm: depstest-0.1',
             'rpm: depstest-0.1-1',
@@ -159,7 +159,7 @@ class RPMHelperTest(testhelp.TestCase):
         fileObj = file(rpmPath)
         header = rpmhelper.readHeader(fileObj)
         reqset, provset = header.getDeps()
-        self.assertEquals(str(reqset), '\n'.join((
+        self.assertEqual(str(reqset), '\n'.join((
             'rpm: baz',
             'rpm: baz-2:1.0-el5',
             'rpm: versiondeps',
@@ -167,7 +167,7 @@ class RPMHelperTest(testhelp.TestCase):
             'rpmlib: CompressedFileNames',
             'rpmlib: PayloadFilesHavePrefix',
         )))
-        self.assertEquals(str(provset), '\n'.join((
+        self.assertEqual(str(provset), '\n'.join((
             'rpm: versiondeps-bar',
             'rpm: versiondeps-bar-2:1',
             'rpm: versiondeps-bar-2:1-2',
@@ -182,7 +182,7 @@ class RPMHelperTest(testhelp.TestCase):
         fileObj = file(rpmPath)
         header = rpmhelper.readHeader(fileObj)
         reqset, provset = header.getDeps(enableRPMVersionDeps=False)
-        self.assertEquals(str(reqset), '\n'.join((
+        self.assertEqual(str(reqset), '\n'.join((
             'file: /usr/bin/perl',
             'rpm: perl',
             'rpm: perl[Archive::Tar::Constant]',
@@ -211,7 +211,7 @@ class RPMHelperTest(testhelp.TestCase):
             'rpmlib: FileDigests',
             'rpmlib: PayloadFilesHavePrefix',
             'rpmlib: VersionedDependencies')))
-        self.assertEquals(str(provset), '\n'.join((
+        self.assertEqual(str(provset), '\n'.join((
             'rpm: perl-Archive-Tar',
             'rpm: perl-Archive-Tar[x86-64]',
             'rpm: perl[Archive::Tar::Constant]',
@@ -224,7 +224,7 @@ class RPMHelperTest(testhelp.TestCase):
         fileObj = file(rpmPath)
         header = rpmhelper.readHeader(fileObj)
         reqset, provset = header.getDeps(enableRPMVersionDeps=True)
-        self.assertEquals(str(reqset), '\n'.join((
+        self.assertEqual(str(reqset), '\n'.join((
             'file: /usr/bin/perl',
             'rpm: perl',
             'rpm: perl-4:5.10.0-68.fc11',
@@ -254,7 +254,7 @@ class RPMHelperTest(testhelp.TestCase):
             'rpmlib: FileDigests',
             'rpmlib: PayloadFilesHavePrefix',
             'rpmlib: VersionedDependencies')))
-        self.assertEquals(str(provset), '\n'.join((
+        self.assertEqual(str(provset), '\n'.join((
             'rpm: perl-Archive-Tar',
             'rpm: perl-Archive-Tar-0:1.46',
             'rpm: perl-Archive-Tar-0:1.46-68.fc11',
@@ -296,11 +296,11 @@ class RPMHelperTest(testhelp.TestCase):
 
         # Finally, StringIO
         fileObj.seek(0)
-        fileObj = StringIO.StringIO(fileObj.read())
+        fileObj = io.StringIO(fileObj.read())
         rpmhelper.verifySignatures(fileObj, [ k ])
 
         # Replace last byte
-        fileObj = StringIO.StringIO(fileObj.getvalue()[:-1])
+        fileObj = io.StringIO(fileObj.getvalue()[:-1])
         fileObj.seek(0, 2)
         fileObj.write("\xff")
         fileObj.seek(0)

@@ -39,69 +39,69 @@ class CMCoreTest(rephelp.RepositoryHelper):
 
         item = ('a', '1', None)
         sm = cml._CMOperation(item=item, modified=False)
-        self.assertEquals(sm.item, item)
-        self.assertEquals(sm.modified, False)
+        self.assertEqual(sm.item, item)
+        self.assertEqual(sm.modified, False)
         item2 = ('b', '2', None)
         self.assertRaises(NotImplementedError, sm.update, item2)
 
     @context('sysmodel')
     def testCMLocation(self):
         loc = cml.CMLocation(line=1, context='foo', op=None)
-        self.assertEquals(str(loc), 'foo:1')
-        self.assertEquals(loc.asString(), 'foo:1')
-        self.assertEquals(repr(loc),
+        self.assertEqual(str(loc), 'foo:1')
+        self.assertEqual(loc.asString(), 'foo:1')
+        self.assertEqual(repr(loc),
             "CMLocation(line=1, context='foo', op=None, spec=None)")
         loc = cml.CMLocation(line=None, context='foo', op=None)
-        self.assertEquals(str(loc), 'foo:new-line')
-        self.assertEquals(loc.asString(), 'foo:new-line')
-        self.assertEquals(repr(loc),
+        self.assertEqual(str(loc), 'foo:new-line')
+        self.assertEqual(loc.asString(), 'foo:new-line')
+        self.assertEqual(repr(loc),
             "CMLocation(line=None, context='foo', op=None, spec=None)")
         loc = cml.CMLocation(line=1, context=None, op=None)
-        self.assertEquals(str(loc), '1')
-        self.assertEquals(loc.asString(), '1')
-        self.assertEquals(repr(loc),
+        self.assertEqual(str(loc), '1')
+        self.assertEqual(loc.asString(), '1')
+        self.assertEqual(repr(loc),
             "CMLocation(line=1, context=None, op=None, spec=None)")
         loc = cml.CMLocation(line=None, context=None, op=None)
-        self.assertEquals(str(loc), 'new-line')
-        self.assertEquals(loc.asString(), 'new-line')
-        self.assertEquals(repr(loc),
+        self.assertEqual(str(loc), 'new-line')
+        self.assertEqual(loc.asString(), 'new-line')
+        self.assertEqual(repr(loc),
             "CMLocation(line=None, context=None, op=None, spec=None)")
 
     @context('sysmodel')
     def testCMTroveSpec(self):
         ts = cml.CMTroveSpec('foo', 'a@b:c', 'baz')
-        self.assertEquals(str(ts), 'foo=a@b:c[baz]')
-        self.assertEquals(ts.format(), 'foo=a@b:c[baz]')
-        self.assertEquals(ts.asString(), 'foo=a@b:c[baz]')
-        self.assertEquals(ts.pinned, False)
+        self.assertEqual(str(ts), 'foo=a@b:c[baz]')
+        self.assertEqual(ts.format(), 'foo=a@b:c[baz]')
+        self.assertEqual(ts.asString(), 'foo=a@b:c[baz]')
+        self.assertEqual(ts.pinned, False)
 
         ts = cml.CMTroveSpec('foo=a@b:c[baz]')
-        self.assertEquals(str(ts), 'foo=a@b:c[baz]')
-        self.assertEquals(ts.format(), 'foo=a@b:c[baz]')
+        self.assertEqual(str(ts), 'foo=a@b:c[baz]')
+        self.assertEqual(ts.format(), 'foo=a@b:c[baz]')
 
         ts = cml.CMTroveSpec('foo==a@b:c[baz]')
-        self.assertEquals(str(ts), 'foo==a@b:c[baz]')
-        self.assertEquals(ts.format(), 'foo==a@b:c[baz]')
-        self.assertEquals(ts.asString(), 'foo==a@b:c[baz]')
-        self.assertEquals(ts.pinned, True)
-        self.assertEquals(ts._has_branch, False)
-        self.assertEquals(ts.snapshot, False)
+        self.assertEqual(str(ts), 'foo==a@b:c[baz]')
+        self.assertEqual(ts.format(), 'foo==a@b:c[baz]')
+        self.assertEqual(ts.asString(), 'foo==a@b:c[baz]')
+        self.assertEqual(ts.pinned, True)
+        self.assertEqual(ts._has_branch, False)
+        self.assertEqual(ts.snapshot, False)
 
         ts = cml.CMTroveSpec('foo=/a@b:c[baz]')
-        self.assertEquals(str(ts), 'foo=/a@b:c[baz]')
-        self.assertEquals(ts.format(), 'foo=/a@b:c[baz]')
-        self.assertEquals(ts.asString(), 'foo=/a@b:c[baz]')
-        self.assertEquals(ts.pinned, False)
-        self.assertEquals(ts._has_branch, False)
-        self.assertEquals(ts.snapshot, False)
+        self.assertEqual(str(ts), 'foo=/a@b:c[baz]')
+        self.assertEqual(ts.format(), 'foo=/a@b:c[baz]')
+        self.assertEqual(ts.asString(), 'foo=/a@b:c[baz]')
+        self.assertEqual(ts.pinned, False)
+        self.assertEqual(ts._has_branch, False)
+        self.assertEqual(ts.snapshot, False)
 
         ts = cml.CMTroveSpec('foo=a@b:c/1.2-1-1[baz]')
-        self.assertEquals(str(ts), 'foo=a@b:c/1.2-1-1[baz]')
-        self.assertEquals(ts.format(), 'foo=a@b:c/1.2-1-1[baz]')
-        self.assertEquals(ts.asString(), 'foo=a@b:c/1.2-1-1[baz]')
-        self.assertEquals(ts.pinned, False)
-        self.assertEquals(ts._has_branch, True)
-        self.assertEquals(ts.snapshot, True)
+        self.assertEqual(str(ts), 'foo=a@b:c/1.2-1-1[baz]')
+        self.assertEqual(ts.format(), 'foo=a@b:c/1.2-1-1[baz]')
+        self.assertEqual(ts.asString(), 'foo=a@b:c/1.2-1-1[baz]')
+        self.assertEqual(ts.pinned, False)
+        self.assertEqual(ts._has_branch, True)
+        self.assertEqual(ts.snapshot, True)
 
 
     @context('sysmodel')
@@ -112,170 +112,170 @@ class CMCoreTest(rephelp.RepositoryHelper):
     @context('sysmodel')
     def testSearchTrove(self):
         s1 = cml.SearchTrove(text='foo=foo@bar:baz[~blah]')
-        self.assertEquals(repr(s1),
+        self.assertEqual(repr(s1),
             "SearchTrove(text='foo=foo@bar:baz[~blah]', modified=True, index=None)")
-        self.assertEquals(s1.format(), 'search foo=foo@bar:baz[~blah]')
-        self.assertEquals(s1.asString(), 'foo=foo@bar:baz[~blah]')
-        self.assertEquals(str(s1), 'foo=foo@bar:baz[~blah]')
-        self.assertEquals(s1.item, ('foo', 'foo@bar:baz', deps.parseFlavor('~blah')))
+        self.assertEqual(s1.format(), 'search foo=foo@bar:baz[~blah]')
+        self.assertEqual(s1.asString(), 'foo=foo@bar:baz[~blah]')
+        self.assertEqual(str(s1), 'foo=foo@bar:baz[~blah]')
+        self.assertEqual(s1.item, ('foo', 'foo@bar:baz', deps.parseFlavor('~blah')))
 
         s2 = cml.SearchTrove(item = s1.item, modified=True, index=1)
-        self.assertEquals(repr(s2),
+        self.assertEqual(repr(s2),
             "SearchTrove(text='foo=foo@bar:baz[~blah]', modified=True, index=1)")
-        self.assertEquals(s2.format(), 'search foo=foo@bar:baz[~blah]')
-        self.assertEquals(s2.asString(), 'foo=foo@bar:baz[~blah]')
-        self.assertEquals(str(s2), 'foo=foo@bar:baz[~blah]')
+        self.assertEqual(s2.format(), 'search foo=foo@bar:baz[~blah]')
+        self.assertEqual(s2.asString(), 'foo=foo@bar:baz[~blah]')
+        self.assertEqual(str(s2), 'foo=foo@bar:baz[~blah]')
 
         st = cml.SearchTrove('foo=bar:baz[blah]', modified=False)
-        self.assertEquals(st.modified, False)
+        self.assertEqual(st.modified, False)
         item2 = (st.item[0], 'bar:blah', st.item[2])
         st.update(item2)
-        self.assertEquals(st.item, item2)
-        self.assertEquals(st.modified, True)
+        self.assertEqual(st.item, item2)
+        self.assertEqual(st.modified, True)
 
     @context('sysmodel')
     def testSearchLabel(self):
         s1 = cml.SearchLabel(text='foo@bar:baz')
-        self.assertEquals(repr(s1),
+        self.assertEqual(repr(s1),
             "SearchLabel(text='foo@bar:baz', modified=True, index=None)")
-        self.assertEquals(s1.format(), 'search foo@bar:baz')
-        self.assertEquals(s1.asString(), 'foo@bar:baz')
+        self.assertEqual(s1.format(), 'search foo@bar:baz')
+        self.assertEqual(s1.asString(), 'foo@bar:baz')
 
         s2 = cml.SearchLabel(item = s1.item, modified=False, index=1)
-        self.assertEquals(repr(s2),
+        self.assertEqual(repr(s2),
             "SearchLabel(text='foo@bar:baz', modified=False, index=1)")
-        self.assertEquals(s2.format(), 'search foo@bar:baz')
-        self.assertEquals(s2.asString(), 'foo@bar:baz')
-        self.assertEquals(str(s2), 'foo@bar:baz')
+        self.assertEqual(s2.format(), 'search foo@bar:baz')
+        self.assertEqual(s2.asString(), 'foo@bar:baz')
+        self.assertEqual(str(s2), 'foo@bar:baz')
 
     @context('sysmodel')
     def testIncludeOperation(self):
         s1 = cml.IncludeOperation(text='foo=foo@bar:baz[~blah]')
-        self.assertEquals(repr(s1),
+        self.assertEqual(repr(s1),
             "IncludeOperation(text='foo=foo@bar:baz[~blah]', modified=True, index=None)")
-        self.assertEquals(s1.format(), 'include foo=foo@bar:baz[~blah]')
-        self.assertEquals(s1.asString(), 'foo=foo@bar:baz[~blah]')
-        self.assertEquals(str(s1), 'foo=foo@bar:baz[~blah]')
-        self.assertEquals(s1.item, ('foo', 'foo@bar:baz', deps.parseFlavor('~blah')))
+        self.assertEqual(s1.format(), 'include foo=foo@bar:baz[~blah]')
+        self.assertEqual(s1.asString(), 'foo=foo@bar:baz[~blah]')
+        self.assertEqual(str(s1), 'foo=foo@bar:baz[~blah]')
+        self.assertEqual(s1.item, ('foo', 'foo@bar:baz', deps.parseFlavor('~blah')))
 
         s2 = cml.IncludeOperation(item = s1.item, modified=True, index=1)
-        self.assertEquals(repr(s2),
+        self.assertEqual(repr(s2),
             "IncludeOperation(text='foo=foo@bar:baz[~blah]', modified=True, index=1)")
-        self.assertEquals(s2.format(), 'include foo=foo@bar:baz[~blah]')
-        self.assertEquals(s2.asString(), 'foo=foo@bar:baz[~blah]')
-        self.assertEquals(str(s2), 'foo=foo@bar:baz[~blah]')
+        self.assertEqual(s2.format(), 'include foo=foo@bar:baz[~blah]')
+        self.assertEqual(s2.asString(), 'foo=foo@bar:baz[~blah]')
+        self.assertEqual(str(s2), 'foo=foo@bar:baz[~blah]')
 
         st = cml.IncludeOperation('foo=bar:baz[blah]', modified=False)
-        self.assertEquals(st.modified, False)
+        self.assertEqual(st.modified, False)
         item2 = (st.item[0], 'bar:blah', st.item[2])
         st.update(item2)
-        self.assertEquals(st.item, item2)
-        self.assertEquals(st.modified, True)
+        self.assertEqual(st.item, item2)
+        self.assertEqual(st.modified, True)
 
     @context('sysmodel')
     def testNoOperation(self):
         t1 = cml.NoOperation('')
         t2 = cml.NoOperation(text='')
         t3 = cml.NoOperation(item='')
-        self.assertEquals(repr(t1), repr(t2))
-        self.assertEquals(repr(t2), repr(t3))
-        self.assertEquals(repr(t1), 
+        self.assertEqual(repr(t1), repr(t2))
+        self.assertEqual(repr(t2), repr(t3))
+        self.assertEqual(repr(t1), 
             "NoOperation(text='', modified=True, index=None)")
         t4 = cml.NoOperation('foo', modified=False, index=1)
-        self.assertEquals(repr(t4), 
+        self.assertEqual(repr(t4), 
             "NoOperation(text='foo', modified=False, index=1)")
 
     @context('sysmodel')
     def testVersionOperation(self):
         t1 = cml.VersionOperation('1.0')
-        self.assertEquals(t1.asString(), '1.0')
-        self.assertEquals(str(t1), '1.0')
-        self.assertEquals(t1.format(), 'version 1.0')
-        self.assertEquals(repr(t1), 
+        self.assertEqual(t1.asString(), '1.0')
+        self.assertEqual(str(t1), '1.0')
+        self.assertEqual(t1.format(), 'version 1.0')
+        self.assertEqual(repr(t1), 
             "VersionOperation(text='1.0', modified=True, index=None)")
         t2 = cml.VersionOperation('foo', modified=False, index=1)
-        self.assertEquals(t2.asString(), 'foo')
-        self.assertEquals(str(t2), 'foo')
-        self.assertEquals(t2.format(), 'version foo')
-        self.assertEquals(repr(t2), 
+        self.assertEqual(t2.asString(), 'foo')
+        self.assertEqual(str(t2), 'foo')
+        self.assertEqual(t2.format(), 'version foo')
+        self.assertEqual(repr(t2), 
             "VersionOperation(text='foo', modified=False, index=1)")
 
     @context('sysmodel')
     def testTroveOperation(self):
         t1 = cml.TroveOperation('foo')
-        self.assertEquals(t1.item, [('foo', None, None)])
-        self.assertEquals(t1.asString(), 'foo')
-        self.assertEquals(repr(t1),
+        self.assertEqual(t1.item, [('foo', None, None)])
+        self.assertEqual(t1.asString(), 'foo')
+        self.assertEqual(repr(t1),
             "TroveOperation(text=['foo'], modified=True, index=None)")
 
         t2 = cml.TroveOperation(['foo'])
-        self.assertEquals(t2.item, [('foo', None, None)])
-        self.assertEquals(t2.asString(), 'foo')
+        self.assertEqual(t2.item, [('foo', None, None)])
+        self.assertEqual(t2.asString(), 'foo')
 
         t3 = cml.TroveOperation(['foo', 'bar=a@b:c'])
-        self.assertEquals(t3.item, [('foo', None, None),
+        self.assertEqual(t3.item, [('foo', None, None),
                                     ('bar', 'a@b:c', None)])
         iterList = [x for x in t3]
-        self.assertEquals(iterList, [('foo', None, None),
+        self.assertEqual(iterList, [('foo', None, None),
                                      ('bar', 'a@b:c', None)])
-        self.assertEquals(t3.asString(), 'foo bar=a@b:c')
+        self.assertEqual(t3.asString(), 'foo bar=a@b:c')
 
     @context('sysmodel')
     def testTroveOperations(self):
         t1 = cml.UpdateTroveOperation('foo', index=1)
-        self.assertEquals(str(t1.getLocation()), '1')
-        self.assertEquals(repr(t1.getLocation()),
+        self.assertEqual(str(t1.getLocation()), '1')
+        self.assertEqual(repr(t1.getLocation()),
               "CMLocation(line=1, context=None,"
               " op=UpdateTroveOperation(text=['foo'], modified=True, index=1),"
               " spec=None)")
-        self.assertEquals(t1.getLocation().op, t1)
-        self.assertEquals(t1.item, [('foo', None, None)])
-        self.assertEquals(t1.asString(), 'foo')
-        self.assertEquals(str(t1), 'foo')
-        self.assertEquals(t1.format(), 'update foo')
-        self.assertEquals(repr(t1),
+        self.assertEqual(t1.getLocation().op, t1)
+        self.assertEqual(t1.item, [('foo', None, None)])
+        self.assertEqual(t1.asString(), 'foo')
+        self.assertEqual(str(t1), 'foo')
+        self.assertEqual(t1.format(), 'update foo')
+        self.assertEqual(repr(t1),
             "UpdateTroveOperation(text=['foo'], modified=True, index=1)")
 
         t2 = cml.EraseTroveOperation(['foo'], index=2, context='foo')
-        self.assertEquals(str(t2.getLocation()), 'foo:2')
-        self.assertEquals(repr(t2.getLocation()),
+        self.assertEqual(str(t2.getLocation()), 'foo:2')
+        self.assertEqual(repr(t2.getLocation()),
               "CMLocation(line=2, context='foo',"
               " op=EraseTroveOperation(text=['foo'], modified=True, index=2),"
               " spec=None)")
-        self.assertEquals(t2.getLocation().op, t2)
-        self.assertEquals(t2.item, [('foo', None, None)])
-        self.assertEquals(t2.asString(), 'foo')
-        self.assertEquals(str(t2), 'foo')
-        self.assertEquals(t2.format(), 'erase foo')
-        self.assertEquals(repr(t2),
+        self.assertEqual(t2.getLocation().op, t2)
+        self.assertEqual(t2.item, [('foo', None, None)])
+        self.assertEqual(t2.asString(), 'foo')
+        self.assertEqual(str(t2), 'foo')
+        self.assertEqual(t2.format(), 'erase foo')
+        self.assertEqual(repr(t2),
             "EraseTroveOperation(text=['foo'], modified=True, index=2)")
 
         t3 = cml.InstallTroveOperation(['foo', 'bar=a@b:c'])
-        self.assertEquals(t3.item, [('foo', None, None),
+        self.assertEqual(t3.item, [('foo', None, None),
                                     ('bar', 'a@b:c', None)])
-        self.assertEquals(t3.asString(), 'foo bar=a@b:c')
-        self.assertEquals(str(t3), 'foo bar=a@b:c')
-        self.assertEquals(t3.format(), 'install foo bar=a@b:c')
-        self.assertEquals(repr(t3),
+        self.assertEqual(t3.asString(), 'foo bar=a@b:c')
+        self.assertEqual(str(t3), 'foo bar=a@b:c')
+        self.assertEqual(t3.format(), 'install foo bar=a@b:c')
+        self.assertEqual(repr(t3),
             "InstallTroveOperation(text=['foo', 'bar=a@b:c'], modified=True, index=None)")
 
         t4 = cml.PatchTroveOperation(['foo', 'bar=a@b:c', 'baz[f]'])
-        self.assertEquals(t4.item, [('foo', None, None),
+        self.assertEqual(t4.item, [('foo', None, None),
                                     ('bar', 'a@b:c', None),
                                     ('baz', None, deps.parseFlavor('f'))])
-        self.assertEquals(t4.asString(), 'foo bar=a@b:c baz[f]')
-        self.assertEquals(str(t4), 'foo bar=a@b:c baz[f]')
-        self.assertEquals(t4.format(), 'patch foo bar=a@b:c baz[f]')
-        self.assertEquals(repr(t4),
+        self.assertEqual(t4.asString(), 'foo bar=a@b:c baz[f]')
+        self.assertEqual(str(t4), 'foo bar=a@b:c baz[f]')
+        self.assertEqual(t4.format(), 'patch foo bar=a@b:c baz[f]')
+        self.assertEqual(repr(t4),
             "PatchTroveOperation(text=['foo', 'bar=a@b:c', 'baz[f]'], modified=True, index=None)")
 
         t5 = cml.OfferTroveOperation(['foo', 'bar=a@b:c'])
-        self.assertEquals(t5.item, [('foo', None, None),
+        self.assertEqual(t5.item, [('foo', None, None),
                                     ('bar', 'a@b:c', None)])
-        self.assertEquals(t5.asString(), 'foo bar=a@b:c')
-        self.assertEquals(str(t5), 'foo bar=a@b:c')
-        self.assertEquals(t5.format(), 'offer foo bar=a@b:c')
-        self.assertEquals(repr(t5),
+        self.assertEqual(t5.asString(), 'foo bar=a@b:c')
+        self.assertEqual(str(t5), 'foo bar=a@b:c')
+        self.assertEqual(t5.format(), 'offer foo bar=a@b:c')
+        self.assertEqual(repr(t5),
             "OfferTroveOperation(text=['foo', 'bar=a@b:c'], modified=True, index=None)")
 
 
@@ -292,27 +292,27 @@ class CMTest(rephelp.RepositoryHelper):
     @context('sysmodel')
     def testCMOperations(self):
         m = self.getCM()
-        self.assertEquals(m.SearchTrove,
+        self.assertEqual(m.SearchTrove,
                 cml.SearchTrove)
-        self.assertEquals(m.SearchLabel,
+        self.assertEqual(m.SearchLabel,
                 cml.SearchLabel)
-        self.assertEquals(m.SearchOperation,
+        self.assertEqual(m.SearchOperation,
                 cml.SearchOperation)
-        self.assertEquals(m.IncludeOperation,
+        self.assertEqual(m.IncludeOperation,
                 cml.IncludeOperation)
-        self.assertEquals(m.NoOperation,
+        self.assertEqual(m.NoOperation,
                 cml.NoOperation)
-        self.assertEquals(m.VersionOperation,
+        self.assertEqual(m.VersionOperation,
                 cml.VersionOperation)
-        self.assertEquals(m.UpdateTroveOperation,
+        self.assertEqual(m.UpdateTroveOperation,
                 cml.UpdateTroveOperation)
-        self.assertEquals(m.EraseTroveOperation,
+        self.assertEqual(m.EraseTroveOperation,
                 cml.EraseTroveOperation)
-        self.assertEquals(m.InstallTroveOperation,
+        self.assertEqual(m.InstallTroveOperation,
                 cml.InstallTroveOperation)
-        self.assertEquals(m.OfferTroveOperation,
+        self.assertEqual(m.OfferTroveOperation,
                 cml.OfferTroveOperation)
-        self.assertEquals(m.PatchTroveOperation,
+        self.assertEqual(m.PatchTroveOperation,
                 cml.PatchTroveOperation)
         
     @context('sysmodel')
@@ -334,36 +334,36 @@ class CMTest(rephelp.RepositoryHelper):
         inc = cml.IncludeOperation(text='cml-foo', modified=False, index=6)
         m.appendOp(inc)
 
-        self.assertEquals(m.getVersion(), None)
+        self.assertEqual(m.getVersion(), None)
         ver = cml.VersionOperation('2.0', modified=False, index=7)
         m.setVersion(ver)
-        self.assertEquals(str(m.getVersion()), '2.0')
+        self.assertEqual(str(m.getVersion()), '2.0')
 
-        self.assertEquals(len(m.modelOps), 5)
-        self.assertEquals(m.modelOps[0], gs)
-        self.assertEquals(m.modelOps[1], gl)
-        self.assertEquals(m.modelOps[2], at)
-        self.assertEquals(m.modelOps[3], rt)
-        self.assertEquals(m.modelOps[4], inc)
-        self.assertEquals(m.noOps[0], nop)
-        self.assertEquals(len(m.noOps), 1)
-        self.assertEquals(sorted(m.indexes.keys()), [1,2,3,4,5,6,7])
-        self.assertEquals(m.indexes[1], [gs])
-        self.assertEquals(m.indexes[2], [gl])
-        self.assertEquals(m.indexes[3], [nop])
-        self.assertEquals(m.indexes[4], [at])
-        self.assertEquals(m.indexes[5], [rt])
-        self.assertEquals(m.indexes[6], [inc])
-        self.assertEquals(m.indexes[7], [ver])
-        self.assertEquals(m.modified(), False)
+        self.assertEqual(len(m.modelOps), 5)
+        self.assertEqual(m.modelOps[0], gs)
+        self.assertEqual(m.modelOps[1], gl)
+        self.assertEqual(m.modelOps[2], at)
+        self.assertEqual(m.modelOps[3], rt)
+        self.assertEqual(m.modelOps[4], inc)
+        self.assertEqual(m.noOps[0], nop)
+        self.assertEqual(len(m.noOps), 1)
+        self.assertEqual(sorted(m.indexes.keys()), [1,2,3,4,5,6,7])
+        self.assertEqual(m.indexes[1], [gs])
+        self.assertEqual(m.indexes[2], [gl])
+        self.assertEqual(m.indexes[3], [nop])
+        self.assertEqual(m.indexes[4], [at])
+        self.assertEqual(m.indexes[5], [rt])
+        self.assertEqual(m.indexes[6], [inc])
+        self.assertEqual(m.indexes[7], [ver])
+        self.assertEqual(m.modified(), False)
 
     @context('sysmodel')
     def testAddNoOpByText(self):
         m = self.getCM()
         m.appendNoOpByText('#foo', modified=False, index=1)
-        self.assertEquals(len(m.noOps), 1)
-        self.assertEquals(str(m.noOps[0]), '#foo')
-        self.assertEquals(sorted(m.indexes.keys()), [1])
+        self.assertEqual(len(m.noOps), 1)
+        self.assertEqual(str(m.noOps[0]), '#foo')
+        self.assertEqual(sorted(m.indexes.keys()), [1])
 
     @context('sysmodel')
     def testAddOperationsByName(self):
@@ -381,14 +381,14 @@ class CMTest(rephelp.RepositoryHelper):
         m.appendOpByName('include', text='cml-foo',
             modified=False, index=6)
 
-        self.assertEquals(len(m.modelOps), 6)
-        self.assertEquals(m.modelOps[0].format(), 'install group-foo')
-        self.assertEquals(m.modelOps[1].format(), 'update bar blah')
-        self.assertEquals(m.modelOps[2].format(), 'patch group-errata-1234')
-        self.assertEquals(m.modelOps[3].format(), 'erase baz')
-        self.assertEquals(m.modelOps[4].format(), 'offer optional')
-        self.assertEquals(m.modelOps[5].format(), 'include cml-foo')
-        self.assertEquals(sorted(m.indexes.keys()), [1,2,3,4,5,6])
+        self.assertEqual(len(m.modelOps), 6)
+        self.assertEqual(m.modelOps[0].format(), 'install group-foo')
+        self.assertEqual(m.modelOps[1].format(), 'update bar blah')
+        self.assertEqual(m.modelOps[2].format(), 'patch group-errata-1234')
+        self.assertEqual(m.modelOps[3].format(), 'erase baz')
+        self.assertEqual(m.modelOps[4].format(), 'offer optional')
+        self.assertEqual(m.modelOps[5].format(), 'include cml-foo')
+        self.assertEqual(sorted(m.indexes.keys()), [1,2,3,4,5,6])
 
     @context('sysmodel')
     def testRemoveOp(self):
@@ -400,9 +400,9 @@ class CMTest(rephelp.RepositoryHelper):
         m.appendOpByName('patch', text='group-errata-1234',
             modified=False, index=3)
 
-        self.assertEquals(len(m.modelOps), 3)
+        self.assertEqual(len(m.modelOps), 3)
         m.removeOp(op)
-        self.assertEquals(len(m.modelOps), 2)
+        self.assertEqual(len(m.modelOps), 2)
 
     @context('sysmodel')
     def testAddEraseOperation(self):
@@ -413,19 +413,19 @@ class CMTest(rephelp.RepositoryHelper):
         m.appendOpByName('erase', text='baz',
             modified=False, index=2)
 
-        self.assertEquals(len(m.modelOps), 2)
-        self.assertEquals(str(m.modelOps[0]), 'group-foo')
-        self.assertEquals(str(m.modelOps[1]), 'baz')
-        self.assertEquals(m.modelOps[0].format(), 'install group-foo')
-        self.assertEquals(m.modelOps[1].format(), 'erase baz')
+        self.assertEqual(len(m.modelOps), 2)
+        self.assertEqual(str(m.modelOps[0]), 'group-foo')
+        self.assertEqual(str(m.modelOps[1]), 'baz')
+        self.assertEqual(m.modelOps[0].format(), 'install group-foo')
+        self.assertEqual(m.modelOps[1].format(), 'erase baz')
 
         m.appendOpByName('update', text=['bar', 'blah'],
             modified=False, index=3)
-        self.assertEquals(m.modelOps[2].format(), 'update bar blah')
+        self.assertEqual(m.modelOps[2].format(), 'update bar blah')
 
         m.appendOpByName('erase', text='bar')
-        self.assertEquals(m.modelOps[2].format(), 'update bar blah')
-        self.assertEquals(m.modelOps[3].format(), 'erase bar')
+        self.assertEqual(m.modelOps[2].format(), 'update bar blah')
+        self.assertEqual(m.modelOps[3].format(), 'erase bar')
 
     @context('sysmodel')
     def testRefreshVersionSnapshots(self):
@@ -485,16 +485,16 @@ class CMTest(rephelp.RepositoryHelper):
             modified=False, index=5)
         m.appendOp(inc)
 
-        self.assertEquals(m.modified(), False)
-        self.assertEquals([x.format() for x in m.modelOps],
+        self.assertEqual(m.modified(), False)
+        self.assertEqual([x.format() for x in m.modelOps],
             ['search group-foo=g@h:i/1.0-1-1',
              'search j@k:l',
              'update bar=g@h:i/2.0-1-1',
              'install pinned==g@h:i/2.0-1-1',
              'include cml-inc=g@h:i/1.0-1-1'])
         m.refreshVersionSnapshots()
-        self.assertEquals(m.modified(), True)
-        self.assertEquals([x.format() for x in m.modelOps],
+        self.assertEqual(m.modified(), True)
+        self.assertEqual([x.format() for x in m.modelOps],
             ['search group-foo=g@h:i/1.0-1-2',
              'search j@k:l',
              'update bar=g@h:i/2.0-1-2',
@@ -538,8 +538,8 @@ class CMTest(rephelp.RepositoryHelper):
             }
         )
         m.refreshVersionSnapshots()
-        self.assertEquals(m.modified(), True)
-        self.assertEquals([x.format() for x in m.modelOps],
+        self.assertEqual(m.modified(), True)
+        self.assertEqual([x.format() for x in m.modelOps],
             ['search group-foo=g@h:i/1.0-1-2',
              'search j@k:l',
              'update bar=g@h:i/2.0-1-2',
@@ -580,8 +580,8 @@ class CMTest(rephelp.RepositoryHelper):
             }
         repos.findTroves._mock.setDefaultReturn(findtroves)
         m.refreshVersionSnapshots()
-        self.assertEquals(m.modified(), True)
-        self.assertEquals([x.format() for x in m.modelOps],
+        self.assertEqual(m.modified(), True)
+        self.assertEqual([x.format() for x in m.modelOps],
             ['search group-foo=g@h:i/1.0-1-2',
              'search j@k:l',
              'update bar=g@h:i/2.0-1-2',
@@ -591,10 +591,10 @@ class CMTest(rephelp.RepositoryHelper):
         # New version is missing
         del findtroves[('group-foo', 'g@h:i', None)]
         err = self.assertRaises(TroveNotFound, m.refreshVersionSnapshots)
-        self.assertEquals(str(err), "Trove not found: group-foo=g@h:i")
+        self.assertEqual(str(err), "Trove not found: group-foo=g@h:i")
         del findtroves[('bar', 'g@h:i', None)]
         err = self.assertRaises(TroveNotFound, m.refreshVersionSnapshots)
-        self.assertEquals(str(err),
+        self.assertEqual(str(err),
                 "2 troves not found:\nbar=g@h:i\ngroup-foo=g@h:i")
 
     def testNoRefreshLocalVersions(self):
@@ -608,14 +608,14 @@ class CMTest(rephelp.RepositoryHelper):
             modified=False, index=4)
         m.appendOp(pi)
 
-        self.assertEquals(m.modified(), False)
-        self.assertEquals([x.format() for x in m.modelOps],
+        self.assertEqual(m.modified(), False)
+        self.assertEqual([x.format() for x in m.modelOps],
             ['install foo=/local@local:COOK/2.0-1-1'])
         m.refreshVersionSnapshots()
         repos.findTroves._mock.assertNotCalled()
-        self.assertEquals([x.format() for x in m.modelOps],
+        self.assertEqual([x.format() for x in m.modelOps],
             ['install foo=/local@local:COOK/2.0-1-1'])
-        self.assertEquals(m.modified(), False)
+        self.assertEqual(m.modified(), False)
 
 
 class CMLTest(rephelp.RepositoryHelper):
@@ -631,10 +631,10 @@ class CMLTest(rephelp.RepositoryHelper):
     @context('sysmodel')
     def testInit(self):
         smf = self.getCML()
-        self.assertEquals(smf.filedata, [])
+        self.assertEqual(smf.filedata, [])
         smf.parse(fileData=['# comment\n'])
-        self.assertEquals(smf.filedata, ['# comment\n'])
-        self.assertEquals(repr(smf.noOps[0]),
+        self.assertEqual(smf.filedata, ['# comment\n'])
+        self.assertEqual(repr(smf.noOps[0]),
             repr(cml.NoOperation('# comment', modified=False, index=1)))
         smf.parse() # does not raise an exception
 
@@ -642,17 +642,17 @@ class CMLTest(rephelp.RepositoryHelper):
     def testCMReset(self):
         smf = self.getCML()
         smf.parse(fileData=['# comment\n', 'search foo\n', 'install bar\n'])
-        self.assertEquals(smf.format(),
+        self.assertEqual(smf.format(),
             '# comment\n'
             'search foo\n'
             'install bar\n')
         smf.parse(fileData=['# comment\n', 'search foo\n'])
-        self.assertEquals(smf.format(),
+        self.assertEqual(smf.format(),
             '# comment\n'
             'search foo\n')
         smf.reset()
-        self.assertEquals(smf.format(), '')
-        self.assertEquals(smf.modelOps, [])
+        self.assertEqual(smf.format(), '')
+        self.assertEqual(smf.modelOps, [])
 
     @context('sysmodel')
     def testQuotedData(self):
@@ -667,7 +667,7 @@ class CMLTest(rephelp.RepositoryHelper):
         smf.modelOps[1].modified = True
         smf.appendOpByName('install',
             'blah[~foo, !bar, ~!baz is: x86(cmov)]')
-        self.assertEquals(smf.format(), '\n'.join((
+        self.assertEqual(smf.format(), '\n'.join((
             "search 'group-foo=bar:baz/1.2[a,b is: x86_64]'",
             "search 'group-foo=bar:baz/1.2[a,b is: x86(cmov,i386,i486,i586)]'",
             "install foo",
@@ -685,12 +685,12 @@ class CMLTest(rephelp.RepositoryHelper):
             "install %s" % ' '.join("'%s'" % x for x in trvspecs),
             "",
         ])
-        self.assertEquals(smf.format(), expected)
+        self.assertEqual(smf.format(), expected)
         # Parse it again, make sure we get the same results
         smf = self.getCML()
         smf.parse(fileData=expected.strip().split('\n'))
-        self.assertEquals(smf.format(), expected)
-        self.assertEquals(
+        self.assertEqual(smf.format(), expected)
+        self.assertEqual(
                 [ len(x.item) for x in smf.modelOps ],
                 [ 2 ])
 
@@ -699,29 +699,29 @@ class CMLTest(rephelp.RepositoryHelper):
         smf = self.getCML()
 
         smf.appendNoOpByText('# an initial comment')
-        self.assertEquals(smf.format(),
+        self.assertEqual(smf.format(),
             '# an initial comment\n')
 
         smf.appendOpByName('update', 'foo')
-        self.assertEquals(smf.format(),
+        self.assertEqual(smf.format(),
             '# an initial comment\n'
             'update foo\n')
 
         smf.appendOp(cml.SearchLabel('a@b:c'))
-        self.assertEquals(smf.format(),
+        self.assertEqual(smf.format(),
             '# an initial comment\n'
             'update foo\n'
             'search a@b:c\n')
 
         smf.setVersion(cml.VersionOperation('1.0'))
-        self.assertEquals(smf.format(),
+        self.assertEqual(smf.format(),
             '# an initial comment\n'
             'version 1.0\n'
             'update foo\n'
             'search a@b:c\n')
 
         smf.appendOpByName('offer', 'optional')
-        self.assertEquals(smf.format(),
+        self.assertEqual(smf.format(),
             '# an initial comment\n'
             'version 1.0\n'
             'update foo\n'
@@ -729,7 +729,7 @@ class CMLTest(rephelp.RepositoryHelper):
             'offer optional\n')
 
         smf.appendOpByName('include', 'cml-inc')
-        self.assertEquals(smf.format(),
+        self.assertEqual(smf.format(),
             '# an initial comment\n'
             'version 1.0\n'
             'update foo\n'
@@ -738,7 +738,7 @@ class CMLTest(rephelp.RepositoryHelper):
             'include cml-inc\n')
 
         smf.appendNoOpByText('# a trailing comment', index=999)
-        self.assertEquals(smf.format(),
+        self.assertEqual(smf.format(),
             '# an initial comment\n'
             'version 1.0\n'
             'update foo\n'
@@ -748,7 +748,7 @@ class CMLTest(rephelp.RepositoryHelper):
             '# a trailing comment\n')
 
         smf.appendNoOpByText('# another trailing comment', index=999)
-        self.assertEquals(smf.format(),
+        self.assertEqual(smf.format(),
             '# an initial comment\n'
             'version 1.0\n'
             'update foo\n'
@@ -759,7 +759,7 @@ class CMLTest(rephelp.RepositoryHelper):
             '# another trailing comment\n')
 
         smf2 = smf.copy()
-        self.assertEquals(smf.format(), smf2.format())
+        self.assertEqual(smf.format(), smf2.format())
 
     @context('sysmodel')
     def testParseWrite(self):
@@ -783,22 +783,22 @@ class CMLTest(rephelp.RepositoryHelper):
         ))
         smf = self.getCML()
         smf.parse(fileData=[x+'\n' for x in fileData.split('\n')][:-1])
-        self.assertEquals(smf.format(), fileData)
-        self.assertEquals(str(smf.modelOps[3].getLocation(
+        self.assertEqual(smf.format(), fileData)
+        self.assertEqual(str(smf.modelOps[3].getLocation(
                                   smf.modelOps[3].item[0])), '7:bar')
-        self.assertEquals(smf.modelOps[3].format(), 'install bar')
+        self.assertEqual(smf.modelOps[3].format(), 'install bar')
         smf.modelOps[2].modified=True
-        self.assertEquals(smf.modified(), True)
+        self.assertEqual(smf.modified(), True)
         modFileData = fileData.replace(' #disappearing act', '')
-        self.assertEquals(smf.format(), modFileData)
+        self.assertEqual(smf.format(), modFileData)
         smf.appendOp(cml.UpdateTroveOperation('newtrove'))
         modFileData = modFileData.replace('include cml-inc\n',
                                           'include cml-inc\nupdate newtrove\n')
-        self.assertEquals(smf.format(), modFileData)
+        self.assertEqual(smf.format(), modFileData)
         smf.appendOp(cml.SearchLabel('d@e:f'))
         modFileData = modFileData.replace('update newtrove\n',
                                           'update newtrove\nsearch d@e:f\n')
-        self.assertEquals(smf.format(), modFileData)
+        self.assertEqual(smf.format(), modFileData)
 
         mockFile = mock.MockObject()
         smf.write(mockFile)
@@ -806,10 +806,10 @@ class CMLTest(rephelp.RepositoryHelper):
 
         smf.parse(fileData=[x+'\n' for x in fileData.split('\n')][:-1],
                   context='foo')
-        self.assertEquals(str(smf.modelOps[3].getLocation(
+        self.assertEqual(str(smf.modelOps[3].getLocation(
                                     smf.modelOps[3].item[0])),
                           'foo:7:bar')
-        self.assertEquals(smf.modelOps[3].format(), 'install bar')
+        self.assertEqual(smf.modelOps[3].format(), 'install bar')
 
 
     @context('sysmodel')
@@ -817,26 +817,26 @@ class CMLTest(rephelp.RepositoryHelper):
         smf = self.getCML()
         e =self.assertRaises(cml.CMError,
             smf.parse, fileData=['badverb noun'], context='/foo')
-        self.assertEquals(str(e), '/foo:1: Unrecognized command "badverb"')
+        self.assertEqual(str(e), '/foo:1: Unrecognized command "badverb"')
         e =self.assertRaises(cml.CMError,
             smf.parse, fileData=['badverb'], context='/foo')
-        self.assertEquals(str(e), '/foo:1: Invalid statement "badverb"')
+        self.assertEqual(str(e), '/foo:1: Invalid statement "badverb"')
         e =self.assertRaises(cml.CMError,
             smf.parse, fileData=['search foo=bar=baz@blah@blah:1-1-1-1-1'])
-        self.assertEquals(str(e),
+        self.assertEqual(str(e),
             '/foo:1: Error with spec "foo=bar=baz@blah@blah:1-1-1-1-1":'
             " Too many ='s")
         e = self.assertRaises(cml.CMError,
             smf.parse, fileData=['install "'], context='/foo')
-        self.assertEquals(str(e), '/foo:1: No closing quotation')
+        self.assertEqual(str(e), '/foo:1: No closing quotation')
         e = self.assertRaises(cml.CMError,
             smf.parse, fileData=['search "'], context='/foo')
-        self.assertEquals(str(e), '/foo:1: No closing quotation')
+        self.assertEqual(str(e), '/foo:1: No closing quotation')
 
     @context('sysmodel')
     def testEmptyEverything(self):
         smf = self.getCML()
-        self.assertEquals(smf.format(), '')
+        self.assertEqual(smf.format(), '')
 
     @context('sysmodel')
     def testImmediateErasureInModelData(self):
@@ -850,4 +850,4 @@ class CMLTest(rephelp.RepositoryHelper):
         smf.parse(fileData=[x+'\n' for x in fileData.split('\n')][:-1])
         # ensure that erasure is not short-circuited -- model should
         # not be truncated to just the search line.
-        self.assertEquals(smf.format(), fileData)
+        self.assertEqual(smf.format(), fileData)

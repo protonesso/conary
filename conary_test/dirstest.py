@@ -43,7 +43,7 @@ class DirectoryTest(rephelp.RepositoryHelper):
         self.resetRoot()
         self.updatePkg(self.rootDir, 'testdirs')
         sb = os.stat(self.tmpdir)
-        assert(sb.st_mode == 041777)
+        assert(sb.st_mode == 0o41777)
 
     def testDir2(self):
         """
@@ -52,7 +52,7 @@ class DirectoryTest(rephelp.RepositoryHelper):
         """
         self.resetRoot()
         os.mkdir(self.tmpdir)
-        os.chmod(self.tmpdir, 0755)
+        os.chmod(self.tmpdir, 0o755)
         self.updatePkg(self.rootDir, 'testdirs')
         sb = os.stat(self.tmpdir)
-        assert(sb.st_mode == 041777)
+        assert(sb.st_mode == 0o41777)

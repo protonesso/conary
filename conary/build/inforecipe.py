@@ -52,6 +52,6 @@ class UserGroupInfoRecipe(AbstractPackageRecipe):
         return klass.loadPolicy(self,
                                 internalPolicyModules = internalPolicyModules)
 
-exec defaultrecipes.BaseRequiresRecipe
-exec defaultrecipes.UserInfoRecipe
-exec defaultrecipes.GroupInfoRecipe
+exec(defaultrecipes.BaseRequiresRecipe)
+exec(defaultrecipes.UserInfoRecipe)
+exec(defaultrecipes.GroupInfoRecipe)

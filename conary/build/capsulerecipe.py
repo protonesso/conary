@@ -32,7 +32,7 @@ class AbstractCapsuleRecipe(AbstractPackageRecipe):
         klass.__init__(self, *args, **kwargs)
 
         from conary.build import build
-        for name, item in build.__dict__.items():
+        for name, item in list(build.__dict__.items()):
             if inspect.isclass(item) and issubclass(item, action.Action):
                 self._addBuildAction(name, item)
 
@@ -43,4 +43,4 @@ class AbstractCapsuleRecipe(AbstractPackageRecipe):
 
 
 
-exec defaultrecipes.CapsuleRecipe
+exec(defaultrecipes.CapsuleRecipe)

@@ -232,7 +232,7 @@ cannot shadow earlier trove
             # check for duplicates
             hasTroves = self.repos.hasTroves(branchedTroves)
 
-            for (name, version, flavor), troveCs in branchedTroves.iteritems():
+            for (name, version, flavor), troveCs in branchedTroves.items():
                 if hasTroves[name, version, flavor]:
                     dupList.append((name, version.branch()))
                 else:

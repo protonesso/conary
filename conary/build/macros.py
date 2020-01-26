@@ -41,7 +41,7 @@ class Macros(dict):
 
     def update(self, other):
         if isinstance(other, dict):
-            for key, item in other.iteritems():
+            for key, item in other.items():
                 self[key] = item
         else:
             for key, item in other:
@@ -63,7 +63,7 @@ class Macros(dict):
             return
         # '.' in name reserved for getting alternative representations
         if '.' in name:
-            raise MacroError, 'name "%s" contains illegal character: "."' % name
+            raise MacroError('name "%s" contains illegal character: "."' % name)
         if self.__track:
             self.__tracked[name] = 1
         # only expand references to ourself
@@ -121,7 +121,7 @@ class Macros(dict):
         if repmethod == 'literalRegex':
             return re.escape(name)
         # should not be reached
-        raise MacroError, 'unknown representation method %s for %s' %(repmethod, name)
+        raise MacroError('unknown representation method %s for %s' %(repmethod, name))
 
     def __getattr__(self, name):
         return self.__getitem__(name)
@@ -130,7 +130,7 @@ class Macros(dict):
         self.__track = flag
 
     def getTrackedChanges(self):
-        return self.__tracked.keys()
+        return list(self.__tracked.keys())
 
     def copy(self, shadow=True):
         # shadow saves initial copying cost for a higher search cost
@@ -147,7 +147,7 @@ class Macros(dict):
         if self.__macros:
             # just accessing the element will copy it to this
             # macro
-            for key in self.__macros.keys():
+            for key in list(self.__macros.keys()):
                 dummy = self[key]
             self.__macros = {}
 

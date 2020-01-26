@@ -7438,8 +7438,8 @@ class DifflibTest(rephelp.RepositoryHelper):
 
         diff = fixeddifflib.unified_diff(first, second,
                                         "old", "new")
-        diff.next()
-        diff.next()
+        next(diff)
+        next(diff)
 
         # The next stuff takes about 30 seconds, so only enable it if you want
         # to test for regressions

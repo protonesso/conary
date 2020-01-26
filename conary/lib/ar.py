@@ -39,10 +39,10 @@ class ArFile(object):
     '''
     __slots__ = ['name', 'mtime', 'uid', 'gid', 'mode', 'size', 'data']
     def __init__(self, **kw):
-        for x, y in kw.items():
+        for x, y in list(kw.items()):
             setattr(self, x, y)
     def __repr__(self):
-        return '<ArFile 0%0o %d:%d %10d %s %s>' %(self.mode%0777, self.uid,
+        return '<ArFile 0%0o %d:%d %10d %s %s>' %(self.mode%0o777, self.uid,
             self.gid, self.size, time.ctime(self.mtime), self.name)
 
 def Archive(fileObj):

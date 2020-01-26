@@ -21,7 +21,7 @@ The conary main program.
 
 import sys
 if sys.version_info < (2, 6):
-    print "error: python 2.6 or later is required"
+    print("error: python 2.6 or later is required")
     sys.exit(1)
 
 #stdlib
@@ -112,13 +112,13 @@ Creates a changeset with the specified troves and stores it in <outfile>"""
         kwargs = {}
 
         callback = self.getCallback(cfg, argSet)
-        if argSet.has_key('quiet'):
+        if 'quiet' in argSet:
             del argSet['quiet']
-        if argSet.has_key('json'):
+        if 'json' in argSet:
             del argSet['json']
         kwargs['callback'] = callback
 
-        kwargs['recurse'] = not(argSet.has_key('no-recurse'))
+        kwargs['recurse'] = not('no-recurse' in argSet)
         if not kwargs['recurse']:
             del argSet['no-recurse']
 
@@ -145,7 +145,7 @@ class CommitCommand(ConaryCommand):
 
     def runCommand(self, cfg, argSet, otherArgs):
         targetBranch = None
-        if argSet.has_key('target-branch'):
+        if 'target-branch' in argSet:
             targetBranch  = argSet['target-branch']
             del argSet['target-branch']
         if len(otherArgs) < 3: return self.usage()
@@ -224,7 +224,7 @@ class EmergeCommand(ConaryCommand):
             return cook.cookCommand(cfg, otherArgs[2:], False, {},
                                     emerge = True, cookIds=cookIds,
                                     ignoreDeps=ignoreDeps)
-        except cook.CookError, msg:
+        except cook.CookError as msg:
             log.error(msg)
             return 1
 _register(EmergeCommand)
@@ -354,10 +354,10 @@ class RemoveCommand(ConaryCommand):
 
         try:
             db.removeFiles([ x[1] for x in pathList ])
-        except conary.errors.DatabaseError, e:
+        except conary.errors.DatabaseError as e:
             log.error(str(e))
             return 1
-        except OSError, e:
+        except OSError as e:
             log.error("cannot remove %s: %s" % (fullPath, e.strerror))
             return 1
 
@@ -388,10 +388,10 @@ class RepairCommand(ConaryCommand):
 
         try:
             db.repairTroves(client.getRepos(), troveList)
-        except conary.errors.DatabaseError, e:
+        except conary.errors.DatabaseError as e:
             log.error(str(e))
             return 1
-        except OSError, e:
+        except OSError as e:
             log.error("cannot remove %s: %s" % (fullPath, e.strerror))
             return 1
 
@@ -422,10 +422,10 @@ class RestoreCommand(ConaryCommand):
 
         try:
             db.restoreTroves(client.getRepos(), troveList)
-        except conary.errors.DatabaseError, e:
+        except conary.errors.DatabaseError as e:
             log.error(str(e))
             return 1
-        except OSError, e:
+        except OSError as e:
             log.error("cannot remove %s: %s" % (fullPath, e.strerror))
             return 1
 
@@ -525,7 +525,7 @@ rollback operation #151 and all later operations)."""
         kwargs['capsuleChangesets'] = argSet.pop('from-file', [])
 
         kwargs['callback'] = self.getCallback(cfg, argSet)
-        if argSet.has_key('json'):
+        if 'json' in argSet:
             del argSet['json']
 
         if argSet or len(otherArgs) != 3: return self.usage()
@@ -799,7 +799,7 @@ class RepQueryCommand(_AbstractQueryCommand):
             kw['filesToShow'].append(files)
 
         if kw['filesToShow'] and kw['showBuildLog']:
-            print 'error: can\'t use --build-log and --show-file together'
+            print('error: can\'t use --build-log and --show-file together')
             return 1
 
         if argSet.pop('show-removed', False):
@@ -1055,13 +1055,13 @@ class _UpdateCommand(ConaryCommand, _CallbackCommand):
         modelFile = systemmodel.SystemModelFile(model)
 
         callback = self.getCallback(cfg, argSet, modelFile=modelFile)
-        if argSet.has_key('quiet'):
+        if 'quiet' in argSet:
             del argSet['quiet']
-        if argSet.has_key('json'):
+        if 'json' in argSet:
             del argSet['json']
         kwargs['callback'] = callback
 
-        if argSet.has_key('resolve'):
+        if 'resolve' in argSet:
             cfg.autoResolve = True
             del argSet['resolve']
 
@@ -1070,7 +1070,7 @@ class _UpdateCommand(ConaryCommand, _CallbackCommand):
         if os.path.normpath(cfg.root) != '/':
             kwargs['noRestart'] = True
 
-        if argSet.has_key('no-resolve'):
+        if 'no-resolve' in argSet:
             cfg.autoResolve = False
             del argSet['no-resolve']
         if argSet.pop('keep-required', False):
@@ -1282,7 +1282,7 @@ class UpdateAllCommand(_UpdateCommand, _CallbackCommand):
         kwargs = { 'systemModel': False }
         kwargs['restartInfo'] = argSet.pop('restart-info', None)
         kwargs['callback'] = self.getCallback(cfg, argSet)
-        if argSet.has_key('json'):
+        if 'json' in argSet:
             del argSet['json']
 
         model = cml.CML(cfg)
@@ -1303,15 +1303,15 @@ class UpdateAllCommand(_UpdateCommand, _CallbackCommand):
         if os.path.normpath(cfg.root) != '/':
             kwargs['noRestart'] = True
 
-        if argSet.has_key('info'):
+        if 'info' in argSet:
             kwargs['info'] = True
             del argSet['info']
 
-        if argSet.has_key('items'):
+        if 'items' in argSet:
             kwargs['showItems'] = True
             del argSet['items']
 
-        if argSet.has_key('no-deps'):
+        if 'no-deps' in argSet:
             kwargs['depCheck'] = False
             del argSet['no-deps']
 
@@ -1320,7 +1320,7 @@ class UpdateAllCommand(_UpdateCommand, _CallbackCommand):
         kwargs["replaceModifiedFiles"] = argSet.pop('replace-modified-files', False)
         kwargs["replaceUnmanagedFiles"] = argSet.pop('replace-unmanaged-files', False)
 
-        if argSet.has_key('replace-files'):
+        if 'replace-files' in argSet:
             del argSet['replace-files']
             kwargs["replaceFiles"] = \
             kwargs["replaceModifiedConfigFiles"] = \
@@ -1336,15 +1336,15 @@ class UpdateAllCommand(_UpdateCommand, _CallbackCommand):
 
         kwargs['checkPathConflicts'] = \
                                 not argSet.pop('no-conflict-check', False)
-        if argSet.has_key('no-resolve'):
+        if 'no-resolve' in argSet:
             cfg.autoResolve = False
             del argSet['no-resolve']
 
-        if argSet.has_key('resolve'):
+        if 'resolve' in argSet:
             cfg.autoResolve = True
             del argSet['resolve']
 
-        if argSet.has_key('test'):
+        if 'test' in argSet:
             kwargs['test'] = argSet['test']
             del argSet['test']
 
@@ -1432,10 +1432,10 @@ class ConaryMain(command.MainHandler):
     hobbleShortOpts = True
 
     def usage(self, rc = 1, showAll=False):
-        print 'Conary Software Configuration Management System'
+        print('Conary Software Configuration Management System')
         if not showAll:
-            print
-            print 'Common Commands (use "conary help" for the full list)'
+            print()
+            print('Common Commands (use "conary help" for the full list)')
         return options.MainHandler.usage(self, rc, showAll=showAll)
 
 
@@ -1447,7 +1447,7 @@ class ConaryMain(command.MainHandler):
         # this way so we can get rid of any extraneous options that
         # may precede the command name.
         if '--version' in argv:
-            print self.version
+            print(self.version)
             return
 
         dummyCfg = self.configClass(readConfigFiles=False)
@@ -1456,9 +1456,9 @@ class ConaryMain(command.MainHandler):
             # silly such as "conary --some-switch-that-doesnt-exist".
             # We have to handle it here. (CNY-3364)
             cmdArgv = self._getPreCommandOptions(argv, dummyCfg)[1]
-        except options.OptionError, oe:
+        except options.OptionError as oe:
             self.usage()
-            print str(oe)
+            print(str(oe))
             return 1
         thisCommand = self.getCommand(cmdArgv, dummyCfg)
         self._ignoreConfigErrors = getattr(thisCommand, 'ignoreConfigErrors', False)
@@ -1476,7 +1476,7 @@ class ConaryMain(command.MainHandler):
         cfg.initializeFlavors()
 
         lsprof = False
-        if argSet.has_key('lsprof'):
+        if 'lsprof' in argSet:
             import cProfile
             prof = cProfile.Profile()
             prof.enable()
@@ -1507,12 +1507,12 @@ def main(argv=sys.argv):
 
         conaryMain = ConaryMain()
         return conaryMain.main(argv, debuggerException, debugAll=debugAll)
-    except IOError, e:
+    except IOError as e:
         # allow broken pipe to exit
         if e.errno != errno.EPIPE:
             raise
-    except conary.errors.ReexecRequired, e:
-        print e
+    except conary.errors.ReexecRequired as e:
+        print(e)
         # a restart of this command has been requested for some 
         # reason.  Exit code will now be the exit code of the redirect.
         if e.execParams is not None:
@@ -1523,16 +1523,16 @@ def main(argv=sys.argv):
         os.execve(sys.argv[0], args, os.environ)
     except debuggerException:
         raise
-    except cfgtypes.CfgError, e:
+    except cfgtypes.CfgError as e:
         if log.getVerbosity() == log.DEBUG:
             raise
         log.error(str(e))
     except (conary.repository.errors.ConaryError, 
-            openpgpfile.PGPError), e:
+            openpgpfile.PGPError) as e:
         if not str(e):
             raise
         else:
-            print >> sys.stderr, str(e)
+            print(str(e), file=sys.stderr)
     except:
         raise
     return 1

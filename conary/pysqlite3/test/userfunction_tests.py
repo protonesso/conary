@@ -109,9 +109,9 @@ class UserFunctions(unittest.TestCase, testsupport.TestSupport):
         self.cur.execute("insert into test(a) values (?)", 5)
         self.cur.execute("select intreturner(a) as a from test")
         res = self.cur.fetchone()
-        self.failUnless(isinstance(res.a, types.IntType),
+        self.assertTrue(isinstance(res.a, int),
                         "The result should have been an int.")
-        self.failUnlessEqual(res.a, 10,
+        self.assertEqual(res.a, 10,
                         "The function returned the wrong result.")
 
     def CheckFloatFunction(self):
@@ -119,9 +119,9 @@ class UserFunctions(unittest.TestCase, testsupport.TestSupport):
         self.cur.execute("insert into test(a) values (?)", 5.0)
         self.cur.execute("select floatreturner(a) as a from test")
         res = self.cur.fetchone()
-        self.failUnless(isinstance(res.a, types.FloatType),
+        self.assertTrue(isinstance(res.a, float),
                         "The result should have been a float.")
-        self.failUnlessEqual(res.a, 5.0 * 2.0,
+        self.assertEqual(res.a, 5.0 * 2.0,
                         "The function returned the wrong result.")
 
     def CheckStringFunction(self):
@@ -130,9 +130,9 @@ class UserFunctions(unittest.TestCase, testsupport.TestSupport):
         self.cur.execute("insert into test(a) values (?)", mystr)
         self.cur.execute("select stringreturner(a) as a from test")
         res = self.cur.fetchone()
-        self.failUnless(isinstance(res.a, types.StringType),
+        self.assertTrue(isinstance(res.a, bytes),
                         "The result should have been a string.")
-        self.failUnlessEqual(res.a, "[%s]" % mystr,
+        self.assertEqual(res.a, "[%s]" % mystr,
                         "The function returned the wrong result.")
 
     def CheckNullFunction(self):
@@ -141,14 +141,14 @@ class UserFunctions(unittest.TestCase, testsupport.TestSupport):
         self.cur.execute("insert into test(a) values (?)", mystr)
         self.cur.execute("select nullreturner(a) as a from test")
         res = self.cur.fetchone()
-        self.failUnlessEqual(res.a, None,
+        self.assertEqual(res.a, None,
                         "The result should have been None.")
 
     def CheckFunctionWithNullArgument(self):
         mystr = "test"
         self.cur.execute("select nullreturner(NULL) as a")
         res = self.cur.fetchone()
-        self.failUnlessEqual(res.a, None,
+        self.assertEqual(res.a, None,
                         "The result should have been None.")
 
 
@@ -158,9 +158,9 @@ class UserFunctions(unittest.TestCase, testsupport.TestSupport):
         self.cur.execute("insert into test(a) values (?)", mystr)
         try:
             self.cur.execute("select exceptionreturner(a) as a from test")
-        except sqlite.DatabaseError, reason:
+        except sqlite.DatabaseError as reason:
             pass
-        except Exception, reason:
+        except Exception as reason:
             self.fail("Wrong exception raised: %s", sys.exc_info()[0])
 
     def CheckAggregateBasic(self):
@@ -168,9 +168,9 @@ class UserFunctions(unittest.TestCase, testsupport.TestSupport):
         self.cur.executemany("insert into test(a) values (?)", [(10,), (20,), (30,)])
         self.cur.execute("select mysum(a) as sum from test")
         res = self.cur.fetchone()
-        self.failUnless(isinstance(res.sum, types.IntType),
+        self.assertTrue(isinstance(res.sum, int),
                         "The result should have been an int.")
-        self.failUnlessEqual(res.sum, 60,
+        self.assertEqual(res.sum, 60,
                         "The function returned the wrong result.")
 
     def CheckAggregateReturnNull(self):
@@ -178,7 +178,7 @@ class UserFunctions(unittest.TestCase, testsupport.TestSupport):
         self.cur.executemany("insert into test(a) values (?)", [(10,), (20,), (30,)])
         self.cur.execute("select mysumreturnnull(a) as sum from test")
         res = self.cur.fetchone()
-        self.failUnlessEqual(res.sum, None,
+        self.assertEqual(res.sum, None,
                         "The result should have been None.")
 
     def CheckAggregateStepException(self):
@@ -186,9 +186,9 @@ class UserFunctions(unittest.TestCase, testsupport.TestSupport):
         self.cur.executemany("insert into test(a) values (?)", [(10,), (20,), (30,)])
         try:
             self.cur.execute("select mysumstepexception(a) as sum from test")
-        except sqlite.DatabaseError, reason:
+        except sqlite.DatabaseError as reason:
             pass
-        except Exception, reason:
+        except Exception as reason:
             self.fail("Wrong exception raised: %s" % sys.exc_info()[0])
 
     def CheckAggregateFinalizeException(self):
@@ -196,15 +196,15 @@ class UserFunctions(unittest.TestCase, testsupport.TestSupport):
         self.cur.executemany("insert into test(a) values (?)", [(10,), (20,), (30,)])
         try:
             self.cur.execute("select mysumfinalizeexception(a) as sum from test")
-        except sqlite.DatabaseError, reason:
+        except sqlite.DatabaseError as reason:
             pass
-        except Exception, reason:
+        except Exception as reason:
             self.fail("Wrong exception raised: %s", sys.exc_info()[0])
 
     def CheckAggregateStepNullArgument(self):
         self.cur.execute("select mysum(NULL) as a")
         res = self.cur.fetchone()
-        self.failUnlessEqual(res.a, 0,
+        self.assertEqual(res.a, 0,
                         "The result should have been 0.")
 
 

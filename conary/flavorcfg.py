@@ -35,7 +35,7 @@ class CfgFlagSense(cfg.CfgType):
         elif val == "required":
             sense = deps.FLAG_SENSE_REQUIRED
         else:
-            raise cfg.ParseError, ("unknown use value '%s'") % val
+            raise cfg.ParseError(("unknown use value '%s'") % val)
         return sense
 
     @staticmethod
@@ -100,9 +100,8 @@ class ArchConfig(cfg.ConfigFile):
 
     def read(self, path):
         cfg.ConfigFile.read(self, path)
-        if sorted(self.archProp.iterkeys()) != sorted(self._requiredArchProps):
-            raise RuntimeError, \
-                    ('Arch %s must specify arch properties %s using the'
+        if sorted(self.archProp.keys()) != sorted(self._requiredArchProps):
+            raise RuntimeError('Arch %s must specify arch properties %s using the'
                      ' archProp directive' % (self.name,
                      ', '.join(sorted(self._requiredArchProps))))
 
@@ -212,7 +211,7 @@ class FlavorConfig:
 
     def toDependency(self, override=None):
         useFlags = deps.Flavor()
-        flags = [x.toDepFlag() for x in self.flags.values() ]
+        flags = [x.toDepFlag() for x in list(self.flags.values()) ]
         if flags:
             useFlags.addDep(deps.UseDependency, deps.Dependency("use", flags))
         if override:
@@ -230,9 +229,9 @@ class FlavorConfig:
         return useFlags
 
     def populateBuildFlags(self):
-        for flag in self.flags.itervalues():
+        for flag in self.flags.values():
             flag.addUseFlag()
-        for arch in self.arches.itervalues():
+        for arch in self.arches.values():
             arch.addArchFlags()
 
         # These are the required arch properties, every architecture

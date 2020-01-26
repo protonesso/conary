@@ -723,7 +723,7 @@ class GroupPolicy(BasePolicy):
     def do(self):
         grpGraph = graph.DirectedGraph()
         # get a top to bottom directed graph order
-        for grp in self.recipe.troveMap.values():
+        for grp in list(self.recipe.troveMap.values()):
             nvf = grp.getNameVersionFlavor()
             grpGraph.addNode(nvf)
             for child in grp.iterTroveList(strongRefs = True):
@@ -739,7 +739,7 @@ class GroupPolicy(BasePolicy):
             policySets = {order[0][0]: [[order[0]]]}
         for nvf in order:
             grp = self.recipe.troveMap[nvf]
-            for paths in policySets.values():
+            for paths in list(policySets.values()):
                 for path in [x for x in paths if x[-1] == nvf]:
                     for child in grp.iterTroveList(strongRefs = True):
                         newPath = path + [child]
@@ -748,7 +748,7 @@ class GroupPolicy(BasePolicy):
                                 paths.append(newPath)
         # now we can use the final group in each chain to determine the
         # inclusion info for each trove.
-        for groupName, paths in policySets.iteritems():
+        for groupName, paths in policySets.items():
             troveSet = []
             for path in paths:
                 grp = self.recipe.troveMap[path[-1]]
@@ -801,7 +801,7 @@ def loadPolicy(recipeObj, policySet = None, internalPolicyModules = (),
         GROUP_ENFORCEMENT: [],
     }
     # bucket -> dict of policy classes
-    policyMap = dict((b, {}) for b in policies.keys())
+    policyMap = dict((b, {}) for b in list(policies.keys()))
     # name -> policy classes
     policyNameMap = {}
 
@@ -821,7 +821,7 @@ def loadPolicy(recipeObj, policySet = None, internalPolicyModules = (),
     import conary.build.grouppolicy
     for pt in internalPolicyModules:
         m = sys.modules['conary.build.'+pt]
-        for symbolName in m.__dict__.keys():
+        for symbolName in list(m.__dict__.keys()):
             policyCls = m.__dict__[symbolName]
             if type(policyCls) is not classType:
                 continue
@@ -856,22 +856,22 @@ def loadPolicy(recipeObj, policySet = None, internalPolicyModules = (),
 
     # Enforce dependencies
     missingDeps = []
-    for policyCls in policyNameMap.values():
+    for policyCls in list(policyNameMap.values()):
         if hasattr(policyCls, 'requires'):
             for reqName, reqType in policyCls.requires:
                 if reqType & REQUIRED and reqName not in policyNameMap:
                     missingDeps.append((policyCls.__name__, reqName))
     if missingDeps:
-        raise PolicyError, '\n'.join(
+        raise PolicyError('\n'.join(
             ('policy %s missing required policy %s' %(x,y)
-             for x, y in missingDeps))
+             for x, y in missingDeps)))
 
     # Sort and initialize
-    for policyName, policyCls in policyNameMap.iteritems():
+    for policyName, policyCls in policyNameMap.items():
         policyMap[policyCls.bucket][policyName]=policyNameMap[policyName]
-    for bucket in policyMap.keys():
+    for bucket in list(policyMap.keys()):
         dg = graph.DirectedGraph()
-        for policyCls in policyMap[bucket].values():
+        for policyCls in list(policyMap[bucket].values()):
             dg.addNode(policyCls)
             if hasattr(policyCls, 'requires'):
                 for reqName, reqType in policyCls.requires:
@@ -887,9 +887,9 @@ def loadPolicy(recipeObj, policySet = None, internalPolicyModules = (),
         if depLoops:
             # convert to names
             depLoops = [sorted(x.__name__ for x in y) for y in depLoops]
-            raise PolicyError, '\n'.join(
+            raise PolicyError('\n'.join(
                 'found dependency loop: %s' %', '.join(y)
-                 for y in depLoops)
+                 for y in depLoops))
 
         # store an ordered list of initialized policy objects
         policies[bucket] = [x(recipeObj) for x in dg.getTotalOrdering(

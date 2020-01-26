@@ -83,7 +83,7 @@ class CrossCompileReqTest(rephelp.RepositoryHelper):
             crossRecipeObj.checkBuildRequirements(self.cfg,
                                             crossRecipeObj._trove.getVersion())
             assert(0)
-        except errors.RecipeDependencyError, err:
+        except errors.RecipeDependencyError as err:
             assert(str(err) == "unresolved build dependencies")
             self.logFilter.compare(
             ['error: Could not find the following cross requirements (that must be installed in %s/sysroot) needed to cook this recipe:\n'
@@ -97,7 +97,7 @@ class CrossCompileReqTest(rephelp.RepositoryHelper):
         crossRecipeObj.checkBuildRequirements(self.cfg,
                                             crossRecipeObj._trove.getVersion())
         reqMap = dict((x[0], x[1].getNameVersionFlavor()) for x in 
-                       crossRecipeObj.crossReqMap.items())
+                       list(crossRecipeObj.crossReqMap.items()))
         assert(reqMap  == {'foo:devel' : t2,
                            'oldcross:devel' : t1})
         assert(crossRecipeObj.buildReqMap == {})
@@ -109,12 +109,12 @@ class CrossCompileTargetSet(rephelp.RepositoryHelper):
             flavor = deps.parseFlavor(flavorStr, raiseError=True)
             result = packagerecipe.getCrossCompileSettings(flavor)
             if result is None:
-                self.assertEquals(expected, None)
+                self.assertEqual(expected, None)
                 return
             expected = (expected[0], deps.parseFlavor(expected[1],
                                                       raiseError=True),
                         expected[2])
-            self.assertEquals(result, expected)
+            self.assertEqual(result, expected)
 
         _test('is:x86', None)
         _test('is:x86 target:x86_64', (None, 'is:x86_64', False))

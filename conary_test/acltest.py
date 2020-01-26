@@ -18,7 +18,7 @@ import copy
 import cgi
 import itertools
 import os
-from SimpleHTTPServer import SimpleHTTPRequestHandler
+from http.server import SimpleHTTPRequestHandler
 
 from testrunner import testhelp
 from testutils import sock_utils
@@ -398,7 +398,7 @@ class AclTest(AuthHelper):
         elif use.Arch.x86_64:
             pass
         else:
-            raise NotImplementedError, 'edit test for this arch'
+            raise NotImplementedError('edit test for this arch')
         versionDict = {}.fromkeys([ versions.VersionFromString(x) for x in
                                         versionList ], [ flavor ])
         q = { 'double' : versionDict,
@@ -412,7 +412,7 @@ class AclTest(AuthHelper):
         all = repos.getTroveVersionList('localhost', { None : None })
         all = list(self.asSet(all))
 
-        troves = dict(itertools.izip(all, repos.getTroves(all)))
+        troves = dict(zip(all, repos.getTroves(all)))
 
         for testRepos in (limitedRepos, branchRepos, repeatRepos):
             canSee = testRepos.getTroveVersionList('localhost', { None : None })
@@ -455,13 +455,13 @@ class AclTest(AuthHelper):
         del all["double:source"]
         all = list(self.asSet(all))
 
-        troves = dict(itertools.izip(all, repos.getTroves(all)))
-        infos = dict(itertools.izip(all, repos.getTroveInfo(
+        troves = dict(zip(all, repos.getTroves(all)))
+        infos = dict(zip(all, repos.getTroveInfo(
             trove._TROVEINFO_TAG_SOURCENAME, all)))
         for trv in all:
             assert(troves[trv].troveInfo.sourceName == infos[trv])
         # test sigs as well
-        infos = dict(itertools.izip(all, repos.getTroveInfo(
+        infos = dict(zip(all, repos.getTroveInfo(
             trove._TROVEINFO_TAG_SIGS, all)))
         for trv in all:
             assert(troves[trv].troveInfo.sigs == infos[trv])
@@ -807,7 +807,7 @@ class AclTest(AuthHelper):
         self.addComponent("writestuff:runtime", "1.0-1-1", repos=limitedRepos)
 
         l = repos.getTroveVersionList('localhost', { None : None } )
-        assert (l.keys() == ['writestuff:runtime'])
+        assert (list(l.keys()) == ['writestuff:runtime'])
 
     @testhelp.context('entitlements')
     def testExternalAuthChecks(self):
@@ -1192,7 +1192,7 @@ class AclTest(AuthHelper):
                           repos.addAcl, self.cfg.buildLabel, 'test', [], [])
         try:
             repos.c['localhost'].addAcl(59)
-        except errors.InvalidClientVersion, e:
+        except errors.InvalidClientVersion as e:
             assert(str(e) == 'addAcl call only supports protocol versions '
                              '60 and later')
         else:
@@ -1203,7 +1203,7 @@ class AclTest(AuthHelper):
                           False, False)
         try:
             repos.c['localhost'].editAcl(59)
-        except errors.InvalidClientVersion, e:
+        except errors.InvalidClientVersion as e:
             assert(str(e) == 'editAcl call only supports protocol versions '
                              '60 and later')
         else:
@@ -1249,19 +1249,19 @@ class AclTest(AuthHelper):
                              [ 'foo:runtime' ] )
 
         # test recursive adding
-        self.assertEqual(userClient.hasTroves([
-            pkg.getNameVersionFlavor(), grp.getNameVersionFlavor() ] ).values(),
+        self.assertEqual(list(userClient.hasTroves([
+            pkg.getNameVersionFlavor(), grp.getNameVersionFlavor() ] ).values()),
                              [ False, False ] )
         repos.addTroveAccess('user', [ grp.getNameVersionFlavor()])
         # this has a side effect of testing CNY-2758
         repos.addTroveAccess('mirror', [ grp.getNameVersionFlavor()])
 
-        self.assertEqual(userClient.hasTroves([
-            pkg.getNameVersionFlavor(), grp.getNameVersionFlavor() ] ).values(),
+        self.assertEqual(list(userClient.hasTroves([
+            pkg.getNameVersionFlavor(), grp.getNameVersionFlavor() ] ).values()),
                              [ True, True ] )
-        self.assertEqual(userClient.hasTroves([
+        self.assertEqual(list(userClient.hasTroves([
             pkg1.getNameVersionFlavor(), grp1.getNameVersionFlavor(), grp2.getNameVersionFlavor(),
-            ] ).values(), [ False, False, False ] )
+            ] ).values()), [ False, False, False ] )
 
         self.assertEqual(sorted(userClient.troveNames(self.cfg.buildLabel)),
                         [ 'foo', 'foo:runtime', 'group-foo' ] )
@@ -1294,8 +1294,8 @@ class AclTest(AuthHelper):
 
         repos.deleteTroveAccess('user', [ grp.getNameVersionFlavor() ] )
         self.assertEqual(repos.listTroveAccess('localhost', 'user'), [] )
-        self.assertEqual(userClient.hasTroves([
-            pkg.getNameVersionFlavor(), grp.getNameVersionFlavor() ] ).values(),
+        self.assertEqual(list(userClient.hasTroves([
+            pkg.getNameVersionFlavor(), grp.getNameVersionFlavor() ] ).values()),
                              [ False, False ] )
         self.assertEqual(userClient.troveNames(self.cfg.buildLabel), [])
 
@@ -1399,7 +1399,7 @@ class AclTest(AuthHelper):
 
         haves = []
         havenots = []
-        for x in xrange(5):
+        for x in range(5):
             # test mixed component accesses
             compa = self.addComponent('a:runtime', str(x))
             compb = self.addComponent('b:runtime', str(x))
@@ -1442,7 +1442,7 @@ class AclTest(AuthHelper):
         try:
             repos.addTroveAccess('user', [
                 ('not-there', version, deps.parseFlavor('yummy')) ])
-        except errors.TroveMissing, e:
+        except errors.TroveMissing as e:
             self.assertEqual(e.version, version)
         else:
             self.fail('TroveMissing was not raised')
@@ -1770,13 +1770,13 @@ class OneTimeEntitlementRequests(EntitlementRequests):
 class OneTimeEntitlementRequestsInternalTimeout(OneTimeEntitlementRequests):
 
     valid = dict(EntitlementRequests.valid)
-    for key, val in valid.items():
+    for key, val in list(valid.items()):
         valid[key] = (val[0], val[1], 1, val[3])
 
 class RetryEntitlementRequests(EntitlementRequests):
 
     valid = dict(EntitlementRequests.valid)
-    for key, val in valid.items():
+    for key, val in list(valid.items()):
         valid[key] = (val[0], val[1])
 
 class AuthorizationServer:

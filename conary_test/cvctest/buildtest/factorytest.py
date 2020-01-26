@@ -63,7 +63,7 @@ class TarFactory(Factory):
         os.chdir('sample')
         os.mkdir('bin')
         self.writeFile('bin/script', '#!/bin/bash\necho hello world\n',
-                       mode = 0755)
+                       mode = 0o755)
         os.system('tar czf script-1.1.tar.gz bin')
         shutil.rmtree('bin')
         self.addfile('script-1.1.tar.gz')
@@ -76,7 +76,7 @@ class TarFactory(Factory):
     def testFactoryNames(self):
         try:
             self.newpkg('factory-foo')
-        except Exception, e:
+        except Exception as e:
             self.assertEqual(str(e),
                 'Only factory troves may use "factory-" in '
                 'their name. Add --factory=factory to create a factory trove.'
@@ -84,7 +84,7 @@ class TarFactory(Factory):
 
         try:
             self.newpkg('foo', factory = 'factory')
-        except Exception, e:
+        except Exception as e:
             assert(str(e) == 'The name of factory troves must begin with '
                              '"factory-"')
 
@@ -205,7 +205,7 @@ class FooRecipe(FactoryRecipeClass):
             log.setVerbosity(log.INFO)
             klass = logging.getLoggerClass()
             self.discardOutput(cook.cookCommand, self.cfg, [cstate], False, {})
-            self.assertEquals(klass, logging.getLoggerClass())
+            self.assertEqual(klass, logging.getLoggerClass())
         finally:
             log.setVerbosity(level)
         ccs = changeset.ChangeSetFromFile(os.path.join(self.workDir,
@@ -366,7 +366,7 @@ class FactoryTest(Factory):
         try:
             self.cookItem(repos, self.cfg, state.ConaryStateFromFile('CONARY'),
                           ignoreDeps = True)
-        except Exception, e:
+        except Exception as e:
             assert(str(e) == 'version factory-test:source of @NEW@ does not '
                              'contain factory-test.recipe')
 

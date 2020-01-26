@@ -19,10 +19,10 @@ import re
 import sys
 import pgsql
 
-from base_drv import BaseDatabase, BaseCursor, BaseBinary
-from base_drv import BaseKeywordDict
-import sqlerrors
-import sqllib
+from .base_drv import BaseDatabase, BaseCursor, BaseBinary
+from .base_drv import BaseKeywordDict
+from . import sqlerrors
+from . import sqllib
 
 class KeywordDict(BaseKeywordDict):
     keys = BaseKeywordDict.keys.copy()
@@ -85,7 +85,7 @@ class Cursor(BaseCursor):
     def _tryExecute(self, func, *params, **kw):
         try:
             ret = func(*params, **kw)
-        except pgsql.DatabaseError, e:
+        except pgsql.DatabaseError as e:
             msg = e.args[0]
             if msg.find("violates foreign key constraint") > 0:
                 raise sqlerrors.ConstraintViolation(msg)
@@ -116,7 +116,7 @@ class Cursor(BaseCursor):
                     *args, **kw)
             ret = self._tryExecute(self._cursor.execute, sql, args)
         elif len(keys): # check that all keys used in the query appear in the kw
-            if False in [kw.has_key(x) for x in keys]:
+            if False in [x in kw for x in keys]:
                 raise CursorError(
                     "Query keys not defined in named argument dict",
                     sorted(keys), sorted(kw.keys()))
@@ -209,11 +209,11 @@ class Database(BaseDatabase):
             cdb["port"] = -1
         try:
             self.dbh = pgsql.connect(**cdb)
-        except pgsql.DatabaseError, err:
+        except pgsql.DatabaseError as err:
             exc_info = sys.exc_info()
             newerr = sqlerrors.DatabaseError(
                     "Could not connect to database %s: %s" % (cdb, str(err)))
-            raise type(newerr), newerr, exc_info[2]
+            raise type(newerr)(newerr).with_traceback(exc_info[2])
 
         # reset the tempTables since we just lost them because of the (re)connect
         self.tempTables = sqllib.CaselessDict()

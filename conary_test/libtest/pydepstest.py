@@ -25,22 +25,22 @@ class BasicTest(testhelp.TestCase):
 
     def test_deunicode(self):
         for input, expected in (
-                (u"foo", "foo"),
                 ("foo", "foo"),
-                ((u"foo", "bar"), ("foo", "bar")),
-                ([u"foo", "bar"], ["foo", "bar"]),
-                (set([u"foo", "bar"]), set(["foo", "bar"])),
-                (dict(foo=u"foo", bar="bar"), dict(foo="foo", bar="bar")),
-                ({u"foo": u"foo", u"bar": "bar", "baz": u"baz", "spam": "spam"},
+                ("foo", "foo"),
+                (("foo", "bar"), ("foo", "bar")),
+                (["foo", "bar"], ["foo", "bar"]),
+                (set(["foo", "bar"]), set(["foo", "bar"])),
+                (dict(foo="foo", bar="bar"), dict(foo="foo", bar="bar")),
+                ({"foo": "foo", "bar": "bar", "baz": "baz", "spam": "spam"},
                  {"foo": "foo", "bar": "bar", "baz": "baz", "spam": "spam"}),
-                (dict(foo=set([u"foo", "bar"]), bar=(u"foo", "bar"),
-                      baz=[u"foo", "bar"]),
+                (dict(foo=set(["foo", "bar"]), bar=("foo", "bar"),
+                      baz=["foo", "bar"]),
                  dict(foo=set(["foo", "bar"]), bar=("foo", "bar"),
                       baz=["foo", "bar"])),
-                ([dict(foo=u"foo", bar="bar")], [dict(foo="foo", bar="bar")]),
+                ([dict(foo="foo", bar="bar")], [dict(foo="foo", bar="bar")]),
                 ):
             actual = pydeps._deunicode(input)
-            self.assertEquals(
+            self.assertEqual(
                 expected,
                 actual,
                 "pydeps._deunicode(%s) == %s, wanted %s" % (

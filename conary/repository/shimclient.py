@@ -172,7 +172,7 @@ class ShimNetClient(netclient.NetworkRepositoryClient):
 
     def commitChangeSet(self, chgSet, callback = None, mirror = False,
                         hidden = False):
-        trvCs = chgSet.iterNewTroveList().next()
+        trvCs = next(chgSet.iterNewTroveList())
         newLabel = trvCs.getNewVersion().trailingLabel()
 
         if not isinstance(self.c[newLabel], ShimServerProxy):

@@ -82,13 +82,13 @@ class CloneJob(object):
         self.cloneJob[troveTup] = targetVersion
 
     def iterTargetList(self):
-        return self.cloneJob.iteritems()
+        return iter(self.cloneJob.items())
 
     def getTrovesToClone(self):
-        return self.cloneJob.keys()
+        return list(self.cloneJob.keys())
 
     def getPreclonedTroves(self):
-        return self.preCloned.keys()
+        return list(self.preCloned.keys())
 
     def isEmpty(self):
         return not self.cloneJob
@@ -208,7 +208,7 @@ class ClientClone(object):
             else:
                 match = None
                 versionD = matches.get(name, {})
-                for matchVersion, flavorList in versionD.iteritems():
+                for matchVersion, flavorList in versionD.items():
                     if (matchVersion.trailingLabel() ==
                                 version.trailingLabel()
                             and flavor in flavorList):
@@ -245,7 +245,7 @@ class ClientClone(object):
         # make sure we write out the final changeset
         lastTrove = finalTroveList[-1][1]
         for current, (oldTroveInfo, (fromVersion, finalTrove)) in \
-                    enumerate(itertools.izip(oldTrovesNeeded, finalTroveList)):
+                    enumerate(zip(oldTrovesNeeded, finalTroveList)):
             if oldTroveInfo is not None:
                 oldTrove = oldTroves.pop(0)
                 assert(_sameHost(oldTrove.getVersion(),
@@ -355,7 +355,7 @@ class ClientClone(object):
                 [ (x[0], x[1], x[3]) for x in individualFilesNeeded ])
             contentsNeeded = []
             for fileObject, (pathId, newFileId, oldFileId, fromFileVersion) in \
-                    itertools.izip(allFileObjects, individualFilesNeeded):
+                    zip(allFileObjects, individualFilesNeeded):
                 diff, hash = changeset.fileChangeSet(pathId, None, fileObject)
                 cs.addFile(oldFileId, newFileId, diff)
                 if not fileObject.flags.isEncapsulatedContent() and hash:
@@ -368,7 +368,7 @@ class ClientClone(object):
                                 compressed = True,
                                 callback = callback)
             for (contents, ((pathId, isCfg), (newFileId, fromFileVersion))) in \
-                                itertools.izip(allContents, contentsNeeded):
+                                zip(allContents, contentsNeeded):
                 cs.addFileContents(pathId, newFileId,
                                    changeset.ChangedFileTypes.file,
                                    contents, isCfg,
@@ -508,7 +508,7 @@ class ClientClone(object):
             srcList = troveCache.getTroveInfo(
                             trove._TROVEINFO_TAG_SOURCENAME, srcsNeeded)
             sourceByPackage.update( (x,y()) for x, y in
-                                        itertools.izip(srcsNeeded, srcList) )
+                                        zip(srcsNeeded, srcList) )
 
             newToClone = []
             for troveTup in needed:
@@ -587,7 +587,7 @@ class ClientClone(object):
         leafMap.addLeafResults(result)
 
         possiblePreClones = []
-        for queryItem, tupList in result.iteritems():
+        for queryItem, tupList in result.items():
             tupList = [ x for x in tupList if x[2] == queryItem[2] ]
             if not tupList:
                 continue
@@ -604,7 +604,7 @@ class ClientClone(object):
                        callback):
         hasTroves = self.repos.hasTroves(
                         [x[0] for x in cloneMap.iterSourceTargetBranches()])
-        presentTroveTups = [x[0] for x in hasTroves.items() if x[1]]
+        presentTroveTups = [x[0] for x in list(hasTroves.items()) if x[1]]
         _logMe("Getting clonedFromInfo for sources")
         leafMap.addClonedFromInfo(troveCache, presentTroveTups)
         _logMe("done")
@@ -687,9 +687,9 @@ class ClientClone(object):
                 byFlavor.setdefault(binaryTup[2], []).append(binaryTup)
 
             cloneSource = False
-            for byFlavor in byVersion.itervalues():
+            for byFlavor in byVersion.values():
                 finalNewVersion = None
-                for flavor, binaryList in byFlavor.iteritems():
+                for flavor, binaryList in byFlavor.items():
                     # Binary list is a list of binaries all created from the
                     # same cook command.
                     newVersion = leafMap.isAlreadyCloned(binaryList,
@@ -701,11 +701,11 @@ class ClientClone(object):
                         finalNewVersion = None
                         break
                 if finalNewVersion:
-                    for binaryTup in itertools.chain(*byFlavor.itervalues()):
+                    for binaryTup in itertools.chain(*iter(byFlavor.values())):
                         cloneMap.target(binaryTup, finalNewVersion)
                         cloneJob.alreadyCloned(binaryTup)
                 else:
-                    binaryList = list(itertools.chain(*byFlavor.itervalues()))
+                    binaryList = list(itertools.chain(*iter(byFlavor.values())))
                     versionsToGet.append((targetSourceVersion, binaryList))
                     cloneSource = True
             if not cloneSource:
@@ -720,7 +720,7 @@ class ClientClone(object):
         callback.targetBinaries()
         newVersions = leafMap.createBinaryVersions(self.repos,
                                                    versionsToGet)
-        for newVersion, versionInfo in itertools.izip(newVersions,
+        for newVersion, versionInfo in zip(newVersions,
                                                       versionsToGet):
             binaryList = versionInfo[1]
             for binaryTup in binaryList:
@@ -775,7 +775,7 @@ class ClientClone(object):
                                         allowMissing=True)
         leafMap.addLeafResults(results)
         matches = []
-        for queryItem, tupList in results.iteritems():
+        for queryItem, tupList in results.items():
             sourceTup = query[queryItem][0]
             upstreamVersion = sourceTup[1].trailingRevision().getVersion()
             for troveTup in tupList:
@@ -786,7 +786,7 @@ class ClientClone(object):
         leafMap.addClonedFromInfo(troveCache, matches)
         total = len(query)
         current = 0
-        for queryItem, (sourceTup, markList) in query.items():
+        for queryItem, (sourceTup, markList) in list(query.items()):
             current += 1
             callback.checkNeedsFulfilled(current, total)
             newVersion = leafMap.isAlreadyCloned(sourceTup, queryItem[1])
@@ -795,7 +795,7 @@ class ClientClone(object):
             if newVersion:
                 cloneMap.target(sourceTup, newVersion)
                 del query[queryItem]
-        unmetNeeds = query.values()
+        unmetNeeds = list(query.values())
         unmetNeeds = chooser.filterUnmetTroveInfoItems(unmetNeeds)
         return unmetNeeds
 
@@ -827,7 +827,7 @@ class ClientClone(object):
         groupsNeeded = [ x[0] for x in needed if trove.troveIsGroup(x[0][0]) ]
         groupsNeeded += [ x[1] for x in needed if trove.troveIsGroup(x[0][0]) ]
         groupTroves = troveCache.getTroves(groupsNeeded)
-        groupTroves = dict( itertools.izip(groupsNeeded, groupTroves) )
+        groupTroves = dict( zip(groupsNeeded, groupTroves) )
 
         hasTroves = troveCache.hasTroves(hasList)
         toReclone = []
@@ -900,7 +900,7 @@ class ClientClone(object):
 
         # this getTroves populates troveCache.hasTroves simultaneously
         has = troveCache.hasTroves(allTroveList)
-        toFetch = [ x for x, y in itertools.izip(allTroveList, has)
+        toFetch = [ x for x, y in zip(allTroveList, has)
                             if y ]
         troveCache.getTroves(toFetch, withFiles=True)
         #del allTroveList, has
@@ -1044,7 +1044,7 @@ class ClientClone(object):
         if trv.getName().endswith(':source') and not infoOnly:
             try:
                 cl = cloneJob.options.callback.getCloneChangeLog(trv)
-            except Exception, e:
+            except Exception as e:
                 log.error("%s", str(e))
                 return None
 
@@ -1222,7 +1222,7 @@ class CloneChooser(object):
         # make sure there are no zeroed timeStamps - branches may be
         # user-supplied string
         newMap = {}
-        for key, value in targetMap.iteritems():
+        for key, value in targetMap.items():
             if isinstance(key, versions.Branch):
                 key = key.copy()
                 key.resetTimeStamps()
@@ -1435,25 +1435,25 @@ class CloneMap(object):
 
     def iterSourceTargetBranches(self):
         for (name, targetBranch, flavor), version  \
-           in self.trovesByTargetBranch.iteritems():
+           in self.trovesByTargetBranch.items():
             if name.endswith(':source'):
                 yield (name, version, flavor), targetBranch
 
     def iterBinaryTargetBranches(self):
         for (name, targetBranch, flavor), version  \
-           in self.trovesByTargetBranch.iteritems():
+           in self.trovesByTargetBranch.items():
             if not name.endswith(':source'):
                 yield (name, version, flavor), targetBranch
 
     def getBinaryTrovesBySource(self):
-        return self.trovesBySource.items()
+        return list(self.trovesBySource.items())
 
     def getTrovesWithSameSource(self, troveTupleList):
         bySource = {}
         for troveTup in troveTupleList:
             sourceTup = self.sourcesByTrove[troveTup]
             bySource[sourceTup] = self.trovesBySource[sourceTup]
-        return bySource.values()
+        return list(bySource.values())
 
     def getSourceVersion(self, troveTup):
         return self.sourcesByTrove[troveTup]
@@ -1484,7 +1484,7 @@ class CloneMap(object):
 
     def getCloneTargetLabelsForLabel(self, label):
         matches = set()
-        for troveTup, newVersion in self.targetMap.iteritems():
+        for troveTup, newVersion in self.targetMap.items():
             if troveTup[1].trailingLabel() == label:
                 matches.add(newVersion.trailingLabel())
         return matches
@@ -1602,17 +1602,17 @@ class LeafMap(object):
         for idx, item in enumerate(troveList):
             nameList = item[1]
             if (self.options.bumpGroupVersions
-                and trove.troveIsGroup(iter(nameList).next())):
+                and trove.troveIsGroup(next(iter(nameList)))):
                 bumpList[True].append((idx, item))
             else:
                 bumpList[False].append((idx, item))
         allVersions = [None] * len(troveList)
-        for bumpVersions, troveList in bumpList.items():
+        for bumpVersions, troveList in list(bumpList.items()):
             indexes = [ x[0] for x in troveList ]
             troveList = [ x[1] for x in troveList ]
             newVersions = nextversion.nextVersions(repos, None, troveList,
                                                    alwaysBumpCount=bumpVersions)
-            for idx, newVersion in itertools.izip(indexes, newVersions):
+            for idx, newVersion in zip(indexes, newVersions):
                 allVersions[idx] = newVersion
         return allVersions
 
@@ -1641,11 +1641,11 @@ class LeafMap(object):
                 l.append(troveTup)
 
         results = dict()
-        for host, troveTups in trovesByHost.items():
+        for host, troveTups in list(trovesByHost.items()):
             try:
                 infoList = troveCache.getTroveInfo(
                                 trove._TROVEINFO_TAG_CLONEDFROMLIST, troveTups)
-            except errors.ConaryError, msg:
+            except errors.ConaryError as msg:
                 log.debug('warning: Could not access host %s: %s',
                                 host, msg)
 
@@ -1659,17 +1659,17 @@ class LeafMap(object):
                 cfList = troveCache.getTroveInfo(
                                 trove._TROVEINFO_TAG_CLONEDFROM,
                                 [ troveTups[x] for x in missingList ])
-            except errors.ConaryError, msg:
+            except errors.ConaryError as msg:
                 log.debug('warning: Could not access host %s: %s',
                                 host, msg)
 
-            for i, clonedFrom in itertools.izip(missingList, cfList):
+            for i, clonedFrom in zip(missingList, cfList):
                 if clonedFrom:
                     infoList[i] = [ clonedFrom() ]
                 else:
                     infoList[i] = None
 
-            results.update(itertools.izip(troveTups, infoList))
+            results.update(zip(troveTups, infoList))
 
         for troveTup in tupList:
             if troveTup[1].isInLocalNamespace():
@@ -1688,7 +1688,7 @@ class LeafMap(object):
                 for clonedFrom in clonedFromList:
                     clonedFromInfo[troveTup].add(clonedFrom)
 
-        for troveTup, clonedFrom in clonedFromInfo.iteritems():
+        for troveTup, clonedFrom in clonedFromInfo.items():
             self._addTrove(troveTup, clonedFrom)
 
 class CloneError(errors.ClientError):
@@ -1739,4 +1739,4 @@ def _logMe(msg):
     else:
         timeStr = '%s secs' % (secs)
 
-    print '\n%s (%s): %s' % (time.strftime('%X'), timeStr, msg)
+    print('\n%s (%s): %s' % (time.strftime('%X'), timeStr, msg))

@@ -57,7 +57,7 @@ class AbstractDerivedCapsuleRecipe(AbstractCapsuleRecipe):
         if self.parentVersion:
             try:
                 parentRevision = versions.Revision(self.parentVersion)
-            except conaryerrors.ParseError, e:
+            except conaryerrors.ParseError as e:
                 raise builderrors.RecipeFileError(
                             'Cannot parse parentVersion %s: %s' % \
                                     (self.parentVersion, str(e)))
@@ -122,7 +122,7 @@ class AbstractDerivedCapsuleRecipe(AbstractCapsuleRecipe):
         try:
             troveList = repos.findTrove(None,
                                    (self.name, parentVersion, self._buildFlavor))
-        except conaryerrors.TroveNotFound, err:
+        except conaryerrors.TroveNotFound as err:
             raise builderrors.RecipeFileError('Could not find package to derive from for this flavor: ' + str(err))
         if len(troveList) > 1:
             raise builderrors.RecipeFileError(
@@ -184,7 +184,7 @@ class AbstractDerivedCapsuleRecipe(AbstractCapsuleRecipe):
                     self._addCapsule(capPath, trv.troveInfo.capsule.type(),
                                      trv.name())
 
-                    fileData = list(itertools.izip(h[rpmhelper.OLDFILENAMES],
+                    fileData = list(zip(h[rpmhelper.OLDFILENAMES],
                                     h[rpmhelper.FILEUSERNAME],
                                     h[rpmhelper.FILEGROUPNAME],
                                     h[rpmhelper.FILEMODES],
@@ -203,7 +203,7 @@ class AbstractDerivedCapsuleRecipe(AbstractCapsuleRecipe):
                                                                path)
                             self.exploder.handleFileMode(trv, fileObj, path,
                                                          self.macros.destdir)
-                        except OSError, e:
+                        except OSError as e:
                             if fileObj.flags.isInitialContents():
                                 pass
                             else:
@@ -256,4 +256,4 @@ class AbstractDerivedCapsuleRecipe(AbstractCapsuleRecipe):
         self._addBuildAction('XInetdService', build.XInetdService)
         self._addBuildAction('XMLCatalogEntry', build.XMLCatalogEntry)
 
-exec defaultrecipes.DerivedCapsuleRecipe
+exec(defaultrecipes.DerivedCapsuleRecipe)

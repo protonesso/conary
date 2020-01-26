@@ -105,15 +105,15 @@ class FileContainer:
     def readHeader(self):
         magic = self.file.pread(4, 0)
         if len(magic) != 4 or magic != FILE_CONTAINER_MAGIC:
-            raise BadContainer, "bad magic"
+            raise BadContainer("bad magic")
 
         version = self.file.pread(4, 4)
         if len(version) != 4:
-            raise BadContainer, "invalid container version"
+            raise BadContainer("invalid container version")
         self.version = struct.unpack("!I", version)[0]
         if self.version not in READABLE_VERSIONS:
-            raise BadContainer, "unsupported file container version %d" % \
-                        self.version
+            raise BadContainer("unsupported file container version %d" % \
+                        self.version)
 
         self.contentsStart = 8
         self.next = self.contentsStart
@@ -169,7 +169,7 @@ class FileContainer:
         return (name, tag, fcf)
 
     def _nextFile(self):
-        offset = self.next
+        offset = self.__next__
 
         nameLen = self.file.pread(10, offset)
         if not len(nameLen):
@@ -305,7 +305,7 @@ class FileContainer:
             try:
                 self.file.write(FILE_CONTAINER_MAGIC)
                 self.file.write(struct.pack("!I", version))
-            except OSError, err:
+            except OSError as err:
                 if err.errno == errno.EBADF:
                     raise IOError(errno.EBADF, "File is not open for writing")
                 raise

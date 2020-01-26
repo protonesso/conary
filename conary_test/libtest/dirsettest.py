@@ -27,33 +27,33 @@ class DirSetTest(testhelp.TestCase):
         assert('/usr/lib' in d)
         assert('/usr' in d)
         assert('/' not in d)
-        self.assertEquals(sorted(list(d)), [ '/etc', '/usr', '/var/tmp'])
+        self.assertEqual(sorted(list(d)), [ '/etc', '/usr', '/var/tmp'])
 
         assert('/var' not in d)
         assert('/var/tmp' in d)
         assert('/var/tmp/other' in d)
         d.add('/var')
         assert('/var' in d)
-        self.assertEquals(sorted(list(d)), [ '/etc', '/usr', '/var'])
+        self.assertEqual(sorted(list(d)), [ '/etc', '/usr', '/var'])
 
     def testDirDict(self):
         d = dirset.DirectoryDict()
         d['/etc'] = 'etc'
         d['/usr/bin'] = 'usrbin'
         d['/usr/lib'] = 'usrlib'
-        self.assertEquals(d['/usr/bin/vi'], 'usrbin')
-        self.assertEquals(d['/usr/bin'], 'usrbin')
-        self.assertEquals(d['/usr/lib/libc'], 'usrlib')
+        self.assertEqual(d['/usr/bin/vi'], 'usrbin')
+        self.assertEqual(d['/usr/bin'], 'usrbin')
+        self.assertEqual(d['/usr/lib/libc'], 'usrlib')
         self.assertRaises(KeyError, d.__getitem__, '/usr')
-        self.assertEquals(d.get('/usr', None), None)
-        self.assertEquals(d.get('/usr/bin', None), 'usrbin')
-        self.assertEquals(sorted(list(d.iterkeys())),
+        self.assertEqual(d.get('/usr', None), None)
+        self.assertEqual(d.get('/usr/bin', None), 'usrbin')
+        self.assertEqual(sorted(list(d.keys())),
                           [ '/etc', '/usr/bin', '/usr/lib' ])
-        self.assertEquals(sorted(list(d.itertops())),
+        self.assertEqual(sorted(list(d.itertops())),
                           [ '/etc', '/usr/bin', '/usr/lib' ])
 
         d['/usr'] = 'usr'
-        self.assertEquals(d['/usr/bin/vi'], 'usrbin')
-        self.assertEquals(d['/usr'], 'usr')
-        self.assertEquals(sorted(list(d.itertops())),
+        self.assertEqual(d['/usr/bin/vi'], 'usrbin')
+        self.assertEqual(d['/usr'], 'usr')
+        self.assertEqual(sorted(list(d.itertops())),
                           [ '/etc', '/usr' ])

@@ -24,7 +24,7 @@ import subprocess
 
 conaryPath = os.environ.get('CONARY_PATH', None)
 if not conaryPath:
-    print >>sys.stderr, 'please set CONARY_PATH'
+    print('please set CONARY_PATH', file=sys.stderr)
     sys.exit(1)
 
 if conaryPath not in sys.path:
@@ -97,8 +97,8 @@ class CoverageWrapper(object):
         coverage.annotate(files, self._annotatePath, baseDirs = self._baseDirs)
         if annotatePath.startswith(os.getcwd() + '/'):
             annotatePath = '.' + annotatePath[len(os.getcwd()):]
-        print
-        print '*** %s file(s) annotated in %s' % (len(files), annotatePath)
+        print()
+        print('*** %s file(s) annotated in %s' % (len(files), annotatePath))
 
     def iterAnalysis(self, paths):
         coverage = imp.load_source('coverage', self._executable)
@@ -133,10 +133,10 @@ def getEnviron():
     coveragePath = os.environ.get('COVERAGE_PATH', None)
     policyPath = os.environ.get('CONARY_POLICY_PATH', '/usr/lib/conary/policy')
     if not coveragePath:
-        print "Please set COVERAGE_PATH to the dir in which coverage.py is located"
+        print("Please set COVERAGE_PATH to the dir in which coverage.py is located")
         sys.exit(1)
     elif not policyPath:
-        print "Please set CONARY_POLICY_PATH"
+        print("Please set CONARY_POLICY_PATH")
         sys.exit(1)
     return {'conary'   : conaryPath,
             'policy'   : policyPath,
@@ -209,7 +209,7 @@ def getFilesToAnnotateByPatch(baseDir, exclude, patchInput, filesDict=None):
             break
         lines = [ int(x) for x in output.readline().split()]
         files[fileName] = lines
-    for fileName in files.keys():
+    for fileName in list(files.keys()):
         for excludePattern in exclude:
             if re.search(excludePattern, fileName):
                 del files[fileName]
@@ -238,7 +238,7 @@ def _getFilesToAnnotateFromFn(baseDirs, exclude, fn, *args, **kw):
     finally:
         os.chdir(curDir)
 
-    for fullPath in files.keys():
+    for fullPath in list(files.keys()):
         if not _isPythonFile(fullPath):
             del files[fullPath]
 

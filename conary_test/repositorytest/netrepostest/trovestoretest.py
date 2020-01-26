@@ -88,7 +88,7 @@ class TroveStoreTest(dbstoretest.DBStoreTestBase):
         f3 = files.FileFromFilesystem("/etc/group", self.id3)
         # make a really huge dependency, thus a very large file stream
         req = deps.DependencySet()
-        for x in xrange(10000):
+        for x in range(10000):
             req.addDep(deps.SonameDependencies, deps.Dependency("libtest.so.%d" %x))
         f3.requires.set(req)
         # make sure it's way too big for a blob in mysql
@@ -138,7 +138,7 @@ Some changes just are.
         cu = store.db.cursor()
         cu.execute("SELECT count(*) FROM Dependencies WHERE "
                    "name = 'libtest.so.1'")
-        self.assertEqual(cu.next(), (1,))
+        self.assertEqual(next(cu), (1,))
 
         # make sure the sha1s were stored
         cu.execute("""
@@ -459,7 +459,7 @@ Some changes just are.
         v = ThawVersion('/conary.rpath.com@test:trunk/10:1-1')
         # add 2000 test components
         store.addTroveSetStart([], [], [])
-        for x in xrange(500):
+        for x in range(500):
             n = 'test%d:runtime' %x
             t = trove.Trove(n, v, f, None)
             t.computeDigests()
@@ -546,11 +546,11 @@ Some changes just are.
 
         def _checkStateDiff(one, two):
             if one != two:
-                assert(one.keys() == two.keys())
+                assert(list(one.keys()) == list(two.keys()))
                 for key in one:
                     if one[key] != two[key]:
-                        print "table %s has changed" % key
-                raise AssertionError, "\n%s\n!=\n%s" % (one, two)
+                        print("table %s has changed" % key)
+                raise AssertionError("\n%s\n!=\n%s" % (one, two))
 
         store = self._connect()
 
@@ -839,7 +839,7 @@ Some changes just are.
         cu = store.db.cursor()
         for tbl in [ 'FilePaths', 'Dirnames', 'Basenames' ]:
             cu.execute("select count(*) from %s" % tbl)
-            self.assertEquals(cu.next()[0], 1)
+            self.assertEqual(cu.next()[0], 1)
 
 class TroveStoreTest2(rephelp.RepositoryHelper):
     def testNeedToStoreFile(self):
@@ -884,7 +884,7 @@ class TroveStoreTest2(rephelp.RepositoryHelper):
             "/usr/share/foo/file3"]))
         ret = repos.getPackageBranchPathIds("foo:source", branch, ["/usr/share/foo"])
         # since protocol 62, dirnames are strictly honored, so ret should only have file3
-        self.assertEqual(ret.keys(), ["/usr/share/foo/file3"])
+        self.assertEqual(list(ret.keys()), ["/usr/share/foo/file3"])
         # protocol 61 will treat the dirlist as prefixes, which should return all files back
         repos.c[branch].setProtocolVersion(61)
         ret61 = repos.getPackageBranchPathIds("foo:source", branch, ["/usr/share/foo"])

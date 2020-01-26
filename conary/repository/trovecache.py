@@ -15,8 +15,8 @@
 #
 
 
-from itertools import izip
-import cPickle, os, tempfile
+
+import pickle, os, tempfile
 
 from conary import errors, trove, versions
 from conary.deps import deps
@@ -69,7 +69,7 @@ class TroveCache(trovesource.AbstractTroveSource):
 
     def _addToCache(self, troveTupList, troves, _cached = None,
                     withFiles = False):
-        for troveTup, trv in izip(troveTupList, troves):
+        for troveTup, trv in zip(troveTupList, troves):
             self.cache.add(troveTup, trv, withFiles = withFiles)
 
         if _cached:
@@ -85,9 +85,9 @@ class TroveCache(trovesource.AbstractTroveSource):
 
     def _getSizeTuple(self):
         return ( len(self.cache),
-                 sum([ len([ x[0] for x in self.depCache.itervalues()
+                 sum([ len([ x[0] for x in self.depCache.values()
                                  if x[0] is not None ]),
-                       len([ x[1] for x in self.depCache.itervalues()
+                       len([ x[1] for x in self.depCache.values()
                                  if x[1] is not None ]) ] ),
                  len(self.depSolutionCache), len(self.timeStampCache),
                  len(self.findCache), len(self.fileCache) )
@@ -167,7 +167,7 @@ class TroveCache(trovesource.AbstractTroveSource):
                              deps.DependencySet())
 
         needed = [ (i, troveTup) for i, (troveTup, depSets) in
-                            enumerate(izip(troveTupList, result))
+                            enumerate(zip(troveTupList, result))
                             if missingNeeded(depSets)  ]
         if not needed:
             return result
@@ -180,12 +180,12 @@ class TroveCache(trovesource.AbstractTroveSource):
                                                 [ x[1] for x in needed ],
                                                 provides = provides,
                                                 requires = requires)
-        except netclient.PartialResultsError, e:
+        except netclient.PartialResultsError as e:
             # we can't use this call everywhere; handle what we can and we'll
             # deal with the None's later
             depList = e.partialResults
 
-        for (i, troveTup), depInfo in izip(needed, depList):
+        for (i, troveTup), depInfo in zip(needed, depList):
             # depInfo can be None if we got partial results due to
             # old servers
             if depInfo is not None:
@@ -197,7 +197,7 @@ class TroveCache(trovesource.AbstractTroveSource):
                             enumerate(troveTupList) if result[i] is None ]
 
         trvs = self.getTroves([ x[1] for x in needed])
-        for (i, troveTup), trv in izip(needed, trvs):
+        for (i, troveTup), trv in zip(needed, trvs):
             result[i] = (trv.getProvides(), trv.getRequires())
 
         return result
@@ -221,7 +221,7 @@ class TroveCache(trovesource.AbstractTroveSource):
                 result[i] = trv.getVersion()
 
         needed = [ (i, troveTup) for i, (troveTup, depSet) in
-                            enumerate(izip(troveTupList, result))
+                            enumerate(zip(troveTupList, result))
                             if depSet is None ]
         if not needed:
             return result
@@ -232,12 +232,12 @@ class TroveCache(trovesource.AbstractTroveSource):
         try:
             depList = self.troveSource.getTimestamps(
                                                 [ x[1] for x in needed ])
-        except netclient.PartialResultsError, e:
+        except netclient.PartialResultsError as e:
             # we can't use this call everywhere; handle what we can and we'll
             # deal with the None's later
             depList = e.partialResults
 
-        for (i, troveTup), timeStampedVersion in izip(needed, depList):
+        for (i, troveTup), timeStampedVersion in zip(needed, depList):
             # timeStampedVersion can be None if we got partial results due to
             # old servers
             if timeStampedVersion is not None:
@@ -249,7 +249,7 @@ class TroveCache(trovesource.AbstractTroveSource):
                             enumerate(troveTupList) if result[i] is None ]
 
         trvs = self.getTroves([ x[1] for x in needed])
-        for (i, troveTup), trv in izip(needed, trvs):
+        for (i, troveTup), trv in zip(needed, trvs):
             result[i] = trv.getVersion()
 
         return result
@@ -268,14 +268,14 @@ class TroveCache(trovesource.AbstractTroveSource):
                                     trv.troveInfo.streamDict[infoType][2])
 
         needed = [ (i, troveTup) for i, (troveTup, depSet) in
-                            enumerate(izip(troveTupList, result))
+                            enumerate(zip(troveTupList, result))
                             if depSet is None ]
         if not needed:
             return result
 
         troveInfoList = self.troveSource.getTroveInfo(infoType,
                                                 [ x[1] for x in needed ])
-        for (i, troveTup), troveInfo in izip(needed, troveInfoList):
+        for (i, troveTup), troveInfo in zip(needed, troveInfoList):
             infoCache[troveTup] = troveInfo
             result[i] = troveInfo
 
@@ -314,7 +314,7 @@ class TroveCache(trovesource.AbstractTroveSource):
             trv = trove.Trove(trvCs, skipIntegrityChecks = True)
             self.cache[trv.getNameVersionFlavor()] = trv
 
-        self._cached(self.cache.keys(), [ x[1] for x in self.cache.values() ])
+        self._cached(list(self.cache.keys()), [ x[1] for x in list(self.cache.values()) ])
 
         try:
             # NB: "fileid" and pathid got reversed here by mistake, try not to
@@ -345,10 +345,10 @@ class TroveCache(trovesource.AbstractTroveSource):
         self._cs.reset()
         contType, contents = self._cs.getFileContents(pathId, self._fileId)
         pickled = contents.get().read()
-        return cPickle.loads(pickled)
+        return pickle.loads(pickled)
 
     def _savePickle(self, pathId, data):
-        pickled = cPickle.dumps(data, 2)
+        pickled = pickle.dumps(data, 2)
         self._cs.addFileContents(pathId, self._fileId,
                 changeset.ChangedFileTypes.file,
                 filecontents.FromString(pickled), False)
@@ -363,7 +363,7 @@ class TroveCache(trovesource.AbstractTroveSource):
 
     def _saveTimestamps(self):
         timeStamps = []
-        for (name, baseVersion), version in self.timeStampCache.items():
+        for (name, baseVersion), version in list(self.timeStampCache.items()):
             timeStamps.append( (name, version.freeze()) )
         self._savePickle(self._timeStampsPathId, timeStamps)
 
@@ -376,7 +376,7 @@ class TroveCache(trovesource.AbstractTroveSource):
 
     def _saveDeps(self):
         depList = []
-        for troveTup, (prov, req) in self.depCache.iteritems():
+        for troveTup, (prov, req) in self.depCache.items():
             if type(prov) is not str and prov is not None:
                 prov = prov.freeze()
             if type(req) is not str and req is not None:
@@ -405,7 +405,7 @@ class TroveCache(trovesource.AbstractTroveSource):
 
     def _saveDepSolutions(self):
         depSolutions = []
-        for (sig, depSet), aResult in self.depSolutionCache.iteritems():
+        for (sig, depSet), aResult in self.depSolutionCache.items():
             allResults = []
             for resultList in aResult:
                 allResults.append([ (x[0], x[1].freeze(), x[2].freeze()) for
@@ -440,7 +440,7 @@ class TroveCache(trovesource.AbstractTroveSource):
             return
 
         cs = changeset.ChangeSet()
-        for withFiles, trv in self.cache.values():
+        for withFiles, trv in list(self.cache.values()):
             # we just assume everything in the cache is w/o files. it's
             # fine for system model, safe, and we don't need the cache
             # anywhere else
@@ -467,7 +467,7 @@ class TroveCache(trovesource.AbstractTroveSource):
                 if util.exists(path):
                     os.chmod(cacheName, os.stat(path).st_mode)
                 else:
-                    os.chmod(cacheName, 0644)
+                    os.chmod(cacheName, 0o644)
                 os.rename(cacheName, path)
             except (IOError, OSError):
                 # may not have permissions; say, not running as root

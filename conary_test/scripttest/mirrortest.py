@@ -35,7 +35,7 @@ def skipproxy(fn):
             raise testhelp.SkipTestException('Cannot test mirror with proxy')
 
         return fn(*args, **kwargs)
-    noproxy.func_name = fn.func_name
+    noproxy.__name__ = fn.__name__
     return noproxy
 
 def mockversion(fn, testName, ver):
@@ -49,7 +49,7 @@ def mockversion(fn, testName, ver):
         finally:
             netclient.ServerProxy.getProtocolVersion = old
             pass
-    frobversion.func_name = testName
+    frobversion.__name__ = testName
     return frobversion
 
 class MirrorTest(rephelp.RepositoryHelper):
@@ -135,30 +135,30 @@ class MirrorTest(rephelp.RepositoryHelper):
                                 dstuser="mirror mirror"):
         mirrorCfg = tempfile.NamedTemporaryFile(prefix='mirror-',
                 suffix='.cfg')
-        print >> mirrorCfg, "host localhost"
+        print("host localhost", file=mirrorCfg)
         if matchTroves:
-            print >> mirrorCfg, "matchTroves ", matchTroves
+            print("matchTroves ", matchTroves, file=mirrorCfg)
         if matchTroveSpecs:
-            print >> mirrorCfg, "matchTroveSpecs ", matchTroveSpecs
+            print("matchTroveSpecs ", matchTroveSpecs, file=mirrorCfg)
         if labels:
-            print >> mirrorCfg, "labels ", " ".join(labels)
+            print("labels ", " ".join(labels), file=mirrorCfg)
         if recurseGroups:
-            print >> mirrorCfg, "recurseGroups True"
-        print >> mirrorCfg
-        print >> mirrorCfg, "[source]"
-        print >> mirrorCfg, "user localhost %s" % srcuser
-        print >> mirrorCfg, "repositoryMap localhost %s" % self.sourceMap
-        print >> mirrorCfg
-        print >> mirrorCfg, "[target]"
-        print >> mirrorCfg, "user localhost %s" % dstuser
-        print >> mirrorCfg, "repositoryMap localhost %s" % self.targetMap
+            print("recurseGroups True", file=mirrorCfg)
+        print(file=mirrorCfg)
+        print("[source]", file=mirrorCfg)
+        print("user localhost %s" % srcuser, file=mirrorCfg)
+        print("repositoryMap localhost %s" % self.sourceMap, file=mirrorCfg)
+        print(file=mirrorCfg)
+        print("[target]", file=mirrorCfg)
+        print("user localhost %s" % dstuser, file=mirrorCfg)
+        print("repositoryMap localhost %s" % self.targetMap, file=mirrorCfg)
         mirrorCfg.flush()
         return mirrorCfg
 
     def _flatten(self, troveSpec):
         l = []
-        for name, versionD in troveSpec.iteritems():
-            for version, flavorList in versionD.iteritems():
+        for name, versionD in troveSpec.items():
+            for version, flavorList in versionD.items():
                 l += [ (name, version, flavor) for flavor in flavorList ]
         l.sort()
         return l
@@ -261,7 +261,7 @@ class MirrorTest(rephelp.RepositoryHelper):
         ti.metadata.addItem(mi)
         tl = sourceRepos.getTroveVersionList("localhost", {"test1:runtime":None})
         tl = self._flatten(tl)
-        sourceRepos.setTroveInfo(zip(tl, [ti] * len(tl)))
+        sourceRepos.setTroveInfo(list(zip(tl, [ti] * len(tl))))
         self.assertRaises(AssertionError, self.compareRepositories,
                           sourceRepos, targetRepos)
         self.runMirror(mirrorFile)
@@ -437,12 +437,12 @@ class MirrorTest(rephelp.RepositoryHelper):
         self.createTroves(sourceRepos, 10, 2)
         self.runMirror(mirrorFile)
         self.compareRepositories(sourceRepos, targetRepos)
-        set1 = sourceRepos.getTroveVersionList("localhost", { None : None }).items()
+        set1 = list(sourceRepos.getTroveVersionList("localhost", { None : None }).items())
 
         # put some troves in the source that match the exclusion pattern
         self.createTroves(sourceRepos, 20, 1)
         self.runMirror(mirrorFile)
-        set2 = targetRepos.getTroveVersionList("localhost", { None : None }).items()
+        set2 = list(targetRepos.getTroveVersionList("localhost", { None : None }).items())
         self.assertEqual(len([ x for x in set2 if x not in set1 ]), 0)
 
     @skipproxy
@@ -456,10 +456,10 @@ class MirrorTest(rephelp.RepositoryHelper):
         self.createTroves(sourceRepos, 25, 1)
         self.createTroves(sourceRepos, 20, 1)
         self.runMirror(mirrorFile)
-        set1 = sourceRepos.getTroveVersionList(
-            "localhost", {None: None}).items()
-        set2 = targetRepos.getTroveVersionList(
-            "localhost", {None: None}).items()
+        set1 = list(sourceRepos.getTroveVersionList(
+            "localhost", {None: None}).items())
+        set2 = list(targetRepos.getTroveVersionList(
+            "localhost", {None: None}).items())
         self.assertEqual(len(set1), 6)
         self.assertEqual(len(set2), 2)
 
@@ -479,10 +479,10 @@ class MirrorTest(rephelp.RepositoryHelper):
         target2Repos = self.getRepositoryClient("mirror", "mirror", serverIdx=2)
         self.target2Map = target2Repos.c.map["localhost"]
         mirrorFile2 = self.createConfigurationFile()
-        print >> mirrorFile2
-        print >> mirrorFile2, "[target2]"
-        print >> mirrorFile2, "user localhost mirror mirror"
-        print >> mirrorFile2, "repositoryMap localhost %s" % self.target2Map
+        print(file=mirrorFile2)
+        print("[target2]", file=mirrorFile2)
+        print("user localhost mirror mirror", file=mirrorFile2)
+        print("repositoryMap localhost %s" % self.target2Map, file=mirrorFile2)
         mirrorFile2.flush()
 
         self.createTroves(sourceRepos, 10, 2)
@@ -730,13 +730,13 @@ class MirrorTest(rephelp.RepositoryHelper):
                                    fileContents = [
             ('/bin/foo', rephelp.RegularFile(version='/myhost@rpl:linux/1.0-1-1',
                                              contents = 'foo')),
-            ("/usr/foo", rephelp.Directory(version='/myhost@rpl:linux/1.0-1-1', perms=0777)),
+            ("/usr/foo", rephelp.Directory(version='/myhost@rpl:linux/1.0-1-1', perms=0o777)),
             ], repos=src)
         old = self.addQuickTestComponent('test:runtime', '/myhost@rpl:linux//myotherhost@rpl:linux/1.0-1-1',
                                          fileContents = [
             ( '/bin/foo', rephelp.RegularFile(version = '/myhost@rpl:linux/1.0-1-1',
                                               contents = 'foo')),
-            ("/usr/foo", rephelp.Directory(version='/myhost@rpl:linux/1.0-1-1', perms=0777)),
+            ("/usr/foo", rephelp.Directory(version='/myhost@rpl:linux/1.0-1-1', perms=0o777)),
             ], repos=src)
 
         new = self.addQuickTestComponent('test:runtime', '/myhost@rpl:linux//myotherhost@rpl:linux/1.0-1.1-1',
@@ -744,14 +744,14 @@ class MirrorTest(rephelp.RepositoryHelper):
             ( '/bin/foo', rephelp.RegularFile(version='/myhost@rpl:linux//myotherhost@rpl:linux/1.0-1.1-1',
                                               contents = 'foo')),
             ("/usr/foo", rephelp.Directory(version='/myhost@rpl:linux//myotherhost@rpl:linux/1.0-1.1-1',
-                                           perms=0701)),
+                                           perms=0o701)),
             ], repos=src)
         veryNew = self.addQuickTestComponent('test:runtime', '/myhost@rpl:linux//myotherhost@rpl:linux/1.0-1.2-1',
                                              fileContents = [
             ( '/bin/foo', rephelp.RegularFile(version='/myhost@rpl:linux//myotherhost@rpl:linux/1.0-1.1-1',
                                               contents = 'foo')),
             ("/usr/foo", rephelp.Directory(version='/myhost@rpl:linux//myotherhost@rpl:linux/1.0-1.1-1',
-                                           perms=0701)),
+                                           perms=0o701)),
             ], repos=src)
         dst = self._getMultiTarget(2, ["myhost", "myotherhost"])
         # create the mirror config
@@ -771,7 +771,7 @@ class MirrorTest(rephelp.RepositoryHelper):
         self.createTroves(src, 10, 2, "myotherhost@src:2/2.0")
         s1 = src.getTroveVersionList("myhost", { None : None })
         s2 = src.getTroveVersionList("myotherhost", { None : None })
-        self.assertEqual(s1.keys(), s2.keys())
+        self.assertEqual(list(s1.keys()), list(s2.keys()))
         # add a group that includes troves from both repos
         trv = self.addCollection("group-test", "myhost@src:test/10", [
             ("test10", "myhost@src:1/1.0"),

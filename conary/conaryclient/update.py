@@ -113,7 +113,7 @@ class ClientUpdate(object):
     def revertJournal(cfg):
         try:
             database.Database.revertJournal(cfg.root, cfg.dbPath)
-        except database.OpenError, e:
+        except database.OpenError as e:
             log.error(str(e))
 
     def __init__(self, callback=None):
@@ -173,7 +173,7 @@ class ClientUpdate(object):
         # The outer loop is to allow redirects to point to redirects. The
         # inner loop handles one set of troves.
 
-        initialSet = itertools.izip(itertools.repeat(True), jobSet)
+        initialSet = zip(itertools.repeat(True), jobSet)
         while initialSet:
             alreadyHandled = set()
             nextSet = set()
@@ -215,8 +215,7 @@ class ClientUpdate(object):
                     transitiveClosureToRemove.append(job)
 
                 if not recurse:
-                    raise UpdateError, \
-                        "Redirect found with --no-recurse set: %s=%s[%s]" % item
+                    raise UpdateError("Redirect found with --no-recurse set: %s=%s[%s]" % item)
 
                 allTargets = [ (x[0], str(x[1].label()), x[2])
                                         for x in trv.iterRedirects() ]
@@ -238,13 +237,12 @@ class ClientUpdate(object):
                     l = redirectHack.setdefault(None, redirectSourceList)
                     l.append(item)
                 else:
-                    for matchList in matches.itervalues():
+                    for matchList in matches.values():
                         for match in matchList:
                             if match in redirectSourceList:
-                                raise UpdateError, \
-                                    "Redirect loop found which includes " \
+                                raise UpdateError("Redirect loop found which includes " \
                                     "troves %s, %s" % (item[0],
-                                    ", ".join(x[0] for x in redirectSourceList))
+                                    ", ".join(x[0] for x in redirectSourceList)))
                             assert(match not in redirectSourceList)
                             l = redirectHack.setdefault(match,
                                                         redirectSourceList[:])
@@ -264,7 +262,7 @@ class ClientUpdate(object):
             nextSet = list(nextSet)
             hasTroves = uJob.getTroveSource().hasTroves([
                             (x[1][0], x[1][2][0], x[1][2][1]) for x in nextSet])
-            nextSet = [ x[0] for x in itertools.izip(nextSet, hasTroves) \
+            nextSet = [ x[0] for x in zip(nextSet, hasTroves) \
                                                                   if not x[1] ]
 
             redirectCs, notFound = csSource.createChangeSet(
@@ -284,11 +282,11 @@ class ClientUpdate(object):
         transitiveClosure.difference_update(transitiveClosureToRemove)
         transitiveClosure.difference_update(jobsToRemove)
 
-        for l in redirectHack.itervalues():
+        for l in redirectHack.values():
             outdated = self.db.outdatedTroves(l)
             del l[:]
             for (name, newVersion, newFlavor), \
-                  (oldName, oldVersion, oldFlavor) in outdated.iteritems():
+                  (oldName, oldVersion, oldFlavor) in outdated.items():
                 if oldVersion is not None:
                     l.append((oldName, oldVersion, oldFlavor))
 
@@ -320,7 +318,7 @@ class ClientUpdate(object):
                 # components - here we're looking at both byDefault
                 # True and False components (in trove.diff)
                 hasTroveList = troveSource.hasTroves(infoList)
-                for info, hasTrove in itertools.izip(infoList, hasTroveList):
+                for info, hasTrove in zip(infoList, hasTroveList):
                     if hasTrove:
                         ph = troveSource.getTrove(withFiles = False, *info).\
                                         getPathHashes()
@@ -355,19 +353,19 @@ class ClientUpdate(object):
                                     in jobList if job[1][0] is not None ]
                     hasTroveList = self.db.hasTroves(erasures)
                     self.hasTrovesCache.update(
-                                itertools.izip(erasures, hasTroveList))
+                                zip(erasures, hasTroveList))
                     present = [ x[0] for x in
-                                    itertools.izip(erasures, hasTroveList)
+                                    zip(erasures, hasTroveList)
                                     if x[1] ]
                     pinnedList = self.db.trovesArePinned(present)
                     self.pinnedCache.update(
-                            itertools.izip(present, pinnedList))
+                            zip(present, pinnedList))
 
                     referenceList = self.db.getTroveTroves(
                                                 present, weakRefs = False,
                                                 pristineOnly = False)
                     self.referencesCache.update(
-                            itertools.izip(present, referenceList))
+                            zip(present, referenceList))
 
             # each node is a ((name, version, flavor), state, edgeList
             #                  fromUpdate)
@@ -395,8 +393,8 @@ class ClientUpdate(object):
             # ignored). Handling updates from newJob first prevents duplicates
             # from primaryErases
             for job, isPrimary in itertools.chain(
-                        itertools.izip(newJob, itertools.repeat(False)),
-                        itertools.izip(primaryErases, itertools.repeat(True)),
+                        zip(newJob, itertools.repeat(False)),
+                        zip(primaryErases, itertools.repeat(True)),
                         jobQueue):
                 oldInfo = (job[0], job[1][0], job[1][1])
 
@@ -465,7 +463,7 @@ class ClientUpdate(object):
                                         x[1] for x in needParents)
                 newNeedParents = []
                 for (nodeId, nodeInfo), containerList in \
-                                itertools.izip(needParents, containers):
+                                zip(needParents, containers):
                     for containerInfo in containerList:
                         if containerInfo in nodeIdx:
                             containerId = nodeIdx[containerInfo]
@@ -539,7 +537,7 @@ class ClientUpdate(object):
                     else:
                         eraseCount[oldInfo] = 1
 
-            doubleErased = [ x[0] for x in eraseCount.iteritems() if x[1] > 1 ]
+            doubleErased = [ x[0] for x in eraseCount.items() if x[1] > 1 ]
             for oldInfo in doubleErased:
                 newJob.remove((oldInfo[0], (oldInfo[1], oldInfo[2]),
                                replacedJobs[oldInfo], False))
@@ -608,7 +606,7 @@ class ClientUpdate(object):
                     for x in relativeUpdateJobs if x[1][0] is not None]
         isPresentList = self.db.hasTroves([ x[0] for x in relativeUpdates ])
 
-        for (info, job), isPresent in itertools.izip(relativeUpdates,
+        for (info, job), isPresent in zip(relativeUpdates,
                                                      isPresentList):
             if not isPresent:
                 relativeUpdateJobs.remove(job)
@@ -621,7 +619,7 @@ class ClientUpdate(object):
         relativeInstalls = [ ((x[0], x[2][0], x[2][1]), x)
                          for x in relativeUpdateJobs if x[2][0] is not None]
         isPresentList = self.db.hasTroves([ x[0] for x in relativeInstalls ])
-        for (newTrove, job), isPresent in itertools.izip(relativeInstalls,
+        for (newTrove, job), isPresent in zip(relativeInstalls,
                                                          isPresentList):
             if isPresent:
                 relativeUpdateJobs.remove(job)
@@ -740,7 +738,7 @@ class ClientUpdate(object):
         pins = self.db.trovesArePinned([ (x[0], x[1][0], x[1][1])
                                                     for x in updateJobs ])
         jobByNew = dict( ((job[0], job[2][0], job[2][1]), (job[1], pin)) for
-                        (job, pin) in itertools.izip(updateJobs, pins) )
+                        (job, pin) in zip(updateJobs, pins) )
         jobByNew.update(
                    dict( ((job[0], job[2][0], job[2][1]), (job[1], False)) for
                         job in installJobs))
@@ -1270,7 +1268,7 @@ followLocalChanges: %s
 
         # items which were updated to redirects should be removed, no matter
         # what
-        for info in set(itertools.chain(*redirectHack.values())):
+        for info in set(itertools.chain(*list(redirectHack.values()))):
             erasePrimaries.add((info[0], (info[1], info[2]), (None, None), False))
 
         eraseSet = _findErasures(erasePrimaries, newJob, alreadyInstalled,
@@ -1400,7 +1398,7 @@ conary erase '%s=%s[%s]'
                                     if x not in pathHashCache and
                                     not trove.troveIsCollection(x[0]) ]
         oldPathHashes = self.db.getPathHashesForTroveList(pathHashesNeeded)
-        pathHashCache.update(itertools.izip(pathHashesNeeded, oldPathHashes))
+        pathHashCache.update(zip(pathHashesNeeded, oldPathHashes))
         oldJobs = [ (jobSet[idx], pathHashCache.get(info, None))
                                     for (idx, info) in oldTroves ]
 
@@ -1408,7 +1406,7 @@ conary erase '%s=%s[%s]'
         justNewJobs = [ x for x in jobSet if x[1][2][0] ]
         newTroves = [ (x[1][0], x[1][2][0], x[1][2][1]) for x in justNewJobs ]
         newJobs = ( (x, hashes) for x, hashes in
-                        itertools.izip(justNewJobs, getHashes(newTroves)) )
+                        zip(justNewJobs, getHashes(newTroves)) )
 
         for ((idx, job), pathHashes) in itertools.chain(oldJobs, newJobs):
             if pathHashes is None:
@@ -1456,7 +1454,7 @@ conary erase '%s=%s[%s]'
                     overlapping[newIdx] = idx
 
         sets = []
-        for val in overlapping.itervalues():
+        for val in overlapping.values():
             if isinstance(val, int):
                 continue
             sets.append([ jobSet[x][1] for x in set(val) ])
@@ -1482,7 +1480,7 @@ conary erase '%s=%s[%s]'
         localResults = self.db.findTroves(None, relevantPackages,
                                                allowMissing=True)
         downgrades = {}
-        for troveSpec, localVersions in localResults.iteritems():
+        for troveSpec, localVersions in localResults.items():
             reposVersions = findTroveResults[troveSpec]
             reposVersionsByLabel = {}
             localVersionsByLabel = {}
@@ -1547,10 +1545,10 @@ conary erase '%s=%s[%s]'
             present = self.db.hasTroves([ (x[0], x[2][0], x[2][1]) for x in
                                                     jobSet ] )
             oldItems = set([ (job[0], job[2][0], job[2][1]) for job, isPresent
-                                in itertools.izip(jobSet, present)
+                                in zip(jobSet, present)
                                 if isPresent ])
             newItems = set([ job for job, isPresent
-                                in itertools.izip(jobSet, present)
+                                in zip(jobSet, present)
                                 if not isPresent ])
             return newItems, oldItems
 
@@ -1657,8 +1655,8 @@ conary erase '%s=%s[%s]'
                 continue
 
             if len(oldTroves) > 2:
-                raise UpdateError, "Update of %s specifies multiple " \
-                            "troves for removal" % troveName
+                raise UpdateError("Update of %s specifies multiple " \
+                            "troves for removal" % troveName)
             elif oldTroves:
                 oldTrove = (oldTroves[0][1], oldTroves[0][2])
             else:
@@ -1710,12 +1708,12 @@ conary erase '%s=%s[%s]'
                                                    useAffinity=False,
                                                    exactFlavors=exactFlavors))
         for troveSpec, (oldTroveInfo, isAbsolute) in \
-                itertools.chain(toFind.iteritems(), toFindNoDb.iteritems()):
+                itertools.chain(iter(toFind.items()), iter(toFindNoDb.items())):
             resultList = results[troveSpec]
 
             if len(resultList) > 1 and oldTroveInfo[0] is not None:
-                raise UpdateError, "Relative update of %s specifies multiple " \
-                            "troves for install" % troveName
+                raise UpdateError("Relative update of %s specifies multiple " \
+                            "troves for install" % troveName)
 
             newJobList = [ (x[0], oldTroveInfo, x[1:], isAbsolute) for x in
                                     resultList ]
@@ -1755,7 +1753,7 @@ conary erase '%s=%s[%s]'
             [ (x[0], x[2][0], x[2][1]) for x in jobSet ] )
 
         reposChangeSetList = set([ x[1] for x in
-                          itertools.izip(hasTroves, jobSet)
+                          zip(hasTroves, jobSet)
                            if x[0] is not True ])
 
         if reposChangeSetList != jobSet:
@@ -1804,7 +1802,7 @@ conary erase '%s=%s[%s]'
                             (x[0], x[2][0], x[2][1]) for x in transitiveJobs)
 
             reposChangeSetList = set([ x[1] for x in
-                              itertools.izip(hasTroves, transitiveJobs)
+                              zip(hasTroves, transitiveJobs)
                                if x[0] is not True ])
 
             csSource = trovesource.stack(uJob.getSearchSource(),
@@ -1812,7 +1810,7 @@ conary erase '%s=%s[%s]'
             trovesExist = csSource.hasTroves(
                             [(x[0], x[2][0], x[2][1]) for x in reposChangeSetList])
             reposChangeSetList = [ x[1] for x in
-                                   itertools.izip(trovesExist, reposChangeSetList)
+                                   zip(trovesExist, reposChangeSetList)
                                    if x[0] is True ]
             cs, notFound = csSource.createChangeSet(reposChangeSetList,
                                                     withFiles = False,
@@ -1869,7 +1867,7 @@ conary erase '%s=%s[%s]'
         scripts = self.db.getTroveScripts(troveList)
         troves = self.db.getTroves(troveList, withFiles = False,
             withDeps = False)
-        for job, scriptObj, troveObj in itertools.izip(removeList, scripts, troves):
+        for job, scriptObj, troveObj in zip(removeList, scripts, troves):
             capsuleType = troveObj.getTroveInfo().capsule.type()
             if capsuleType:
                 updJob.addCapsuleType(capsuleType)
@@ -1978,12 +1976,12 @@ conary erase '%s=%s[%s]'
 
             while toFind:
                 matches = searchSource.findTroves(toFind, useAffinity=True)
-                allTroveTups = list(set(itertools.chain(*matches.itervalues())))
+                allTroveTups = list(set(itertools.chain(*iter(matches.values()))))
                 allTroves = searchSource.getTroves(allTroveTups)
-                allTroves = dict(itertools.izip(allTroveTups, allTroves))
+                allTroves = dict(zip(allTroveTups, allTroves))
 
                 newToFind = {}
-                for troveSpec, troveTupList in matches.iteritems():
+                for troveSpec, troveTupList in matches.items():
                     for troveTup in troveTupList:
                         redirTups = toFind[troveSpec]
                         for redirTup in redirTups:
@@ -2076,7 +2074,7 @@ conary erase '%s=%s[%s]'
                 troveList = list(trv.iterTroveListInfo())
                 troveTups = [x[0] for x in troveList]
                 hasTroves = self.db.hasTroves(troveTups)
-                troveList = (x[0] for x in itertools.izip(troveList, hasTroves) if x[1])
+                troveList = (x[0] for x in zip(troveList, hasTroves) if x[1])
                 byDefaultTrue.extend(x[0] for x in troveList if x[1])
             byDefaultFalse.difference_update(byDefaultTrue)
 
@@ -2094,7 +2092,7 @@ conary erase '%s=%s[%s]'
         searchSource = uJob.getSearchSource()
 
         results = searchSource.findTroves(toFind, useAffinity=True)
-        newTroves = list(set(itertools.chain(*results.itervalues())))
+        newTroves = list(set(itertools.chain(*iter(results.values()))))
         newTroves = searchSource.getTroves(newTroves, withFiles=False)
 
         newTroves, troveNames = _convertRedirects(searchSource, newTroves)
@@ -2131,7 +2129,7 @@ conary erase '%s=%s[%s]'
 
             troveTups = [x[0] for x in troveList]
             hasTroves = self.db.hasTroves(troveTups)
-            troveList = (x[0] for x in itertools.izip(troveList, hasTroves) if x[1])
+            troveList = (x[0] for x in zip(troveList, hasTroves) if x[1])
             for (troveNVF, byDefault, isWeak) in troveList:
                 count += 1
                 if not byDefault:
@@ -2208,7 +2206,7 @@ conary erase '%s=%s[%s]'
 
         csSource = trovesource.stack(uJob.getSearchSource(), self.repos)
 
-        for job, isPinned in itertools.izip(removalJobs, pins):
+        for job, isPinned in zip(removalJobs, pins):
             if isPinned:
                 if not job[2][0]:
                     # this is an erasure of a pinned trove skip it.
@@ -2232,7 +2230,7 @@ conary erase '%s=%s[%s]'
             [ (x[0], x[2][0], x[2][1]) for x in updateJobs ] )
 
         reposChangeSetList = set([ x[1] for x in
-                          itertools.izip(hasTroves, updateJobs)
+                          zip(hasTroves, updateJobs)
                            if x[0] is not True ])
 
         cs, notFound = csSource.createChangeSet(reposChangeSetList,
@@ -2277,7 +2275,7 @@ conary erase '%s=%s[%s]'
         items = [ (x[0], x[2][0], x[2][1]) for x in items
                    if not x[2][0].isOnLocalHost() and
                    not x[2][0].isInLocalNamespace() ]
-        items = [ x[0] for x in itertools.izip(items,
+        items = [ x[0] for x in zip(items,
                                                self.db.trovesArePinned(items))
                                                                   if not x[1] ]
         return items
@@ -2407,13 +2405,13 @@ conary erase '%s=%s[%s]'
         allTroves = set(x[0] for x in enumerate(troves)
                         if (x[1][ISPRESENT] or x[1][HASPARENT])
                            and not (x[1][ISPRESENT] and x[1][HASPARENT] and not x[1][ISWEAK]))
-        for name, (parents, troveIds) in parentIds.items():
+        for name, (parents, troveIds) in list(parentIds.items()):
             parents.intersection_update(allTroves)
             parentIds[name][1] = set(troveIds)
             parentIds[name][1].intersection_update(allTroves)
         del allTroves
 
-        noParents = (x[1][1] for x in parentIds.iteritems() if not x[1][0])
+        noParents = (x[1][1] for x in parentIds.items() if not x[1][0])
         noParents = set(itertools.chain(*noParents))
 
         while noParents:
@@ -2456,7 +2454,7 @@ conary erase '%s=%s[%s]'
                                          []).append(troveId)
 
             newNoParents = []
-            for name, troveIds in toDiscard.iteritems():
+            for name, troveIds in toDiscard.items():
                 parentIds[name][0].difference_update(troveIds)
                 if not parentIds[name][0]:
                     newNoParents.extend(parentIds[name][1])
@@ -2486,10 +2484,10 @@ conary erase '%s=%s[%s]'
         oldTroveSource = trovesource.stack(searchSource, self.repos)
         oldTroves = oldTroveSource.getTroves(toGet, withFiles=False)
 
-        troveDict = dict(zip(toGet, oldTroves))
+        troveDict = dict(list(zip(toGet, oldTroves)))
         toGet = [ x for x in newTroveTups if x[1] ]
         newTroves = self.db.getTroves(toGet, withFiles=False)
-        troveDict.update(zip(toGet, newTroves))
+        troveDict.update(list(zip(toGet, newTroves)))
 
         isComponent = trove.troveIsComponent
         for trv in newTroves:
@@ -2506,7 +2504,7 @@ conary erase '%s=%s[%s]'
         toGet = [ x for x in oldTroveTups if x[1] and x not in troveDict ]
         if toGet:
             moreOldTroves = oldTroveSource.getTroves(toGet, withFiles=False)
-            troveDict.update(zip(toGet, moreOldTroves))
+            troveDict.update(list(zip(toGet, moreOldTroves)))
             oldTroves += moreOldTroves
 
 
@@ -2520,15 +2518,15 @@ conary erase '%s=%s[%s]'
             childOld = list(set(chain(*(x.iterTroveList(strongRefs=True,
                                                         weakRefs=True)
                                                         for x in oldTroves))))
-            childOld += [ x[0] for x in troveDict.items()
+            childOld += [ x[0] for x in list(troveDict.items())
                           if isinstance(x[1], list) ]
             hasTroves = self.db.hasTroves(childNew + childOld)
-            installedTroves = set(x[0] for x in izip(childNew, hasTroves)
+            installedTroves = set(x[0] for x in zip(childNew, hasTroves)
                                                 if x[1])
             installedTroves.update(newTroveTups)
 
             hasTroves = hasTroves[len(childNew):]
-            missingTroves = set(x[0] for x in izip(childOld, hasTroves)
+            missingTroves = set(x[0] for x in zip(childOld, hasTroves)
                                               if not x[1])
             missingTroves.update(oldTroveTups)
             del childNew, childOld, hasTroves
@@ -2539,7 +2537,7 @@ conary erase '%s=%s[%s]'
 
         erases = set()
         allJobs = []
-        for oldTroveTup, newTroveTup in itertools.izip(oldTroveTups, newTroveTups):
+        for oldTroveTup, newTroveTup in zip(oldTroveTups, newTroveTups):
             erases.discard(oldTroveTup)
             # find the relevant local updates by performing a
             # diff between oldTrove and a trove based on newTrove
@@ -2629,7 +2627,7 @@ conary erase '%s=%s[%s]'
             oldTroves = localSource.getTroves([(x[0], x[1][0], x[1][1])
                                                for x in incompleteJobs])
             newCs = changeset.ChangeSet()
-            for newT, oldT in itertools.izip(newTroves, oldTroves):
+            for newT, oldT in zip(newTroves, oldTroves):
                 oldT.troveInfo.incomplete.set(1)
                 newT.troveInfo.incomplete.set(1)
                 newT.troveInfo.completeFixup.set(1)
@@ -3313,7 +3311,7 @@ conary erase '%s=%s[%s]'
             result = mainSearchSource.findTroves(resolveGroupList,
                                                  useAffinity=useAffinity,
                                                  exactFlavors=exactFlavors)
-            groupTups = list(itertools.chain(*result.itervalues()))
+            groupTups = list(itertools.chain(*iter(result.values())))
             groupTroves = self.repos.getTroves(groupTups, withFiles=False)
             resolveSource = resolve.DepResolutionByTroveList(self.cfg, self.db,
                                                              groupTroves)
@@ -3344,8 +3342,8 @@ conary erase '%s=%s[%s]'
         if keepExisting:
             for job in jobSet:
                 if job[1][0] is not None:
-                    raise UpdateError, 'keepExisting specified for a ' \
-                                       'relative change set'
+                    raise UpdateError('keepExisting specified for a ' \
+                                       'relative change set')
 
         self.updateCallback.resolvingDependencies()
 
@@ -3397,7 +3395,7 @@ conary erase '%s=%s[%s]'
                 l = d.setdefault((name, branch), [])
                 l.append(job)
 
-            for jobList in d.values():
+            for jobList in list(d.values()):
                 if len(jobList) < 2: continue
                 trvs = uJob.getTroveSource().getTroves(
                         [ (x[0], x[2][0], x[2][1]) for x in jobList ],
@@ -3459,7 +3457,7 @@ conary erase '%s=%s[%s]'
             migrate = migrate,
             exactFlavors = False)
         # Make sure we store them as booleans
-        kwargs = dict( (k, bool(v)) for k, v in kwargs.iteritems())
+        kwargs = dict( (k, bool(v)) for k, v in kwargs.items())
         if not uJob.getRestartedFlag():
             # If we were already a restart, don't bother to change the keyword
             # arguments, they should be the same as for the original set
@@ -3532,11 +3530,11 @@ conary erase '%s=%s[%s]'
         try:
             self.db.commitChangeSet(cs, uJob, callback=self.updateCallback,
                                     **kwargs)
-        except Exception, e:
+        except Exception as e:
             # rollback the current transaction
             self.db.db.rollback()
             if isinstance(e, database.CommitError):
-                raise UpdateError, "changeset cannot be applied:\n%s" % e
+                raise UpdateError("changeset cannot be applied:\n%s" % e)
             raise
 
     def _createAllCs(self, q, allJobs, uJob, cfg, stopSelf):
@@ -3546,7 +3544,7 @@ conary erase '%s=%s[%s]'
         # any passwords we need.
         # _createCs accesses the database through the uJob.troveSource,
         # so make sure that references this fresh db as well.
-        import Queue
+        import queue
 
         # We do not want the download thread to die with DatabaseLocked
         # errors, so make the timeout some really large value (5 minutes)
@@ -3572,7 +3570,7 @@ conary erase '%s=%s[%s]'
                 try:
                     q.put((False, newCs), True, 5)
                     break
-                except Queue.Full:
+                except queue.Full:
                     # if the queue is full, check to see if the
                     # other thread wants to quit
                     if stopSelf.isSet():
@@ -3767,10 +3765,10 @@ conary erase '%s=%s[%s]'
                 self.getRepos()._clearHostCache()
             return
 
-        import Queue
+        import queue
         from threading import Thread, Event
 
-        csQueue = Queue.Queue(5)
+        csQueue = queue.Queue(5)
         stopDownloadEvent = Event()
 
         downloadThread = Thread(None, self._createAllCs,
@@ -3784,7 +3782,7 @@ conary erase '%s=%s[%s]'
                     # get the next changeset object from the
                     # download thread.  Block for 10 seconds max
                     newCs = csQueue.get(True, 10)
-                except Queue.Empty:
+                except queue.Empty:
                     if downloadThread.isAlive():
                         continue
 
@@ -3795,7 +3793,7 @@ conary erase '%s=%s[%s]'
                 # We expect a (boolean, value)
                 isException, val = newCs
                 if isException:
-                    raise val[0], val[1], val[2]
+                    raise val[0](val[1]).with_traceback(val[2])
 
                 newCs = val
                 i += 1
@@ -3856,7 +3854,7 @@ class DowngradeError(UpdateError):
         msg = []
         msg.append('Updating would install older versions of the following packages.  This means that the installed version on the system is not available in the repository.  To override, specify the version explicitly.\n')
         for (troveSpec, label), \
-             (localTups, repoTups) in downgrades.iteritems():
+             (localTups, repoTups) in downgrades.items():
             repoVersions = ['%s/%s[%s]' % (x[1].trailingLabel(),
                                            x[1].trailingRevision(),
                                         deps.getInstructionSetFlavor(x[2]))
@@ -3996,7 +3994,7 @@ class EraseDepFailure(DepResolutionFailure):
         res = []
         packagesByErase = {}
         packagesByInstall = {}
-        resolved = set(itertools.chain(*self.suggMap.values()))
+        resolved = set(itertools.chain(*list(self.suggMap.values())))
         for jobSet in self.jobSets:
             for job in jobSet:
                 newInfo = job[0], job[2][0], job[2][1]
@@ -4047,7 +4045,7 @@ class NeededTrovesFailure(DependencyFailure):
     def _initErrorMessage(self):
         res = []
         requiredBy = {}
-        for (reqInfo, suggList) in self.suggMap.iteritems():
+        for (reqInfo, suggList) in self.suggMap.items():
             for sugg in sorted(suggList):
                if sugg in requiredBy:
                     requiredBy[sugg].append(reqInfo)
@@ -4058,7 +4056,7 @@ class NeededTrovesFailure(DependencyFailure):
             res.append("%s additional trove is needed:" % numPackages)
         else:
             res.append("%s additional troves are needed:" % numPackages)
-        for (suggInfo, reqList) in sorted(requiredBy.iteritems()):
+        for (suggInfo, reqList) in sorted(requiredBy.items()):
             res.append("    %s is required by:" %  self.formatNVF(suggInfo))
             for reqInfo in sorted(reqList):
                 res.append('       %s' % self.formatNVF(reqInfo))
@@ -4071,7 +4069,7 @@ class InstallPathConflicts(UpdateError):
     def __str__(self):
         res = []
         res.append("Troves being installed appear to conflict:")
-        for name, l in sorted(self.conflicts.iteritems()):
+        for name, l in sorted(self.conflicts.items()):
             res.append("   %s -> %s" % (name,
                            " ".join([ "%s[%s]->%s[%s]" %
                                         (x[0][0].asString(),
@@ -4216,7 +4214,7 @@ def _loadRestartInfo(restartDir, updJob):
             includesFileContents = bool(int(includesFileContents))
             fileDict[cspath] = includesFileContents
 
-    for path, includesFileContents in fileDict.iteritems():
+    for path, includesFileContents in fileDict.items():
         # path should already be absolute, so the next line is most likely not
         # changing path
         csFileName = os.path.join(restartDir, path)

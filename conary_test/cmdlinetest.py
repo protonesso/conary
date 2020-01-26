@@ -267,7 +267,7 @@ class CmdLineTest(rephelp.RepositoryHelper):
             ('troves', 'showTroves'),
             ('weak-refs', 'weakRefs'),
         ]
-        flagmap = [isinstance(x, basestring) and (x, x) or x for x in flagmap]
+        flagmap = [isinstance(x, str) and (x, x) or x for x in flagmap]
         kworig = dict((x[1], False) for x in flagmap)
         kworig['recurse'] = None
         cfgmap = [
@@ -1108,7 +1108,7 @@ class CmdLineTest(rephelp.RepositoryHelper):
         try:
             c.runCommand(None, argSet, ['cvc', 'commit'],
                 callback=None, repos=None)
-        except errors.ConaryError, e:
+        except errors.ConaryError as e:
             self.assertEqual(e.args[0],
                 "options --message and --log-file are "
                 "mutually exclusive")
@@ -1127,7 +1127,7 @@ class CmdLineTest(rephelp.RepositoryHelper):
         try:
             c.runCommand(None, argSet, ['cvc', 'commit'],
                 callback=None, repos=None)
-        except errors.ConaryError, e:
+        except errors.ConaryError as e:
             self.assertEqual(e.args[0],
                 "While opening %s: %s" % (tmpf, "No such file or directory"))
         else:
@@ -1362,7 +1362,7 @@ class CmdLineTest(rephelp.RepositoryHelper):
         self.logFilter.add()
         try:
             self.conaryMod.main(argv)
-        except SystemExit, e:
+        except SystemExit as e:
             assert(e.code == 1)
         self.logFilter.compare('error: context "doesnotexist" (given '
                                'manually) does not exist')
@@ -1376,7 +1376,7 @@ class CmdLineTest(rephelp.RepositoryHelper):
         self.logFilter.add()
         try:
             self.conaryMod.main(argv)
-        except SystemExit, e:
+        except SystemExit as e:
             assert(e.code == 1)
         self.logFilter.compare('error: context "doesnotexist" (specified '
                                'in the CONARY state file) does not exist')
@@ -1391,7 +1391,7 @@ class CmdLineTest(rephelp.RepositoryHelper):
         self.logFilter.add()
         try:
             self.conaryMod.main(argv)
-        except SystemExit, e:
+        except SystemExit as e:
             assert(e.code == 1)
         self.logFilter.compare('error: context "doesnotexist" (specified '
                                'as the default context in the conary '
@@ -1406,7 +1406,7 @@ class CmdLineTest(rephelp.RepositoryHelper):
             self.logFilter.add()
             try:
                 self.conaryMod.main(argv)
-            except SystemExit, e:
+            except SystemExit as e:
                 assert(e.code == 1)
             self.logFilter.compare('error: context "doesnotexist" (specified '
                                    'in the CONARY_CONTEXT environment '
@@ -1420,7 +1420,7 @@ class CmdLineTest(rephelp.RepositoryHelper):
             self.checkConary('rq --help',
                              'conary.cmds.conarycmd.RepQueryCommand.usage',
                              (None,))
-        except SystemExit, e:
+        except SystemExit as e:
             assert(e.code == 1)
 
     def testVerboseHelp(self):

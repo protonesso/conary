@@ -54,42 +54,42 @@ class PackageRecipeTest(rephelp.RepositoryHelper):
     def testGlobBasics(self):
         ref = '^foo$'
         glob = self.getGlob('foo')
-        self.assertEquals(glob(), ref)
-        self.assertEquals(repr(glob), "Glob('foo')")
-        self.assertEquals(str(glob), "Glob('foo')")
-        self.assertEquals(ref, glob)
-        self.assertEquals(hash(ref), hash(glob))
-        self.assertEquals(glob, self.getGlob('foo'))
-        self.assertEquals(glob, self.getRegexp(ref))
+        self.assertEqual(glob(), ref)
+        self.assertEqual(repr(glob), "Glob('foo')")
+        self.assertEqual(str(glob), "Glob('foo')")
+        self.assertEqual(ref, glob)
+        self.assertEqual(hash(ref), hash(glob))
+        self.assertEqual(glob, self.getGlob('foo'))
+        self.assertEqual(glob, self.getRegexp(ref))
 
         glob = self.getGlob('foo*')
-        self.assertEquals(glob(), '^foo[^/]*$')
-        self.assertEquals(repr(glob), "Glob('foo*')")
-        self.assertEquals(str(glob), "Glob('foo*')")
+        self.assertEqual(glob(), '^foo[^/]*$')
+        self.assertEqual(repr(glob), "Glob('foo*')")
+        self.assertEqual(str(glob), "Glob('foo*')")
 
         glob = self.getGlob('f?o')
-        self.assertEquals(glob(), '^f[^/]o$')
+        self.assertEqual(glob(), '^f[^/]o$')
 
         glob = self.getGlob('foo.*')
-        self.assertEquals(glob(), '^foo\\.[^/]*$')
+        self.assertEqual(glob(), '^foo\\.[^/]*$')
 
         glob = self.getGlob('%(datadir)s/foo', {'datadir': '/usr/share'})
-        self.assertEquals(glob(), '^\\/usr\\/share\\/foo$')
-        self.assertEquals(repr(glob), "Glob('%(datadir)s/foo')")
-        self.assertEquals(str(glob), "Glob('%%(datadir)s/foo')")
+        self.assertEqual(glob(), '^\\/usr\\/share\\/foo$')
+        self.assertEqual(repr(glob), "Glob('%(datadir)s/foo')")
+        self.assertEqual(str(glob), "Glob('%%(datadir)s/foo')")
 
         glob = self.getGlob('%(datadir)s/?[!foo|bar][^baz][]', {'datadir': '/usr/share'})
-        self.assertEquals(glob(), \
+        self.assertEqual(glob(), \
                 '^\\/usr\\/share\\/[^/][^foo|bar][\\^baz]\\[\\]$')
 
     def testRegexpBasics(self):
         exp = '^foo$'
         reg = self.getRegexp(exp)
-        self.assertEquals(reg, exp)
-        self.assertEquals(reg, self.getRegexp(exp))
-        self.assertEquals(reg, self.getGlob('foo'))
-        self.assertEquals(str(reg), "Regexp('^foo$')")
-        self.assertEquals(repr(reg), "Regexp('^foo$')")
+        self.assertEqual(reg, exp)
+        self.assertEqual(reg, self.getRegexp(exp))
+        self.assertEqual(reg, self.getGlob('foo'))
+        self.assertEqual(str(reg), "Regexp('^foo$')")
+        self.assertEqual(repr(reg), "Regexp('^foo$')")
 
     def testExpandPaths(self):
         recipe = self.getRecipe()
@@ -98,12 +98,12 @@ class PackageRecipeTest(rephelp.RepositoryHelper):
         self.touch(fn)
         reg = self.getRegexp('/foo')
         paths = action._expandPaths([reg], recipe.macros)
-        self.assertEquals([fn], paths)
+        self.assertEqual([fn], paths)
         paths = action._expandPaths(['/*'], recipe.macros)
-        self.assertEquals([fn], paths)
+        self.assertEqual([fn], paths)
         glob = self.getGlob('/f?o')
         paths = action._expandPaths([glob], recipe.macros)
-        self.assertEquals([fn], paths)
+        self.assertEqual([fn], paths)
 
     def testExpandGlobsWithDirs(self):
         recipe = self.getRecipe()
@@ -114,13 +114,13 @@ class PackageRecipeTest(rephelp.RepositoryHelper):
         self.touch(badFn)
         glob = self.getGlob('/foo*')
         paths = action._expandPaths([glob], recipe.macros)
-        self.assertEquals(sorted([goodFn, os.path.dirname(badFn)]), sorted(paths))
+        self.assertEqual(sorted([goodFn, os.path.dirname(badFn)]), sorted(paths))
         glob = self.getGlob('/foo?*')
         paths = action._expandPaths([glob], recipe.macros)
-        self.assertEquals([goodFn], paths)
+        self.assertEqual([goodFn], paths)
         glob = self.getGlob('/foo?bar')
         paths = action._expandPaths([glob], recipe.macros)
-        self.assertEquals([goodFn], paths)
+        self.assertEqual([goodFn], paths)
 
     def testGlobExcludeDirs(self):
         recipeStr = """\
@@ -136,8 +136,8 @@ class TestGlob(PackageRecipe):
 """
 
         built, d = self.buildRecipe(recipeStr, "TestGlob")
-        self.assertEquals(len(built), 1)
-        self.assertEquals(built[0][0], 'testglob:data')
+        self.assertEqual(len(built), 1)
+        self.assertEqual(built[0][0], 'testglob:data')
 
     def testRegexpConfig(self):
         recipeStr = """\
@@ -155,8 +155,8 @@ class TestRegexp(PackageRecipe):
 """
 
         built, d = self.buildRecipe(recipeStr, "TestRegexp")
-        self.assertEquals(len(built), 2)
-        self.assertEquals(sorted(x[0] for x in built),
+        self.assertEqual(len(built), 2)
+        self.assertEqual(sorted(x[0] for x in built),
             ['testregexp:data', 'testregexp:runtime'])
 
         repos = self.openRepository()
@@ -166,7 +166,7 @@ class TestRegexp(PackageRecipe):
             for fileInfo in trv.iterFileList():
                 fileObj = repos.getFileVersion(fileInfo[0],
                         fileInfo[2], fileInfo[3])
-                self.assertEquals(fileObj.flags.isConfig(), 1)
+                self.assertEqual(fileObj.flags.isConfig(), 1)
 
     def testGlobDoc(self):
         recipeStr = """\
@@ -181,8 +181,8 @@ class TestRegexp(PackageRecipe):
         r.Doc(r.glob('f?o'))
 """
         built, d = self.buildRecipe(recipeStr, "TestRegexp")
-        self.assertEquals(len(built), 1)
-        self.assertEquals(built[0][0], 'testregexp:supdoc')
+        self.assertEqual(len(built), 1)
+        self.assertEqual(built[0][0], 'testregexp:supdoc')
 
     def testRegexpDoc(self):
         recipeStr = """\
@@ -197,8 +197,8 @@ class TestRegexp(PackageRecipe):
         r.Doc(r.regexp('f.o'))
 """
         built, d = self.buildRecipe(recipeStr, "TestRegexp")
-        self.assertEquals(len(built), 1)
-        self.assertEquals(built[0][0], 'testregexp:supdoc')
+        self.assertEqual(len(built), 1)
+        self.assertEqual(built[0][0], 'testregexp:supdoc')
 
 class TroveFilterTest(rephelp.RepositoryHelper):
     def setUp(self):
@@ -213,21 +213,21 @@ class TroveFilterTest(rephelp.RepositoryHelper):
         filt = trovefilter.TroveFilter(recipe,
                 'foo', version = 'test.rpath.local@rpl:devel')
         nvf = cmdline.parseTroveSpec('foo=test.rpath.local@rpl:devel')
-        self.assertEquals(filt.match((nvf,)), True)
+        self.assertEqual(filt.match((nvf,)), True)
         nvf = cmdline.parseTroveSpec('foo=foo.rpath.local@rpl:devel')
-        self.assertEquals(filt.match((nvf,)), False)
+        self.assertEqual(filt.match((nvf,)), False)
         filt = trovefilter.TroveFilter(recipe,
                 'foo', version = '/test.rpath.local@rpl:devel')
         nvf = cmdline.parseTroveSpec('foo=/test.rpath.local@rpl:devel')
-        self.assertEquals(filt.match((nvf,)), True)
+        self.assertEqual(filt.match((nvf,)), True)
         nvf = cmdline.parseTroveSpec('foo=/foo.rpath.local@rpl:devel')
-        self.assertEquals(filt.match((nvf,)), False)
+        self.assertEqual(filt.match((nvf,)), False)
         filt = trovefilter.TroveFilter(recipe,
                 'foo', version = '/test.rpath.local@rpl:devel/1-1-1')
         nvf = cmdline.parseTroveSpec('foo=/test.rpath.local@rpl:devel/1-1-1')
-        self.assertEquals(filt.match((nvf,)), True)
+        self.assertEqual(filt.match((nvf,)), True)
         nvf = cmdline.parseTroveSpec('foo=/foo.rpath.local@rpl:devel/1-1-1')
-        self.assertEquals(filt.match((nvf,)), False)
+        self.assertEqual(filt.match((nvf,)), False)
 
     @testhelp.context('trove-filter')
     def testBadTroveFilters(self):
@@ -237,18 +237,18 @@ class TroveFilterTest(rephelp.RepositoryHelper):
 
         try:
             filt = trovefilter.TroveFilter(recipe, 'foo(')
-        except RuntimeError, e:
-            self.assertEquals(str(e), "Bad Regexp: 'foo(' for name")
+        except RuntimeError as e:
+            self.assertEqual(str(e), "Bad Regexp: 'foo(' for name")
         else:
             self.fail("Expected RuntimeError")
 
         nvf = cmdline.parseTroveSpec('foo=/test.rpath.local@rpl:devel')
         filt = trovefilter.TroveFilter(recipe, 'foo')
-        self.assertEquals(filt.match((nvf,)), True)
+        self.assertEqual(filt.match((nvf,)), True)
         filt.compile()
         filt.versionType = True
         filt.version = 'foo'
-        self.assertEquals(filt.match((nvf,)), False)
+        self.assertEqual(filt.match((nvf,)), False)
 
     @testhelp.context('trove-filter')
     def testTroveFilterVersion(self):
@@ -259,25 +259,25 @@ class TroveFilterTest(rephelp.RepositoryHelper):
                 'bar', version = 'test.rpath.local@rpl:linux')
         nvf = ('foo', versions.VersionFromString( \
                 '/test.rpath.local@rpl:linux/1-1-1'), deps.parseFlavor(''))
-        self.assertEquals(filt.match((nvf,)), True)
-        self.assertEquals(filt2.match((nvf,)), False)
+        self.assertEqual(filt.match((nvf,)), True)
+        self.assertEqual(filt2.match((nvf,)), False)
         filt = trovefilter.TroveFilter(recipe,
                 'foo', version = '/test.rpath.local@rpl:linux')
-        self.assertEquals(filt.match((nvf,)), True)
+        self.assertEqual(filt.match((nvf,)), True)
         filt = trovefilter.TroveFilter(recipe,
                 'foo', version = '/test.rpath.local@rpl:linux/1-1-1')
-        self.assertEquals(filt.match((nvf,)), True)
+        self.assertEqual(filt.match((nvf,)), True)
         filt = trovefilter.TroveFilter(recipe,
                 'foo', version = 'test.rpath.local@rpl:linux')
         nvf = ('foo', versions.VersionFromString( \
                 '/test.rpath.local@rpl:devel/1-1-1'), deps.parseFlavor(''))
-        self.assertEquals(filt.match((nvf,)), False)
+        self.assertEqual(filt.match((nvf,)), False)
         filt = trovefilter.TroveFilter(recipe,
                 'foo', version = '/test.rpath.local@rpl:linux')
-        self.assertEquals(filt.match((nvf,)), False)
+        self.assertEqual(filt.match((nvf,)), False)
         filt = trovefilter.TroveFilter(recipe,
                 'foo', version = '/test.rpath.local@rpl:linux/1-1-1')
-        self.assertEquals(filt.match((nvf,)), False)
+        self.assertEqual(filt.match((nvf,)), False)
 
     @testhelp.context('trove-filter')
     def testTroveFilterMacros(self):
@@ -288,14 +288,14 @@ class TroveFilterTest(rephelp.RepositoryHelper):
                 '%(name)s', version = 'test.rpath.local@rpl:linux')
         nvf = ('foo', versions.VersionFromString( \
                 '/test.rpath.local@rpl:linux/1-1-1'), deps.parseFlavor(''))
-        self.assertEquals(filt.match((nvf,)), True)
+        self.assertEqual(filt.match((nvf,)), True)
 
         # test a macro in the version element
         filt = trovefilter.TroveFilter(recipe,
                 '%(name)s', version = '%(name)s.rpath.local@rpl:linux')
         nvf = ('foo', versions.VersionFromString( \
                 '/foo.rpath.local@rpl:linux/1-1-1'), deps.parseFlavor(''))
-        self.assertEquals(filt.match((nvf,)), True)
+        self.assertEqual(filt.match((nvf,)), True)
 
     @testhelp.context('trove-filter')
     def testTroveFilterRegexps(self):
@@ -306,12 +306,12 @@ class TroveFilterTest(rephelp.RepositoryHelper):
                 '%(name)s1+', version = 'test.rpath.local@rpl:linux')
         nvf = ('foo11', versions.VersionFromString( \
                 '/test.rpath.local@rpl:linux/1-1-1'), deps.parseFlavor(''))
-        self.assertEquals(filt.match((nvf,)), True)
+        self.assertEqual(filt.match((nvf,)), True)
 
         # test that name regexp is anchored
         nvf = ('foo113', versions.VersionFromString( \
                 '/test.rpath.local@rpl:linux/1-1-1'), deps.parseFlavor(''))
-        self.assertEquals(filt.match((nvf,)), False)
+        self.assertEqual(filt.match((nvf,)), False)
 
     @testhelp.context('trove-filter')
     def testTroveFilterFlavors(self):
@@ -321,23 +321,23 @@ class TroveFilterTest(rephelp.RepositoryHelper):
                 flavor = 'xen,domU')
         nvf = ('foo', versions.VersionFromString( \
                 '/test.rpath.local@rpl:linux/1-1-1'), deps.parseFlavor(''))
-        self.assertEquals(filt.match((nvf,)), False)
-        self.assertEquals(filt2.match((nvf,)), False)
+        self.assertEqual(filt.match((nvf,)), False)
+        self.assertEqual(filt2.match((nvf,)), False)
         nvf = ('foo', versions.VersionFromString( \
                 '/test.rpath.local@rpl:linux/1-1-1'),
                 deps.parseFlavor('xen,domU is: x86'))
-        self.assertEquals(filt.match((nvf,)), True)
-        self.assertEquals(filt2.match((nvf,)), False)
+        self.assertEqual(filt.match((nvf,)), True)
+        self.assertEqual(filt2.match((nvf,)), False)
         nvf = ('foo', versions.VersionFromString( \
                 '/test.rpath.local@rpl:linux/1-1-1'),
                 deps.parseFlavor('xen,domU is: x86_64'))
-        self.assertEquals(filt.match((nvf,)), True)
-        self.assertEquals(filt2.match((nvf,)), False)
+        self.assertEqual(filt.match((nvf,)), True)
+        self.assertEqual(filt2.match((nvf,)), False)
         nvf = ('foo', versions.VersionFromString( \
                 '/test.rpath.local@rpl:linux/1-1-1'),
                 'xen,domU is: x86_64')
-        self.assertEquals(filt.match((nvf,)), True)
-        self.assertEquals(filt2.match((nvf,)), False)
+        self.assertEqual(filt.match((nvf,)), True)
+        self.assertEqual(filt2.match((nvf,)), False)
 
     @testhelp.context('trove-filter')
     def testTroveFilterFlavors2(self):
@@ -358,15 +358,15 @@ class TroveFilterTest(rephelp.RepositoryHelper):
         nvf4 = ('foo', versions.VersionFromString( \
                 '/test.rpath.local@rpl:linux/1-1-1'),
                 deps.parseFlavor('xen,domU is: x86 x86_64'))
-        self.assertEquals(filt1.match((nvf1,)), False)
-        self.assertEquals(filt1.match((nvf2,)), True)
-        self.assertEquals(filt2.match((nvf2,)), False)
-        self.assertEquals(filt2.match((nvf3,)), True)
-        self.assertEquals(filt2.match((nvf4,)), False)
-        self.assertEquals(filt3.match((nvf4,)), True)
-        self.assertEquals(filt3.match((nvf1,)), False)
-        self.assertEquals(filt3.match((nvf2,)), False)
-        self.assertEquals(filt3.match((nvf3,)), False)
+        self.assertEqual(filt1.match((nvf1,)), False)
+        self.assertEqual(filt1.match((nvf2,)), True)
+        self.assertEqual(filt2.match((nvf2,)), False)
+        self.assertEqual(filt2.match((nvf3,)), True)
+        self.assertEqual(filt2.match((nvf4,)), False)
+        self.assertEqual(filt3.match((nvf4,)), True)
+        self.assertEqual(filt3.match((nvf1,)), False)
+        self.assertEqual(filt3.match((nvf2,)), False)
+        self.assertEqual(filt3.match((nvf3,)), False)
 
     @testhelp.context('trove-filter')
     def testTroveFilterFlavors3(self):
@@ -380,11 +380,11 @@ class TroveFilterTest(rephelp.RepositoryHelper):
         nvf2 = ('foo', versions.VersionFromString( \
                 '/test.rpath.local@rpl:linux/1-1-1'),
                 deps.parseFlavor('xen,domU is: x86(sse, sse2, 486, 586, 686)'))
-        self.assertEquals(filt1.match((nvf1,)), True)
-        self.assertEquals(filt2.match((nvf2,)), True)
+        self.assertEqual(filt1.match((nvf1,)), True)
+        self.assertEqual(filt2.match((nvf2,)), True)
         # most important test. x86 filter matches x86(sse)
-        self.assertEquals(filt1.match((nvf2,)), True)
-        self.assertEquals(filt2.match((nvf1,)), False)
+        self.assertEqual(filt1.match((nvf2,)), True)
+        self.assertEqual(filt2.match((nvf1,)), False)
 
     @testhelp.context('trove-filter')
     def testTroveFilterFlavors4(self):
@@ -399,11 +399,11 @@ class TroveFilterTest(rephelp.RepositoryHelper):
         nvf2 = ('foo', versions.VersionFromString( \
                 '/test.rpath.local@rpl:linux/1-1-1'),
                 deps.parseFlavor('xen,domU is: x86(sse, sse2, 486, 586, 686)'))
-        self.assertEquals(filt1.match((nvf1,)), True)
-        self.assertEquals(filt2.match((nvf2,)), True)
-        self.assertEquals(filt1.match((nvf2,)), False)
-        self.assertEquals(filt2.match((nvf1,)), False)
-        self.assertEquals(filt3.match((nvf1,)), True)
+        self.assertEqual(filt1.match((nvf1,)), True)
+        self.assertEqual(filt2.match((nvf2,)), True)
+        self.assertEqual(filt1.match((nvf2,)), False)
+        self.assertEqual(filt2.match((nvf1,)), False)
+        self.assertEqual(filt3.match((nvf1,)), True)
 
     @testhelp.context('trove-filter')
     def testTroveFilterNoVersion(self):
@@ -411,10 +411,10 @@ class TroveFilterTest(rephelp.RepositoryHelper):
         filt = trovefilter.TroveFilter(recipe, name = 'foo')
         nvf = ('foo', versions.VersionFromString( \
                 '/test.rpath.local@rpl:linux/1-1-1'), deps.parseFlavor(''))
-        self.assertEquals(filt.match((nvf,)), True)
+        self.assertEqual(filt.match((nvf,)), True)
         nvf = ('foo', versions.VersionFromString( \
                 '/test.rpath.local@rpl:devel/1-1-1'), deps.parseFlavor(''))
-        self.assertEquals(filt.match((nvf,)), True)
+        self.assertEqual(filt.match((nvf,)), True)
 
     @testhelp.context('trove-filter')
     def testTroveFilterRevision(self):
@@ -422,38 +422,38 @@ class TroveFilterTest(rephelp.RepositoryHelper):
         filt = trovefilter.TroveFilter(recipe, version = '1.1-1-1')
         nvf = ('foo', versions.VersionFromString( \
                 '/test.rpath.local@rpl:linux/1-1-2'), deps.parseFlavor(''))
-        self.assertEquals(filt.match((nvf,)), False)
+        self.assertEqual(filt.match((nvf,)), False)
         nvf = ('foo', versions.VersionFromString( \
                 '/test.rpath.local@rpl:linux/1.1-1-1'), deps.parseFlavor(''))
-        self.assertEquals(filt.match((nvf,)), True)
+        self.assertEqual(filt.match((nvf,)), True)
 
         filt = trovefilter.TroveFilter(recipe, version = '1.1-1')
         nvf = ('foo', versions.VersionFromString( \
                 '/test.rpath.local@rpl:linux/1.1-1-2'), deps.parseFlavor(''))
-        self.assertEquals(filt.match((nvf,)), True)
+        self.assertEqual(filt.match((nvf,)), True)
         nvf = ('foo', versions.VersionFromString( \
                 '/test.rpath.local@rpl:linux/1.1-2-2'), deps.parseFlavor(''))
-        self.assertEquals(filt.match((nvf,)), False)
+        self.assertEqual(filt.match((nvf,)), False)
         nvf = ('foo', versions.VersionFromString( \
                 '/test.rpath.local@rpl:linux/1.1-1-1'), deps.parseFlavor(''))
-        self.assertEquals(filt.match((nvf,)), True)
+        self.assertEqual(filt.match((nvf,)), True)
         nvf = ('foo', versions.VersionFromString( \
                 '/test.rpath.local@rpl:linux/1.2-1-1'), deps.parseFlavor(''))
-        self.assertEquals(filt.match((nvf,)), False)
+        self.assertEqual(filt.match((nvf,)), False)
 
         filt = trovefilter.TroveFilter(recipe, version = '1.1')
         nvf = ('foo', versions.VersionFromString( \
                 '/test.rpath.local@rpl:linux/1.1-1-2'), deps.parseFlavor(''))
-        self.assertEquals(filt.match((nvf,)), True)
+        self.assertEqual(filt.match((nvf,)), True)
         nvf = ('foo', versions.VersionFromString( \
                 '/test.rpath.local@rpl:linux/1.1-2-1'), deps.parseFlavor(''))
-        self.assertEquals(filt.match((nvf,)), True)
+        self.assertEqual(filt.match((nvf,)), True)
         nvf = ('foo', versions.VersionFromString( \
                 '/test.rpath.local@rpl:linux/1.2-1-1'), deps.parseFlavor(''))
-        self.assertEquals(filt.match((nvf,)), False)
+        self.assertEqual(filt.match((nvf,)), False)
 
         filt = trovefilter.TroveFilter(recipe, version = '')
-        self.assertEquals(filt.match((nvf,)), True)
+        self.assertEqual(filt.match((nvf,)), True)
 
     @testhelp.context('trove-filter')
     def testTroveFilterBlank(self):
@@ -461,10 +461,10 @@ class TroveFilterTest(rephelp.RepositoryHelper):
         filt = trovefilter.TroveFilter(recipe)
         nvf = ('foo', versions.VersionFromString( \
                 '/test.rpath.local@rpl:linux/1.1-2-1'), deps.parseFlavor(''))
-        self.assertEquals(filt.match((nvf,)), True)
+        self.assertEqual(filt.match((nvf,)), True)
         nvf = ('bar', versions.VersionFromString( \
                 '/test.rpath.local@rpl:devel/1.0-6-4'), deps.parseFlavor(''))
-        self.assertEquals(filt.match((nvf,)), True)
+        self.assertEqual(filt.match((nvf,)), True)
 
     @testhelp.context('trove-filter')
     def testTroveFilterNot(self):
@@ -472,18 +472,18 @@ class TroveFilterTest(rephelp.RepositoryHelper):
         filt = -trovefilter.TroveFilter(recipe, name = 'foo')
         nvf = ('foo', versions.VersionFromString( \
                 '/test.rpath.local@rpl:linux/1.1-2-1'), deps.parseFlavor(''))
-        self.assertEquals(filt.match((nvf,)), False)
+        self.assertEqual(filt.match((nvf,)), False)
         nvf = ('bar', versions.VersionFromString( \
                 '/test.rpath.local@rpl:linux/1.1-2-1'), deps.parseFlavor(''))
-        self.assertEquals(filt.match((nvf,)), True)
+        self.assertEqual(filt.match((nvf,)), True)
 
         filt = ~trovefilter.TroveFilter(recipe, name = 'foo')
         nvf = ('foo', versions.VersionFromString( \
                 '/test.rpath.local@rpl:linux/1.1-2-1'), deps.parseFlavor(''))
-        self.assertEquals(filt.match((nvf,)), False)
+        self.assertEqual(filt.match((nvf,)), False)
         nvf = ('bar', versions.VersionFromString( \
                 '/test.rpath.local@rpl:linux/1.1-2-1'), deps.parseFlavor(''))
-        self.assertEquals(filt.match((nvf,)), True)
+        self.assertEqual(filt.match((nvf,)), True)
 
     @testhelp.context('trove-filter')
     def testTroveFilterOr(self):
@@ -499,12 +499,12 @@ class TroveFilterTest(rephelp.RepositoryHelper):
                 '/test.rpath.local@rpl:linux/1.1-2-1'), deps.parseFlavor(''))
         nvf2 = ('group-foo', versions.VersionFromString( \
                 '/test.rpath.local@rpl:linux/1.1-2-1'), deps.parseFlavor(''))
-        self.assertEquals(filt3.match((nvf1, nvf2)), True)
-        self.assertEquals(filt3.match((nvf2,)), False)
-        self.assertEquals(filt4.match((nvf1, nvf2)), True)
-        self.assertEquals(filt5.match((nvf1, nvf2)), True)
-        self.assertEquals(filt5.match((nvf1,)), False)
-        self.assertEquals(filt6.match((nvf1, nvf2)), True)
+        self.assertEqual(filt3.match((nvf1, nvf2)), True)
+        self.assertEqual(filt3.match((nvf2,)), False)
+        self.assertEqual(filt4.match((nvf1, nvf2)), True)
+        self.assertEqual(filt5.match((nvf1, nvf2)), True)
+        self.assertEqual(filt5.match((nvf1,)), False)
+        self.assertEqual(filt6.match((nvf1, nvf2)), True)
 
     @testhelp.context('trove-filter')
     def testTroveFilterAnd(self):
@@ -520,59 +520,59 @@ class TroveFilterTest(rephelp.RepositoryHelper):
                 '/test.rpath.local@rpl:linux/1.1-2-1'), deps.parseFlavor(''))
         nvf2 = ('group-foo', versions.VersionFromString( \
                 '/test.rpath.local@rpl:linux/1.1-2-1'), deps.parseFlavor(''))
-        self.assertEquals(filt3.match((nvf1, nvf2)), False)
-        self.assertEquals(filt3.match((nvf2,)), False)
-        self.assertEquals(filt3.match((nvf1,)), True)
-        self.assertEquals(filt4.match((nvf1, nvf2)), False)
-        self.assertEquals(filt4.match((nvf1,)), False)
-        self.assertEquals(filt4.match((nvf2,)), True)
-        self.assertEquals(filt5.match((nvf1, nvf2)), True)
-        self.assertEquals(filt5.match((nvf1,)), False)
-        self.assertEquals(filt5.match((nvf2,)), False)
-        self.assertEquals(filt6.match((nvf1, nvf2)), False)
+        self.assertEqual(filt3.match((nvf1, nvf2)), False)
+        self.assertEqual(filt3.match((nvf2,)), False)
+        self.assertEqual(filt3.match((nvf1,)), True)
+        self.assertEqual(filt4.match((nvf1, nvf2)), False)
+        self.assertEqual(filt4.match((nvf1,)), False)
+        self.assertEqual(filt4.match((nvf2,)), True)
+        self.assertEqual(filt5.match((nvf1, nvf2)), True)
+        self.assertEqual(filt5.match((nvf1,)), False)
+        self.assertEqual(filt5.match((nvf2,)), False)
+        self.assertEqual(filt6.match((nvf1, nvf2)), False)
 
     @testhelp.context('trove-filter')
     def testTroveFilterEquality(self):
         recipe = self.getRecipe()
         filt1 = trovefilter.TroveFilter(recipe, name = 'foo')
         filt2 = trovefilter.TroveFilter(recipe, name = 'group-foo')
-        self.assertNotEquals(filt1, filt2)
+        self.assertNotEqual(filt1, filt2)
 
         filt1 = trovefilter.TroveFilter(recipe, name = 'foo')
         filt2 = trovefilter.TroveFilter(recipe, name = 'foo')
-        self.assertEquals(filt1, filt2)
+        self.assertEqual(filt1, filt2)
 
         filt1 = trovefilter.TroveFilter(recipe, name = 'foo',
                 version = 'c.r.c@rpl:linux')
         filt2 = trovefilter.TroveFilter(recipe, name = 'foo')
-        self.assertNotEquals(filt1, filt2)
+        self.assertNotEqual(filt1, filt2)
 
         filt1 = trovefilter.TroveFilter(recipe, name = 'foo',
                 version = 'c.r.c@rpl:linux')
         filt2 = trovefilter.TroveFilter(recipe, name = 'foo',
                 version = 'c.r.c@rpl:linux')
-        self.assertEquals(filt1, filt2)
+        self.assertEqual(filt1, filt2)
 
         filt1 = trovefilter.TroveFilter(recipe, name = 'foo',
                 version = 'c.r.c@rpl:linux')
         filt2 = trovefilter.TroveFilter(recipe, name = 'foo',
                 version = '/c.r.c@rpl:linux')
-        self.assertNotEquals(filt1, filt2)
+        self.assertNotEqual(filt1, filt2)
 
         filt1 = trovefilter.TroveFilter(recipe, name = 'foo',
                 version = 'c.r.c@rpl:linux', flavor = 'is: x86')
         filt2 = trovefilter.TroveFilter(recipe, name = 'foo',
                 version = 'c.r.c@rpl:linux')
-        self.assertNotEquals(filt1, filt2)
+        self.assertNotEqual(filt1, filt2)
 
         filt1 = trovefilter.TroveFilter(recipe, name = 'foo',
                 flavor = 'is: x86')
         filt2 = trovefilter.TroveFilter(recipe, name = 'foo',
                 flavor = 'is: x86 x86_64')
-        self.assertNotEquals(filt1, filt2)
+        self.assertNotEqual(filt1, filt2)
 
         filt1 = trovefilter.TroveFilter(recipe, name = 'foo',
                 version = 'c.r.c@rpl:linux', flavor = 'is: x86')
         filt2 = trovefilter.TroveFilter(recipe, name = 'foo',
                 version = 'c.r.c@rpl:linux', flavor = 'is: x86')
-        self.assertEquals(filt1, filt2)
+        self.assertEqual(filt1, filt2)

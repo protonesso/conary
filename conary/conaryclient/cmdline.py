@@ -54,7 +54,7 @@ def parseTroveSpec(specStr, allowEmptyName = True, withFrozenFlavor = False):
 def _getChangeSet(path):
         try:
             cs = changeset.ChangeSetFromFile(path)
-        except BadContainer, msg:
+        except BadContainer as msg:
             # ensure that it is obvious that a file is being referenced
             if path[0] not in './':
                 path = './' + path
@@ -263,7 +263,7 @@ def toTroveSpec(name, versionStr, flavor):
 def askYn(prompt, default=None):
     while True:
         try:
-            resp = raw_input(prompt + ' ')
+            resp = input(prompt + ' ')
         except EOFError:
             return False
 
@@ -275,7 +275,7 @@ def askYn(prompt, default=None):
         elif not resp:
             return default
         else:
-            print "Unknown response '%s'." % resp
+            print("Unknown response '%s'." % resp)
 
 def setContext(cfg, context=None, environ=None, searchCurrentDir=False):
     if environ is None:

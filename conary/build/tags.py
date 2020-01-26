@@ -24,7 +24,7 @@ from conary.build import filter
 from conary.lib.cfg import CfgEnum, CfgList, CfgString, ConfigFile, ParseError
 from conary.lib.cfg import directive
 
-EXCLUDE, INCLUDE = range(2)
+EXCLUDE, INCLUDE = list(range(2))
 
 class CfgImplementsItem(CfgEnum):
     validValueDict = {'files':   ('update', 'preremove', 'remove',
@@ -34,15 +34,14 @@ class CfgImplementsItem(CfgEnum):
 
     def __init__(self):
         validValues = []
-        for fileType, actionList in self.validValueDict.iteritems():
+        for fileType, actionList in self.validValueDict.items():
             validValues.extend(' '.join((fileType, x)) for x in actionList)
         self.validValues = validValues
         CfgEnum.__init__(self)
 
     def checkEntry(self, val):
         if val.find(" ") < 0:
-            raise ParseError, \
-                'missing type/action in "implements %s"' %val
+            raise ParseError('missing type/action in "implements %s"' %val)
         CfgEnum.checkEntry(self, val)
         # XXX missing check for description here
 
@@ -71,15 +70,13 @@ class TagFile(ConfigFile):
         if 'implements' in self.__dict__:
             for item in self.__dict__['implements']:
                 if item.find(" ") < 0:
-                    raise ParseError, \
-                        'missing type/action in "implements %s"' %item
+                    raise ParseError('missing type/action in "implements %s"' %item)
                 key, val = item.split(" ")
                 # deal with self->handler protocol change
                 if key == 'description':
                     if warn:
                         # at cook time
-                        raise ParseError, \
-                            'change "implements %s" to "implements handler" in %s' % (key, filename)
+                        raise ParseError('change "implements %s" to "implements handler" in %s' % (key, filename))
                     # throw this away
                     continue
 

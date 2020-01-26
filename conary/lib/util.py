@@ -18,7 +18,7 @@
 import base64
 import bdb
 import bz2
-import debugger
+from . import debugger
 import errno
 import fnmatch
 import gzip
@@ -29,17 +29,17 @@ import select
 import shutil
 import stat
 import string
-import StringIO
+import io
 import struct
 import subprocess
 import sys
 import tempfile
 import time
 import types
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import uuid
 import weakref
-import xmlrpclib
+import xmlrpc.client
 import zlib
 
 from conary.lib import fixedglob, log, api, urlparse
@@ -73,7 +73,7 @@ def isregular(path):
     return stat.S_ISREG(os.lstat(path)[stat.ST_MODE])
 
 
-def _mkdirs(path, mode=0777):
+def _mkdirs(path, mode=0o777):
     """
     Recursive helper to L{mkdirChain}. Internal use only.
     """
@@ -110,14 +110,14 @@ def searchFile(file, searchdirs, error=None):
         if os.path.exists(s):
             return s
     if error:
-        raise OSError, (errno.ENOENT, os.strerror(errno.ENOENT))
+        raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
     return None
 
 def findFile(file, searchdirs):
     return searchFile(file, searchdirs, error=1)
 
 def which (filename):
-    if not os.environ.has_key('PATH') or os.environ['PATH'] == '':
+    if 'PATH' not in os.environ or os.environ['PATH'] == '':
         p = os.defpath
     else:
         p = os.environ['PATH']
@@ -194,7 +194,7 @@ def genExcepthook(debug=True,
     def SIGUSR1Handler(signum, frame):
         global _debugAll
         _debugAll = True
-        print >>sys.stderr, '<Turning on KeyboardInterrupt catching>'
+        print('<Turning on KeyboardInterrupt catching>', file=sys.stderr)
 
     def excepthook(typ, value, tb):
         if typ is bdb.BdbQuit:
@@ -262,7 +262,7 @@ def _handle_rc(rc, cmd):
             info = 'Shell command "%s" exited with exit code %d' \
                     %(cmd, os.WEXITSTATUS(rc))
         log.error(info)
-        raise RuntimeError, info
+        raise RuntimeError(info)
 
 def execute(cmd, destDir=None, verbose=True):
     """
@@ -331,7 +331,7 @@ class BraceExpander(object):
 
     @classmethod
     def _collapseNode(cls, node):
-        if isinstance(node, basestring):
+        if isinstance(node, str):
             # Char data
             return [ node ]
         if not node:
@@ -369,7 +369,7 @@ class BraceExpander(object):
         operators = []
         lastWasLiteral = False
         for item in listObj:
-            if isinstance(item, basestring):
+            if isinstance(item, str):
                 if not haveText:
                     text = []
                     outputQ.append(text)
@@ -460,7 +460,7 @@ class BraceExpander(object):
                 stack.append([])
                 continue
             if not stack:
-                raise ValueError, 'path %s has unbalanced {}' %path
+                raise ValueError('path %s has unbalanced {}' %path)
             if c == '}':
                 if len(stack) == 1:
                     # Unbalanced }; add it as literal
@@ -524,9 +524,9 @@ def _permsVisit(arg, dirname, names):
         path = joinPaths(dirname, name)
         mode = os.lstat(path)[stat.ST_MODE]
         # has to be executable to cd, readable to list, writeable to delete
-        if stat.S_ISDIR(mode) and (mode & 0700) != 0700:
+        if stat.S_ISDIR(mode) and (mode & 0o700) != 0o700:
             log.warning("working around illegal mode 0%o at %s", mode, path)
-            mode |= 0700
+            mode |= 0o700
             os.chmod(path, mode)
 
 def remove(paths, quiet=False):
@@ -719,7 +719,7 @@ def splitPath(path):
 
 def assertIteratorAtEnd(iter):
     try:
-        iter.next()
+        next(iter)
         raise AssertionError
     except StopIteration:
         return True
@@ -945,7 +945,7 @@ class ExtendedFile(ExtendedFdopen):
         fd = self.fObj.fileno()
         ExtendedFdopen.__init__(self, fd)
 
-class ExtendedStringIO(StringIO.StringIO):
+class ExtendedStringIO(io.StringIO):
 
     def pread(self, bytes, offset):
         pos = self.tell()
@@ -1070,12 +1070,12 @@ class PushIterator:
     def push(self, val):
         self.head.insert(0, val)
 
-    def next(self):
+    def __next__(self):
         if self.head:
             val = self.head.pop(0)
             return val
 
-        return self.iter.next()
+        return next(self.iter)
 
     def __init__(self, iter):
         self.head = []
@@ -1085,7 +1085,7 @@ class PeekIterator:
 
     def _next(self):
         try:
-            self.val = self.iter.next()
+            self.val = next(self.iter)
         except StopIteration:
             self.done = True
 
@@ -1095,7 +1095,7 @@ class PeekIterator:
 
         return self.val
 
-    def next(self):
+    def __next__(self):
         if self.done:
             raise StopIteration
 
@@ -1105,7 +1105,7 @@ class PeekIterator:
 
     def __iter__(self):
         while True:
-            yield self.next()
+            yield next(self)
 
     def __init__(self, iter):
         self.done = False
@@ -1138,7 +1138,7 @@ def lstat(path):
 
     try:
         sb = os.lstat(path)
-    except OSError, e:
+    except OSError as e:
         if e.errno != errno.ENOENT:
             raise
         return None
@@ -1185,7 +1185,7 @@ def _LazyFile_reopen(method):
             # Mark it as being used
             self._timestamp = time.time()
             # Return the real method
-            return getattr(self._realFd, method.func_name)(*args, **kwargs)
+            return getattr(self._realFd, method.__name__)(*args, **kwargs)
         if self._cache is None:
             raise Exception("Cache object is closed")
         try:
@@ -1194,7 +1194,7 @@ def _LazyFile_reopen(method):
             # re-raise for now, until we decide what to do
             raise
         self._reopen()
-        return getattr(self._realFd, method.func_name)(*args, **kwargs)
+        return getattr(self._realFd, method.__name__)(*args, **kwargs)
     return wrapper
 
 
@@ -1306,12 +1306,12 @@ class LazyFileCache:
     def _getFdCount(self):
         try:
             return countOpenFileDescriptors()
-        except OSError, e:
+        except OSError as e:
             # We may be hitting a kernel bug (CNY-2571)
             if e.errno != errno.EINVAL:
                 raise
             # Count the open file descriptors this instance has
-            return len([ x for x in self._fdMap.values()
+            return len([ x for x in list(self._fdMap.values())
                            if x._realFd is not None])
 
     def _getCounter(self):
@@ -1337,7 +1337,7 @@ class LazyFileCache:
         # enough, log n will be smaller. For n = 5k, 10% is 500, while log n
         # is about 12. Even factoring in other sorting constants, you're still
         # winning.
-        l = sorted([ x for x in self._fdMap.values() if x._realFd is not None],
+        l = sorted([ x for x in list(self._fdMap.values()) if x._realFd is not None],
                    lambda a, b: cmp(a._timestamp, b._timestamp))
         for i in range(int(self.threshold / 10)):
             l[i]._release()
@@ -1351,14 +1351,14 @@ class LazyFileCache:
         @raises IOError: could be raised if tell() fails prior to close()
         """
         # No need to call fd's close(), we're destroying this object
-        for fd in self._fdMap.values():
+        for fd in list(self._fdMap.values()):
             fd._close()
             fd._cache = None
         self._fdMap.clear()
 
     def release(self):
         """Release the file descriptors kept open by the LazyFile objects"""
-        for fd in self._fdMap.values():
+        for fd in list(self._fdMap.values()):
             fd._close()
 
     __del__ = close
@@ -1373,12 +1373,12 @@ class Flags(object):
         for flag in self.__slots__:
             setattr(self, flag, False)
 
-        for (flag, val) in kwargs.iteritems():
+        for (flag, val) in kwargs.items():
             setattr(self, flag, val)
 
     def __setattr__(self, flag, val):
         if type(val) != bool:
-            raise TypeError, 'bool expected'
+            raise TypeError('bool expected')
         object.__setattr__(self, flag, val)
 
     def __repr__(self):
@@ -1397,7 +1397,7 @@ class Flags(object):
 def stripUserPassFromUrl(url):
     arr = list(urlparse.urlparse(url))
     hostUserPass = arr[1]
-    userPass, host = urllib.splituser(hostUserPass)
+    userPass, host = urllib.parse.splituser(hostUserPass)
     arr[1] = host
     return urlparse.urlunparse(arr)
 
@@ -1406,7 +1406,7 @@ def _FileIgnoreEpipe_ignoreEpipe(fn):
     def wrapper(*args, **kwargs):
         try:
             return fn(*args, **kwargs)
-        except IOError, e:
+        except IOError as e:
             if e.errno != errno.EPIPE:
                 raise
         return
@@ -1442,7 +1442,7 @@ class BoundedStringIO(object):
             maxMemorySize = object.__getattribute__(self, 'defaultMaxMemorySize')
         self.maxMemorySize = maxMemorySize
         # Store in memory by default
-        self._backend = StringIO.StringIO(buf)
+        self._backend = io.StringIO(buf)
         self._backendType = "memory"
 
     def _writeImpl(self, s):
@@ -1495,7 +1495,7 @@ class BoundedStringIO(object):
         # Need to go from file to memory
         # Read data from file first
         backend.seek(0)
-        backendMem = StringIO.StringIO(backend.read(size))
+        backendMem = io.StringIO(backend.read(size))
         self._backendType = "memory"
         self._backend = backendMem
         backend.close()
@@ -1546,7 +1546,7 @@ class ProtectedTemplate(str):
 
     def __safe_str__(self):
         nargs = {}
-        for k, v in self._substArgs.iteritems():
+        for k, v in self._substArgs.items():
             if hasattr(v, '__safe_str__'):
                 v = "<%s>" % k.upper()
             nargs[k] = v
@@ -1564,7 +1564,7 @@ def urlSplit(url, defaultPort = None):
     should be a numeric value.
     """
     scheme, netloc, path, query, fragment = urlparse.urlsplit(url)
-    userpass, hostport = urllib.splituser(netloc)
+    userpass, hostport = urllib.parse.splituser(netloc)
     if scheme == 'lookaside':
         # Always a local path, sometimes the first part will have a colon in it
         # but it isn't a port, e.g. "lp:lightdm".
@@ -1575,15 +1575,15 @@ def urlSplit(url, defaultPort = None):
         port = defaultPort
 
     if userpass:
-        user, passwd = urllib.splitpasswd(userpass)
+        user, passwd = urllib.parse.splitpasswd(userpass)
         if sys.version_info[:2] == (2, 7):
             # splituser is considered internal and changed
             # behavior in 2.7.  New behavior is right because
             # it allows : in password, but we must deal with
             # the old 2.6 behavior and not double-unquote
-            user = urllib.unquote(user)
+            user = urllib.parse.unquote(user)
             if passwd:
-                passwd = urllib.unquote(passwd)
+                passwd = urllib.parse.unquote(passwd)
         if passwd:
             passwd = ProtectedString(passwd)
     else:
@@ -1598,14 +1598,14 @@ def urlUnsplit(urlTuple):
     userpass = None
     if user:
         if passwd:
-            userpass = "%s:${passwd}" % (urllib.quote(user))
+            userpass = "%s:${passwd}" % (urllib.parse.quote(user))
         else:
-            userpass = urllib.quote(user)
+            userpass = urllib.parse.quote(user)
     if host and ':' in host:
         # Support IPv6 addresses as e.g. [dead::beef]:80
         host = '[%s]' % (host,)
     if port is not None:
-        hostport = urllib.quote("%s:%s" % (host, port), safe = ':[]')
+        hostport = urllib.parse.quote("%s:%s" % (host, port), safe = ':[]')
     else:
         hostport = host
     netloc = hostport
@@ -1614,7 +1614,7 @@ def urlUnsplit(urlTuple):
     urlTempl = urlparse.urlunsplit((scheme, netloc, path, query, fragment))
     if passwd is None:
         return urlTempl
-    return ProtectedTemplate(urlTempl, passwd = ProtectedString(urllib.quote(passwd)))
+    return ProtectedTemplate(urlTempl, passwd = ProtectedString(urllib.parse.quote(passwd)))
 
 def splitExact(s, sep, maxsplit, pad=None):
     """
@@ -1631,22 +1631,22 @@ def splitExact(s, sep, maxsplit, pad=None):
     arr.extend(pad for x in range(maxsplit + 1 - arrLen))
     return arr
 
-class XMLRPCMarshaller(xmlrpclib.Marshaller):
+class XMLRPCMarshaller(xmlrpc.client.Marshaller):
     """Marshaller for XMLRPC data"""
-    dispatch = xmlrpclib.Marshaller.dispatch.copy()
-    def dump_string(self, value, write, escape=xmlrpclib.escape):
+    dispatch = xmlrpc.client.Marshaller.dispatch.copy()
+    def dump_string(self, value, write, escape=xmlrpc.client.escape):
         try:
             value = value.encode("ascii")
         except UnicodeError:
-            sio = StringIO.StringIO()
-            xmlrpclib.Binary(value).encode(sio)
+            sio = io.StringIO()
+            xmlrpc.client.Binary(value).encode(sio)
             write(sio.getvalue())
             return
-        return xmlrpclib.Marshaller.dump_string(self, value, write, escape)
+        return xmlrpc.client.Marshaller.dump_string(self, value, write, escape)
 
     def dump(self, values, stream):
         write = stream.write
-        if isinstance(values, xmlrpclib.Fault):
+        if isinstance(values, xmlrpc.client.Fault):
             # Fault instance
             write("<fault>\n")
             self._dump({'faultCode' : values.faultCode,
@@ -1662,7 +1662,7 @@ class XMLRPCMarshaller(xmlrpclib.Marshaller):
             write("</params>\n")
 
     def dumps(self, values):
-        sio = StringIO.StringIO()
+        sio = io.StringIO()
         self.dump(values, sio)
         return sio.getvalue()
 
@@ -1676,13 +1676,13 @@ class XMLRPCMarshaller(xmlrpclib.Marshaller):
             try:
                 value.__dict__
             except:
-                raise TypeError, "cannot marshal %s objects" % type(value)
+                raise TypeError("cannot marshal %s objects" % type(value))
             # check if this class is a sub-class of a basic type,
             # because we don't know how to marshal these types
             # (e.g. a string sub-class)
             for type_ in type(value).__mro__:
-                if type_ in self.dispatch.keys():
-                    raise TypeError, "cannot marshal %s objects" % type(value)
+                if type_ in list(self.dispatch.keys()):
+                    raise TypeError("cannot marshal %s objects" % type(value))
             f = self.dispatch[types.InstanceType]
         f(self, value, write)
 
@@ -1690,10 +1690,10 @@ class XMLRPCMarshaller(xmlrpclib.Marshaller):
     dispatch[ProtectedString] = dump_string
     dispatch[ProtectedTemplate] = dump_string
 
-class XMLRPCUnmarshaller(xmlrpclib.Unmarshaller):
-    dispatch = xmlrpclib.Unmarshaller.dispatch.copy()
+class XMLRPCUnmarshaller(xmlrpc.client.Unmarshaller):
+    dispatch = xmlrpc.client.Unmarshaller.dispatch.copy()
     def end_base64(self, data):
-        value = xmlrpclib.Binary()
+        value = xmlrpc.client.Binary()
         value.decode(data)
         self.append(value.data)
         self._value = 0
@@ -1704,10 +1704,10 @@ class XMLRPCUnmarshaller(xmlrpclib.Unmarshaller):
         try:
             return data.encode("ascii")
         except UnicodeError:
-            return xmlrpclib.Binary(data)
+            return xmlrpc.client.Binary(data)
 
 def xmlrpcGetParser():
-    parser, target = xmlrpclib.getparser()
+    parser, target = xmlrpc.client.getparser()
     # Use our own marshaller
     target = XMLRPCUnmarshaller()
     # Reuse the parser class as computed by xmlrpclib
@@ -1716,9 +1716,9 @@ def xmlrpcGetParser():
 
 def xmlrpcDump(params, methodname=None, methodresponse=None, stream=None,
                encoding=None, allow_none=False):
-    assert isinstance(params, tuple) or isinstance(params, xmlrpclib.Fault),\
+    assert isinstance(params, tuple) or isinstance(params, xmlrpc.client.Fault),\
            "argument must be tuple or Fault instance"
-    if isinstance(params, xmlrpclib.Fault):
+    if isinstance(params, xmlrpc.client.Fault):
         methodresponse = 1
     elif methodresponse and isinstance(params, tuple):
         assert len(params) == 1, "response tuple must be a singleton"
@@ -1733,7 +1733,7 @@ def xmlrpcDump(params, methodname=None, methodresponse=None, stream=None,
         xmlheader = "<?xml version='1.0'?>\n" # utf-8 is default
 
     if stream is None:
-        io = StringIO.StringIO(stream)
+        io = io.StringIO(stream)
     else:
         io = stream
 
@@ -1775,8 +1775,8 @@ def xmlrpcLoad(stream):
     if hasattr(xmlrpclib, 'expat'):
         try:
             p.close()
-        except xmlrpclib.expat.ExpatError:
-            raise xmlrpclib.ResponseError
+        except xmlrpc.client.expat.ExpatError:
+            raise xmlrpc.client.ResponseError
     else:
         p.close()
     return u.close(), u.getmethodname()
@@ -1801,7 +1801,7 @@ class ServerProxy(object):
     # This used to inherit from xmlrpclib but it replaced everything anyway...
 
     def __init__(self, url, transport, encoding=None, allow_none=False):
-        if isinstance(url, basestring):
+        if isinstance(url, str):
             # Have to import here to avoid an import loop -- one of the many
             # dangers of having a monolithic util.py
             from conary.lib.http.request import URL
@@ -2014,7 +2014,7 @@ class SavedException(object):
         return self.getName() + ': ' + str(self.value)
 
     def throw(self):
-        raise self.type, self.value, self.tb
+        raise self.type(self.value).with_traceback(self.tb)
 
     def clear(self):
         """Free the exception and traceback to avoid reference loops."""
@@ -2076,14 +2076,14 @@ def rethrow(newClassOrInstance, prependClassName=True, oldTup=None):
             newStr = '%s: %s' % (exc_name, newStr)
         newValue = newClass(newStr)
 
-    raise newClass, newValue, exc_traceback
+    raise newClass(newValue).with_traceback(exc_traceback)
 
 class Tick:
     def __init__(self):
         self.last = self.start = time.time()
     def log(self, m = ''):
         now = time.time()
-        print "tick: +%.2f %s total=%.3f" % (now-self.last, m, now-self.start)
+        print("tick: +%.2f %s total=%.3f" % (now-self.last, m, now-self.start))
         self.last = now
 
 class GzipFile(gzip.GzipFile):
@@ -2100,10 +2100,10 @@ class GzipFile(gzip.GzipFile):
             return False
 
         elif magic != '\037\213':
-            raise IOError, 'Not a gzipped file'
+            raise IOError('Not a gzipped file')
         method = ord( self.fileobj.read(1) )
         if method != 8:
-            raise IOError, 'Unknown compression method'
+            raise IOError('Unknown compression method')
         flag = ord( self.fileobj.read(1) )
         # modtime = self.fileobj.read(4)
         # extraflag = self.fileobj.read(1)
@@ -2134,14 +2134,14 @@ class GzipFile(gzip.GzipFile):
 
     def _read(self, size=1024):
         if self.fileobj is None:
-            raise EOFError, "Reached EOF"
+            raise EOFError("Reached EOF")
 
         if self._new_member:
             # If the _new_member flag is set, we have to
             # jump to the next member, if there is one.
             self._init_read()
             if not self._read_gzip_header():
-                raise EOFError, "Reached EOF"
+                raise EOFError("Reached EOF")
             self.decompress = zlib.decompressobj(-zlib.MAX_WBITS)
             self._new_member = False
 
@@ -2158,7 +2158,7 @@ class GzipFile(gzip.GzipFile):
                 raise IOError("gzip file is truncated or corrupt")
             self._read_eof(eof)
             self._add_read_data( uncompress )
-            raise EOFError, 'Reached EOF'
+            raise EOFError('Reached EOF')
 
         uncompress = self.decompress.decompress(buf)
         self._add_read_data( uncompress )
@@ -2185,8 +2185,8 @@ class GzipFile(gzip.GzipFile):
         if crc32 != actualCrc:
             raise IOError("CRC check failed %s != %s" % (hex(crc32),
                                                          hex(actualCrc)))
-        elif isize != (self.size & 0xffffffffL):
-            raise IOError, "Incorrect length of data produced"
+        elif isize != (self.size & 0xffffffff):
+            raise IOError("Incorrect length of data produced")
 
 
 class DeterministicGzipFile(gzip.GzipFile):
@@ -2380,7 +2380,7 @@ class AtomicFile(object):
 
     fObj = None
 
-    def __init__(self, path, mode='w+b', chmod=0644, tmpsuffix = "",
+    def __init__(self, path, mode='w+b', chmod=0o644, tmpsuffix = "",
                  tmpprefix = None):
         self.finalPath = os.path.realpath(path)
         self.finalMode = chmod
@@ -2467,7 +2467,7 @@ class TimestampedMap(object):
 
     def iteritems(self, stale=False):
         now = time.time()
-        ret = sorted(self._map.items(), key = lambda x: x[1][1])
+        ret = sorted(list(self._map.items()), key = lambda x: x[1][1])
         ret = [ (k, v[0]) for (k, v) in ret
             if stale or now <= v[1] ]
         return ret
@@ -2491,13 +2491,13 @@ def statFile(pathOrFile, missingOk=False, inodeOnly=False):
     @rtype: C{tuple}
     """
     try:
-        if isinstance(pathOrFile, basestring):
+        if isinstance(pathOrFile, str):
             st = os.lstat(pathOrFile)
         else:
             if hasattr(pathOrFile, 'fileno'):
                 pathOrFile = pathOrFile.fileno()
             st = os.fstat(pathOrFile)
-    except OSError, err:
+    except OSError as err:
         if err.errno == errno.ENOENT and missingOk:
             return None
         raise
@@ -2539,7 +2539,7 @@ class cachedProperty(object):
         if ownself is None:
             return propself
         ret = propself.func(ownself)
-        setattr(ownself, propself.func.func_name, ret)
+        setattr(ownself, propself.func.__name__, ret)
         return ret
 
 
@@ -2559,7 +2559,7 @@ class SystemIdFactory(object):
                 return None
 
             return base64.b64encode(stdout)
-        except OSError, e:
+        except OSError as e:
             err, msg = e.args
             log.warning('SystemId script failed with the following error: '
                     '%s', msg)

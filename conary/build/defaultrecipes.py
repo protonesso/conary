@@ -776,7 +776,7 @@ recipeNames = {'baserequires': 'BaseRequiresRecipe',
                'derivedcapsule': 'DerivedCapsuleRecipe',
                }
 
-packageNames = dict([(x[1], x[0]) for x in recipeNames.iteritems()])
+packageNames = dict([(x[1], x[0]) for x in recipeNames.items()])
 
 import sys
-defaultRecipes = dict([(x[0], sys.modules[__name__].__dict__[x[1]]) for x in recipeNames.iteritems()])
+defaultRecipes = dict([(x[0], sys.modules[__name__].__dict__[x[1]]) for x in recipeNames.items()])

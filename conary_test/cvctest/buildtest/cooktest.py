@@ -58,7 +58,7 @@ def protect(fn):
         finally:
             # Restore status
             os.chdir(_cwd)
-    testWrapper.func_name = fn.func_name
+    testWrapper.__name__ = fn.__name__
     return testWrapper
 
 class CookTest(rephelp.RepositoryHelper):
@@ -119,7 +119,7 @@ class EmptyPackage(PackageRecipe):
         finally:
             os.chdir(origDir)
 
-        trvcs = cs.iterNewTroveList().next()
+        trvcs = next(cs.iterNewTroveList())
         trv = trove.Trove(trvcs)
         self.assertTrue(str(trv.getBuildFlavor()))
 
@@ -256,7 +256,7 @@ EOF
         elif use.Arch.x86_64:
             assert(flavor == '~!builddocs is: x86_64(~!nx)')
         else:
-            raise NotImplementedError, 'modify test for this arch'
+            raise NotImplementedError('modify test for this arch')
         
     def testOverrides(self):
         flavorRecipe = """\
@@ -300,7 +300,7 @@ class TestRecipe1(PackageRecipe):
         elif use.Arch.x86_64:
             assert(flavor.freeze() == '1#x86_64|5#use:~!builddocs:readline')
         else:
-            raise NotImplementedError, 'modify test for this arch'
+            raise NotImplementedError('modify test for this arch')
         
 
     def testLoadFlavors(self):
@@ -443,7 +443,7 @@ class TestRecipe1(PackageRecipe):
         self.logFilter.add()
         try:
             self.commit()
-        except errors.CvcError, err:
+        except errors.CvcError as err:
             assert(re.match('unable to load recipe file'
                                ' .*testcase.*recipe:\n'
                                'Recipe object name \'foo\''
@@ -784,7 +784,7 @@ class TestFlavoredLibDir(PackageRecipe):
         elif use.Arch.x86_64:
             assert(built[0][2].freeze() == '1#x86_64')
         else:
-            raise NotImplementedError, 'modify test for this arch'
+            raise NotImplementedError('modify test for this arch')
         recipestr2 = """
 class TestFlavoredLibDir(PackageRecipe):
     name = 'foo'
@@ -965,7 +965,7 @@ class LotsOfFiles(PackageRecipe):
         try:
             try:
                 cook.cookCommand(self.cfg, [], False, {})
-            except Exception, e:
+            except Exception as e:
                 assert(isinstance(e, cook.CookError))
                 assert(str(e) == 'Do not cook as root')
             else:
@@ -988,7 +988,7 @@ class LotsOfFiles(PackageRecipe):
         # Create build path
         roDir = tempfile.mkdtemp()
         # Make it read-only
-        os.chmod(roDir, 0400)
+        os.chmod(roDir, 0o400)
 
         oldBuildPath = self.cfg.buildPath
         self.cfg.buildPath = roDir
@@ -998,13 +998,13 @@ class LotsOfFiles(PackageRecipe):
             try:
                 built, str = self.captureOutput(self.cookItem, repos, self.cfg,
                                                 'empty.recipe')
-            except errors.ConaryError, e:
+            except errors.ConaryError as e:
                 self.assertEqual(e.args[0], expected)
         finally:
             self.cfg.buildPath = oldBuildPath
             os.chdir(origDir)
             shutil.rmtree(d)
-            os.chmod(roDir, 0600)
+            os.chmod(roDir, 0o600)
             util.rmtree(roDir, ignore_errors=True)
 
     def testBadPassword(self):
@@ -1107,10 +1107,10 @@ class TestMultipleMainPackage(PackageRecipe):
         versionList = self.repos.getTroveVersionList('localhost', 
                                                 {'test1' : None, 
                                                   'test1-foo' : None })
-        assert(len(versionList['test1'].keys()) == 1)
-        assert(len(versionList['test1-foo'].keys()) == 1)
-        test1v = versionList['test1'].keys()[0]
-        test1Foov = versionList['test1'].keys()[0]
+        assert(len(list(versionList['test1'].keys())) == 1)
+        assert(len(list(versionList['test1-foo'].keys())) == 1)
+        test1v = list(versionList['test1'].keys())[0]
+        test1Foov = list(versionList['test1'].keys())[0]
         flavors = self.repos.getTroveVersionFlavors(versionList)
         assert(len(flavors['test1'][test1v]) == 1)
         assert(len(flavors['test1-foo'][test1Foov]) == 1)
@@ -1515,7 +1515,7 @@ class TestClass(CPackageRecipe):
         try:
             self.cookItem(repos, self.cfg, 'foo')
             assert 0, "should have raised exception"
-        except Exception, err:
+        except Exception as err:
             err = re.sub('[^ ]*\.recipe', 'RECIPE', str(err))
             assert(err == '''\
 unable to load recipe file RECIPE:
@@ -1680,7 +1680,7 @@ class TestCase(PackageRecipe):
             self.changeset(repos, [ trvname, ], ccsfile)
 
             cs = changeset.ChangeSetFromFile(ccsfile)
-            trv = cs.iterNewTroveList().next()
+            trv = next(cs.iterNewTroveList())
             fileobj = trv.getNewFileList()[0]
             fileIds.append(fileobj[2])
             fileVersions.append(fileobj[3])
@@ -1692,7 +1692,7 @@ class TestCase(PackageRecipe):
             ids = repos.getPackageBranchPathIds('foo:source', branch,
                                                 filePrefixes, [fileId])
             self.assertEqual(len(ids), 1)
-            srvFileId = ids.values()[0][2]
+            srvFileId = list(ids.values())[0][2]
             self.assertEqual(fileId, srvFileId)
 
         # Build both flavors again
@@ -1706,7 +1706,7 @@ class TestCase(PackageRecipe):
             self.changeset(repos, [ trvname, ], ccsfile)
 
             cs = changeset.ChangeSetFromFile(ccsfile)
-            trv = cs.iterNewTroveList().next()
+            trv = next(cs.iterNewTroveList())
             fileobj = trv.getNewFileList()[0]
             fileIds2.append(fileobj[2])
             fileVersions2.append(fileobj[3])
@@ -1919,7 +1919,7 @@ class GroupFoo(GroupRecipe):
                                 deps.parseFlavor('~!ssl')])
 
         cs = changeset.ChangeSetFromFile(d)
-        trvcs = cs.iterNewTroveList().next()
+        trvcs = next(cs.iterNewTroveList())
         trv = trove.Trove(trvcs)
         self.assertTrue(str(trv.getBuildFlavor()))
 
@@ -2139,8 +2139,8 @@ class FooRecipe(PackageRecipe):
         loadrecipe.RecipeLoader._defaultsLoaded = False
         (built, d) = self.buildRecipe(recipeStr, 'FooRecipe')
         self.logFilter.remove()
-        self.assertEquals(built[0][0], 'foo:recipe')
-        self.assertEquals(built[0][-1], deps.parseFlavor(''))
+        self.assertEqual(built[0][0], 'foo:recipe')
+        self.assertEqual(built[0][-1], deps.parseFlavor(''))
 
     def testCookPromotesMetadata(self):
         self.addComponent('simple:runtime=1', 
@@ -2161,12 +2161,12 @@ class FooRecipe(PackageRecipe):
 
         assert(built[0][0])
         md = self.findAndGetTrove('simple').getMetadata()
-        self.assertEquals(md['shortDesc'], 'simple')
+        self.assertEqual(md['shortDesc'], 'simple')
         md = self.findAndGetTrove('simple:runtime').getMetadata()
-        self.assertEquals(md['licenses'], ['one', 'two'])
+        self.assertEqual(md['licenses'], ['one', 'two'])
         built, str = self.captureOutput(cook.cookItem, repos, self.cfg, 'simple')
         md = self.findAndGetTrove('simple:runtime').getMetadata()
-        self.assertEquals(md['licenses'], ['one', 'two'])
+        self.assertEqual(md['licenses'], ['one', 'two'])
 
         # next test group promoting
         groupFoo = """
@@ -2187,7 +2187,7 @@ class GroupFoo(GroupRecipe):
         built = self.cookItem(repos, self.cfg, 'group-foo')
         assert(built[0][0])
         md = self.findAndGetTrove('group-foo').getMetadata()
-        self.assertEquals(md['licenses'], ['five', 'six'])
+        self.assertEqual(md['licenses'], ['five', 'six'])
         md = self.findAndGetTrove('group-bar').getMetadata()
         assert(set(md.values()) == set([None]))
 
@@ -2215,8 +2215,8 @@ class Foo(PackageRecipe):
 
         md = self.findAndGetTrove('foo').getMetadata()
 
-        self.failUnless('keyValue' in md)
-        self.failUnlessEqual(md.get('keyValue').items(),
+        self.assertTrue('keyValue' in md)
+        self.assertEqual(list(md.get('keyValue').items()),
                 [('test1', 'bar'), ('test2', 'baz')])
 
     def testMetadataSetGroup(self):
@@ -2250,8 +2250,8 @@ class GroupFoo(GroupRecipe):
 
         md = self.findAndGetTrove('group-foo').getMetadata()
 
-        self.failUnless('keyValue' in md)
-        self.failUnlessEqual(md.get('keyValue').items(),
+        self.assertTrue('keyValue' in md)
+        self.assertEqual(list(md.get('keyValue').items()),
                 [('test1', 'bar'), ('test2', 'baz')])
 
     def testMetadataMatching(self):

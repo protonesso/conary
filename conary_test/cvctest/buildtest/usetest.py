@@ -48,13 +48,13 @@ class TestUse(rephelp.RepositoryHelper):
         Arch.x86._addAlias('3dnow', 'threednow')
         try:
             Arch.x86._addAlias('3dnow', 'threednow')
-        except RuntimeError, e:
+        except RuntimeError as e:
             assert(str(e) == 'alias is already set')
         else:
             raise
         try:
             Arch.x86._addAlias('3dnow', 'fourdnow')
-        except RuntimeError, e:
+        except RuntimeError as e:
             assert(str(e) == 'key 3dnow already has an alias')
         else:
             raise
@@ -224,7 +224,7 @@ class TestUse(rephelp.RepositoryHelper):
         # Check to make sure that the _path instance variable indicates
         # which file defined the Use flag. (CNY-1179)
         Use = use.Use
-        for name, value in Use.iteritems():
+        for name, value in Use.items():
             self.assertTrue(value._path == '%s/%s' % (self.cfg.useDirs[0], name))
 
     def testPackageFlags(self):

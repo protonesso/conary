@@ -33,7 +33,7 @@ class FilesTest(testhelp.TestCase):
         # this test wants dates in US/Eastern representation
         os.environ['TZ']='US/Eastern'
 
-        i = InodeStream(0755, 0x1000, "user", "group")
+        i = InodeStream(0o755, 0x1000, "user", "group")
         i2 = InodeStream(i.freeze())
         assert(i == i2)
         diff = i.diff(i2)
@@ -41,10 +41,10 @@ class FilesTest(testhelp.TestCase):
         assert(not i.twm(diff, i2))
         assert(i == i2)
 
-        assert(i.perms() == 0755)
+        assert(i.perms() == 0o755)
         assert(i.freeze() != i2.freeze(skipSet = { 'mtime' : True }) )
 
-        i2 = InodeStream(0700, 0x1000, "user", "group")
+        i2 = InodeStream(0o700, 0x1000, "user", "group")
         assert(i != i2)
         diff = i.diff(i2)
         assert(diff == '\x01\x00\x02\x01\xed')
@@ -53,7 +53,7 @@ class FilesTest(testhelp.TestCase):
         assert(not i2.twm(diff, i2))
         assert(i == i2)
 
-        i2 = InodeStream(0755, 0x1000, "person", "group")
+        i2 = InodeStream(0o755, 0x1000, "person", "group")
         assert(i != i2)
         diff = i.diff(i2)
         assert(diff == '\x03\x00\x04user')
@@ -62,7 +62,7 @@ class FilesTest(testhelp.TestCase):
         assert(not i2.twm(diff, i2))
         assert(i == i2)
 
-        i2 = InodeStream(0755, 0x1000, "user", "set")
+        i2 = InodeStream(0o755, 0x1000, "user", "set")
         assert(i != i2)
         diff = i.diff(i2)
         assert(diff == '\x04\x00\x05group')
@@ -71,7 +71,7 @@ class FilesTest(testhelp.TestCase):
         assert(not i2.twm(diff, i2))
         assert(i == i2)
 
-        i2 = InodeStream(0700, 0x1001, "person", "set")
+        i2 = InodeStream(0o700, 0x1001, "person", "set")
         assert(i != i2)
         diff = i.diff(i2)
         assert(diff == '\x01\x00\x02\x01\xed\x02\x00\x04\x00\x00\x10\x00\x03\x00\x04user\x04\x00\x05group')
@@ -81,13 +81,13 @@ class FilesTest(testhelp.TestCase):
         assert(not i2.twm(diff, i2))
         assert(i == i2)
 
-        i = InodeStream(04755, 1083767693, "root", "root")
+        i = InodeStream(0o4755, 1083767693, "root", "root")
         assert(i.permsString() == "rwsr-xr-x")
-        i.perms.set(04644)
+        i.perms.set(0o4644)
         assert(i.permsString() == "rwSr--r--")
-        i.perms.set(01644)
+        i.perms.set(0o1644)
         assert(i.permsString() == "rw-r--r-T")
-        i.perms.set(01755)
+        i.perms.set(0o1755)
         assert(i.permsString() == "rwxr-xr-t")
 
         # 20070420 CNY-855: we switched the mtime display to no longer match
@@ -102,14 +102,14 @@ class FilesTest(testhelp.TestCase):
 
     def testDevice(self):
         d = DeviceStream()
-        d.major.set(010)
-        d.minor.set(020)
+        d.major.set(0o10)
+        d.minor.set(0o20)
         d2 = DeviceStream(d.freeze())
         assert(d == d2)
 
         d2 = DeviceStream()
-        d2.major.set(011)
-        d2.minor.set(021)
+        d2.major.set(0o11)
+        d2.minor.set(0o21)
 
         assert(d != d2)
         diff = d.diff(d2)
@@ -124,8 +124,8 @@ class FilesTest(testhelp.TestCase):
 
     def testSymbolicLink(self):
         s = files.SymbolicLink(None)
-        s.inode.perms.set(0604)
-        s.inode.mtime.set(0100)
+        s.inode.perms.set(0o604)
+        s.inode.mtime.set(0o100)
         s.inode.owner.set('daemon')
         s.inode.group.set('uucp')
         # to make sure that referenced names "exist"
@@ -157,8 +157,8 @@ class FilesTest(testhelp.TestCase):
     
     def testSocket(self):
         s = files.Socket(None)
-        s.inode.perms.set(0604)
-        s.inode.mtime.set(0100)
+        s.inode.perms.set(0o604)
+        s.inode.mtime.set(0o100)
         s.inode.owner.set(self.owner)
         s.inode.group.set(self.group)
         s.flags.set(0)
@@ -169,8 +169,8 @@ class FilesTest(testhelp.TestCase):
             s.restore(None, d, p)
             what = os.stat(p)
             assert(stat.S_ISSOCK(what.st_mode))
-            assert(what.st_mtime == 0100)
-            assert(what.st_mode & 07777 == 0604)
+            assert(what.st_mtime == 0o100)
+            assert(what.st_mode & 0o7777 == 0o604)
 
             s2 = files.FileFromFilesystem(p, None)
             assert(s == s2)
@@ -214,8 +214,8 @@ class FilesTest(testhelp.TestCase):
 
     def testOwnership(self):
         f = files.RegularFile(None)
-        f.inode.perms.set(0604)
-        f.inode.mtime.set(0100)
+        f.inode.perms.set(0o604)
+        f.inode.mtime.set(0o100)
         f.inode.owner.set("daemon")
         f.inode.group.set("uucp")
         # to make sure that referenced names "exist"
@@ -233,8 +233,8 @@ class FilesTest(testhelp.TestCase):
 
         # and setuid root
         fr = files.RegularFile(None)
-        fr.inode.perms.set(06755)
-        fr.inode.mtime.set(0100)
+        fr.inode.perms.set(0o6755)
+        fr.inode.mtime.set(0o100)
         fr.inode.owner.set("root")
         fr.inode.group.set("root")
         fr.contents = files.RegularFileStream()
@@ -244,8 +244,8 @@ class FilesTest(testhelp.TestCase):
 
         # and unwriteable
         fo = files.RegularFile(None)
-        fo.inode.perms.set(0444)
-        fo.inode.mtime.set(0100)
+        fo.inode.perms.set(0o444)
+        fo.inode.mtime.set(0o100)
         fo.inode.owner.set("root")
         fo.inode.group.set("root")
         fo.contents = files.RegularFileStream()
@@ -255,8 +255,8 @@ class FilesTest(testhelp.TestCase):
 
         # and secret
         fs = files.RegularFile(None)
-        fs.inode.perms.set(0400)
-        fs.inode.mtime.set(0100)
+        fs.inode.perms.set(0o400)
+        fs.inode.mtime.set(0o100)
         fs.inode.owner.set("root")
         fs.inode.group.set("root")
         fs.contents = files.RegularFileStream()
@@ -271,7 +271,7 @@ class FilesTest(testhelp.TestCase):
         # before we mimic root, test a non-root of setu/gid file
         pr = d+"/setuid"
         fr.restore(contents, d, pr)
-        assert not os.stat(pr).st_mode & 04000
+        assert not os.stat(pr).st_mode & 0o4000
 
         try:
             self.mimicRoot()
@@ -295,20 +295,20 @@ class FilesTest(testhelp.TestCase):
             self.chmodLog = []
             pr = d+"/setuid"
             fr.restore(contents, d, pr)
-            assert self.compareChmodLog([ (pr, 06755) ])
-            assert os.stat(pr).st_mode & 07777 == 06755
+            assert self.compareChmodLog([ (pr, 0o6755) ])
+            assert os.stat(pr).st_mode & 0o7777 == 0o6755
 
             self.chmodLog = []
             po = d+"/unwriteable"
             fo.restore(contents, d, po)
-            assert self.compareChmodLog([ (po, 0444) ])
-            assert os.stat(po).st_mode & 07777 == 0444
+            assert self.compareChmodLog([ (po, 0o444) ])
+            assert os.stat(po).st_mode & 0o7777 == 0o444
 
             self.chmodLog = []
             ps = d+"/secret"
             fs.restore(contents, d, ps)
-            assert self.compareChmodLog([ (ps, 0400) ])
-            assert os.stat(ps).st_mode & 07777 == 0400
+            assert self.compareChmodLog([ (ps, 0o400) ])
+            assert os.stat(ps).st_mode & 0o7777 == 0o400
             self.chmodLog = []
         finally:
             self.realRoot()
@@ -319,8 +319,8 @@ class FilesTest(testhelp.TestCase):
             d = files.BlockDevice(None)
         else:
             d = files.CharacterDevice(None)
-        d.inode.perms.set(0604)
-        d.inode.mtime.set(0100)
+        d.inode.perms.set(0o604)
+        d.inode.mtime.set(0o100)
         d.inode.owner.set("daemon")
         d.inode.group.set("uucp")
         # to make sure that referenced names "exist"
@@ -473,8 +473,8 @@ class FilesTest(testhelp.TestCase):
             for (name, cls) in (('/dev/block', files.BlockDevice),
                                 ('/dev/char', files.CharacterDevice)):
                 d = cls(None)
-                d.inode.perms.set(0604)
-                d.inode.mtime.set(0100)
+                d.inode.perms.set(0o604)
+                d.inode.mtime.set(0o100)
                 d.inode.owner.set("daemon")
                 d.inode.group.set("uucp")
                 # to make sure that referenced names "exist"
@@ -489,14 +489,14 @@ class FilesTest(testhelp.TestCase):
                 p = path + name
                 d.restore(None, path, p, journal=journal)
             assert(journal.devnodes ==
-                   [(path, path + '/dev/block', 'b', 3, 1, 0604, 'daemon', 'uucp'),
-                    (path, path + '/dev/char', 'c', 3, 1, 0604, 'daemon', 'uucp')])
+                   [(path, path + '/dev/block', 'b', 3, 1, 0o604, 'daemon', 'uucp'),
+                    (path, path + '/dev/char', 'c', 3, 1, 0o604, 'daemon', 'uucp')])
 
             d = files.RegularFile(None)
             d.inode.perms.set(1755)
             d.inode.owner.set('root')
             d.inode.group.set('root')
-            d.inode.mtime.set(0100)
+            d.inode.mtime.set(0o100)
             contents = filecontents.FromString('Hello, world')
             d.restore(contents, path, path + '/sbin/ping', journal=journal)
             assert(journal.perms == [(path, path + '/sbin/ping', 'root', 'root')])
@@ -507,8 +507,8 @@ class FilesTest(testhelp.TestCase):
         # this test verifies that the value produced as the fileId
         # of a known stream matches its pre-calculated value.
         f = files.RegularFile(None)
-        f.inode.perms.set(0604)
-        f.inode.mtime.set(0100)
+        f.inode.perms.set(0o604)
+        f.inode.mtime.set(0o100)
         f.inode.owner.set("daemon")
         f.inode.group.set("uucp")
         # to make sure that referenced names "exist"
@@ -526,8 +526,8 @@ class FilesTest(testhelp.TestCase):
 
     def testContentsChanged(self):
         f = files.RegularFile(None)
-        f.inode.perms.set(0444)
-        f.inode.mtime.set(0100)
+        f.inode.perms.set(0o444)
+        f.inode.mtime.set(0o100)
         f.inode.owner.set("root")
         f.inode.group.set("root")
         f.contents = files.RegularFileStream()
@@ -552,8 +552,8 @@ class FilesTest(testhelp.TestCase):
 
         # non-regular files should always return False
         s = files.SymbolicLink(None)
-        s.inode.perms.set(0604)
-        s.inode.mtime.set(0100)
+        s.inode.perms.set(0o604)
+        s.inode.mtime.set(0o100)
         s.inode.owner.set('daemon')
         s.inode.group.set('uucp')
         # to make sure that referenced names "exist"
@@ -579,8 +579,8 @@ class FilesTest(testhelp.TestCase):
 
     def testDiff(self):
         f = files.RegularFile(None)
-        f.inode.perms.set(0444)
-        f.inode.mtime.set(0100)
+        f.inode.perms.set(0o444)
+        f.inode.mtime.set(0o100)
         f.inode.owner.set("root")
         f.inode.group.set("root")
         f.contents = files.RegularFileStream()
@@ -590,8 +590,8 @@ class FilesTest(testhelp.TestCase):
         f.flags.set(0)
 
         s = files.SymbolicLink(None)
-        s.inode.perms.set(0604)
-        s.inode.mtime.set(0100)
+        s.inode.perms.set(0o604)
+        s.inode.mtime.set(0o100)
         s.inode.owner.set('daemon')
         s.inode.group.set('uucp')
         # to make sure that referenced names "exist"

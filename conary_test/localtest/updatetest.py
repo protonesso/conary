@@ -498,7 +498,7 @@ class Foo(PackageRecipe):
             self.logFilter.add()
             try:
                 self.rollback(self.rootDir, 1)
-            except database.RollbackDoesNotExist, e:
+            except database.RollbackDoesNotExist as e:
                 self.assertEqual(str(e), 'rollback r.1 does not exist')
                 self.logFilter.compare("error: rollback 'r.1' not present")
             else:
@@ -626,7 +626,7 @@ class Foo(PackageRecipe):
         try:
             self.discardOutput(self.updatePkg, 'group-foo=1.0',
                 criticalUpdateInfo = updateInfo, raiseError = True)
-        except errors.ReexecRequired, e:
+        except errors.ReexecRequired as e:
             self.discardOutput(self.updatePkg, 'group-foo=1.0',
                 restartInfo=e.data)
 
@@ -635,7 +635,7 @@ class Foo(PackageRecipe):
         try:
             self.discardOutput(self.updatePkg, 'group-foo=1.1',
                 criticalUpdateInfo = updateInfo, raiseError = True)
-        except errors.ReexecRequired, e:
+        except errors.ReexecRequired as e:
             self.discardOutput(self.updatePkg, 'group-foo=1.1',
                 criticalUpdateInfo = updateInfo, restartInfo=e.data)
 
@@ -661,7 +661,7 @@ class Foo(PackageRecipe):
         try:
             self.discardOutput(self.updatePkg, 'group-foo=1.1',
                 criticalUpdateInfo = updateInfo, raiseError = True)
-        except errors.ReexecRequired, e:
+        except errors.ReexecRequired as e:
             file(os.path.join(e.data, "features"), "w").write("")
             self.discardOutput(self.updatePkg, 'group-foo=1.1',
                 criticalUpdateInfo = updateInfo, restartInfo=e.data)
@@ -744,7 +744,7 @@ class Foo(PackageRecipe):
             substDict = { 'script' : scriptName }
             substDict.update(otherArgs)
 
-            for (line, check) in itertools.izip(lines, checkLines):
+            for (line, check) in zip(lines, checkLines):
                 assert(line == check % substDict)
 
             scriptPath = util.joinPaths(self.rootDir, scriptName)
@@ -796,7 +796,7 @@ class Foo(PackageRecipe):
             def __call__(self, path, args, environ):
                 # make sure the file in the chroot is executable
                 sb = os.stat(self.root + args[0])
-                assert(sb.st_mode & 0100)
+                assert(sb.st_mode & 0o100)
                 self.args = args
                 self.environ = environ
                 os.write(1, "GOOD\n")
@@ -1242,7 +1242,7 @@ class Test(CapsuleRecipe):
         realOpen = os.open
         realFileObject = file
 
-        def mockOpen(path, flag, mode = 0777):
+        def mockOpen(path, flag, mode = 0o777):
             if (path.startswith(self.rootDir) and
                     not path.startswith(self.rootDir + self.cfg.dbPath) and
                     os.path.exists(path)):
@@ -1449,10 +1449,10 @@ implements files remove
         self.assertEqual([ x.rstrip() for x in file(tagResultFile) ],
             expected)
 
-        for fileNames in fsJob.tagUpdates.values():
+        for fileNames in list(fsJob.tagUpdates.values()):
             for fileName in fileNames:
                 self.assertFalse(fileName.startswith("//"), fileName)
-        for fileNames in fsJob.tagRemoves.values():
+        for fileNames in list(fsJob.tagRemoves.values()):
             for fileName in fileNames:
                 self.assertFalse(fileName.startswith("//"), fileName)
         for fileName in fsJob.restores:
@@ -1663,7 +1663,7 @@ root:x:0:0:root:/root:/bin/bash
 bin:x:1:1:bin:/bin:/sbin/nologin
 """)
         with open(self.workDir + '/foo', 'w') as f:
-            print >> f, "PREFERRED_UID=1234"
+            print("PREFERRED_UID=1234", file=f)
         update.userAction(self.workDir, [self.workDir + '/foo'])
         with open(self.workDir + '/etc/passwd') as f:
             actual = f.read()

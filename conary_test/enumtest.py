@@ -24,5 +24,5 @@ class EnumTest(unittest.TestCase):
     def testEnum(self):
         theEnum = enum.EnumeratedType("testenum", "foo", "bar")
         assert(theEnum.foo == "testenum-foo")
-        assert(theEnum.values() == [ "testenum-foo", "testenum-bar" ])
+        assert(list(theEnum.values()) == [ "testenum-foo", "testenum-bar" ])
         self.assertRaises(AttributeError, theEnum.__getattr__, "bang")

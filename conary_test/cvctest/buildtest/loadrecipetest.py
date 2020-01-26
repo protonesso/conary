@@ -143,7 +143,7 @@ class FooRecipe(PackageRecipe):
         log.setVerbosity(log.WARNING)
         assert(loader.module.TestRecipe1.foo == '1.0-readline')
         FooLoaded = loader.getLoadedSpecs()
-        assert(FooLoaded.keys() == ['test1=:linux[readline]'])
+        assert(list(FooLoaded.keys()) == ['test1=:linux[readline]'])
         assert(use.LocalFlags.flag)
         assert(len(loader.getLoadedTroves()) == 1)
         v1 =  versions.VersionFromString('/localhost@rpl:linux/1.0-1')
@@ -153,7 +153,7 @@ class FooRecipe(PackageRecipe):
         loader = self._testSubload(self.repos,
                                'loadInstalled("test1.recipe=:linux[readline]")')
         FooLoaded = loader.getLoadedSpecs()
-        assert(FooLoaded.keys() ==
+        assert(list(FooLoaded.keys()) ==
                                     [ 'test1.recipe=:linux[readline]'])
         assert(loader.module.TestRecipe1.foo == '1.0-readline')
         # we don't have a version matching this installed, so just 
@@ -212,7 +212,7 @@ class FooRecipe(PackageRecipe):
             loader = self._testSubload(repos, "loadSuperClass('test2')",
                                        cfg = cfg, branch = branch)
             assert(0)
-        except Exception, err:
+        except Exception as err:
             assert(str(err).find('cannot find source component test1:source:') != -1)
             pass
         db.searchAsDatabase()
@@ -238,7 +238,7 @@ class FooRecipe(PackageRecipe):
             self._testSubload(repos, "loadSuperClass('test2')", branch = branch,
                               cfg = cfg)
             assert(0)
-        except Exception, err:
+        except Exception as err:
             assert(str(err).find('cannot find source component test1:source:') != -1)
             pass
         cfg.installLabelPath = [versions.Label('localhost@rpl:linux')]
@@ -399,7 +399,7 @@ class TestRecipe1(PackageRecipe):
         self.writeFile('testcase.recipe', brokenRecipe)
         try:
             loadrecipe.RecipeLoader(self.workDir + '/testcase.recipe', self.cfg)
-        except Exception, err:
+        except Exception as err:
             assert('''Error in recipe file "testcase.recipe":
  Traceback (most recent call last):''' in str(err))
             assert(str(err).endswith('''\
@@ -413,7 +413,7 @@ NameError: name \'bb\' is not defined
         error = kw.pop('error')
         try:
             fn(*args, **kw)
-        except Exception, e:
+        except Exception as e:
             assert(str(e) == error)
         else:
             assert(0)
@@ -456,7 +456,7 @@ class Foo(PackageRecipe):
         try:
             loadrecipe.RecipeLoader(self.workDir + '/testcase.recipe', self.cfg,
                                     repos=None)
-        except Exception, err:
+        except Exception as err:
             if sys.version_info >= (2, 5):
                 topModule = "<module>"
             else:
@@ -718,7 +718,7 @@ Not using:
             loadrecipe.RecipeLoaderFromString._loadAutoRecipes(importer,
                                         cfg, repos, db = None,
                                         buildFlavor=cfg.buildFlavor)
-        except builderrors.RecipeFileError, e:
+        except builderrors.RecipeFileError as e:
             assert(str(e) ==
                    'no match for autoLoadRecipe entry group-super=2.0')
 
@@ -734,7 +734,7 @@ Not using:
                 loadrecipe.Importer.__init__(self, *args, **kwargs)
 
             def updateModuleDict(self, d):
-                self.addOrder.append(d.keys())
+                self.addOrder.append(list(d.keys()))
                 loadrecipe.Importer.updateModuleDict(self, d)
 
         def addRecipe(name, version, loaded):
@@ -787,7 +787,7 @@ Not using:
         try:
             loadrecipe.RecipeLoaderFromString._loadAutoRecipes(importer, cfg,
                                         repos, db = None)
-        except Exception, err:
+        except Exception as err:
             assert(str(err) ==
                     'Cannot autoload recipes due to a loadedRecipes loop '
                     'involving a:recipe=/localhost@rpl:linux/2.0-1-1[] and '

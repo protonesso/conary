@@ -15,7 +15,7 @@
 #
 
 
-import cPickle, mmap, os, struct, time
+import pickle, mmap, os, struct, time
 
 CLIENT_LOG = 1000000
 
@@ -74,7 +74,7 @@ class AbstractCallLogger:
         while i < size:
             length = struct.unpack("!I", map[i: i + 4])[0]
             i += 4
-            yield self.EntryClass(cPickle.loads(map[i:i + length]))
+            yield self.EntryClass(pickle.loads(map[i:i + length]))
             i += length
 
         os.close(fd)
@@ -82,7 +82,7 @@ class AbstractCallLogger:
     def getEntry(self):
         size = struct.unpack("!I", self.fobj.read(4))[0]
         data = self.fobj.read(size)
-        return self.EntryClass(cPickle.loads(data))
+        return self.EntryClass(pickle.loads(data))
 
     def follow(self):
         self.fobj.seek(0, 2)
@@ -110,7 +110,7 @@ class ClientCallLogger(AbstractCallLogger):
         # lazy re-open the log file in case it was rotated from underneath us
         self.reopen()
 
-        logStr = cPickle.dumps((self.logFormatRevision, url, entitlement,
+        logStr = pickle.dumps((self.logFormatRevision, url, entitlement,
                                 methodName, args, result, latency))
         self.fobj.write(struct.pack("!I", len(logStr)) + logStr)
         self.fobj.flush()

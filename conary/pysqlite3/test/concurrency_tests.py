@@ -37,7 +37,7 @@ class ConcurrencyTests(unittest.TestCase):
         try:
             cu1.execute('BEGIN DEFERRED')
             cu1.execute('INSERT INTO foo VALUES(2)')
-        except sqlite.InternalError, e:
+        except sqlite.InternalError as e:
             assert(str(e) == "database is locked")
         t2 = time.time()
         # make sure we slept 2 seconds
@@ -61,7 +61,7 @@ class ConcurrencyTests(unittest.TestCase):
         t1 = time.time()
         try:
             cu1.execute('BEGIN IMMEDIATE')
-        except sqlite.InternalError, e:
+        except sqlite.InternalError as e:
             assert(str(e) == "database is locked")
         t2 = time.time()
         # make sure we slept 2 seconds
@@ -92,7 +92,7 @@ class ConcurrencyTests(unittest.TestCase):
         try:
             cu1.execute('BEGIN DEFERRED')
             cu1.execute('INSERT INTO foo VALUES(2)')
-        except sqlite.InternalError, e:
+        except sqlite.InternalError as e:
             assert(str(e) == "database is locked")
         t2 = time.time()
         assert(waiter.count == 6)

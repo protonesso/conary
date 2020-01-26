@@ -56,7 +56,7 @@ class DirectorySet:
                 self.dirs[topDir] = True
 
     def __iter__(self):
-        for dirName, val in sorted(self.dirs.iteritems()):
+        for dirName, val in sorted(self.dirs.items()):
             if val is True:
                 yield dirName
             else:
@@ -81,7 +81,7 @@ class DirectorySet:
 class DirectoryDict(dict):
 
     def itertops(self):
-        s = DirectorySet(self.keys())
+        s = DirectorySet(list(self.keys()))
         for x in s:
             yield x
 

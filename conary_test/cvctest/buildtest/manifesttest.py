@@ -93,35 +93,35 @@ class ManifestTest(rephelp.RepositoryHelper):
         man = manifest.ExplicitManifest('foo:runtime', r)
         path = '/foo'
         man.recordPaths(path)
-        self.assertEquals(man.manifestPaths, set(['/foo']))
+        self.assertEqual(man.manifestPaths, set(['/foo']))
 
     def testExtraSepRecord1(self):
         r = self.getRecipe()
         man = manifest.ExplicitManifest('foo:runtime', r)
         path = '//foo'
         man.recordPaths(path)
-        self.assertEquals(man.manifestPaths, set(['/foo']))
+        self.assertEqual(man.manifestPaths, set(['/foo']))
 
     def testExtraSepRecord2(self):
         r = self.getRecipe()
         man = manifest.ExplicitManifest('foo:runtime', r)
         path = '/' + r.macros.destdir + '//foo'
         man.recordPaths(path)
-        self.assertEquals(man.manifestPaths, set(['/foo']))
+        self.assertEqual(man.manifestPaths, set(['/foo']))
 
     def testDestDirTranslate(self):
         r = self.getRecipe()
         man = manifest.ExplicitManifest('foo', r)
         path = os.path.join(self.destdir, 'foo')
         man.recordPaths(path)
-        self.assertEquals(man.manifestPaths, set(['/foo']))
+        self.assertEqual(man.manifestPaths, set(['/foo']))
 
     def testRemoveSep(self):
         r = self.getRecipe()
         man = manifest.ExplicitManifest('foo', r)
         path = os.path.sep + os.path.join(self.destdir, 'foo')
         man.recordPaths(path)
-        self.assertEquals(man.manifestPaths, set(['/foo']))
+        self.assertEqual(man.manifestPaths, set(['/foo']))
 
     def testWalk(self):
         r = self.getRecipe()
@@ -129,14 +129,14 @@ class ManifestTest(rephelp.RepositoryHelper):
         path = os.path.sep + os.path.join(self.destdir, 'foo')
         man.recordPaths(path)
         man.walk(init = True)
-        self.assertEquals(man.fileSet, set(['/foo']))
+        self.assertEqual(man.fileSet, set(['/foo']))
 
         # repeat test to ensure behavior is invariant of init param
         man.fileSet = set()
         man.manifestPaths = set()
         man.recordPaths(path)
         man.walk(init = False)
-        self.assertEquals(man.fileSet, set(['/foo']))
+        self.assertEqual(man.fileSet, set(['/foo']))
 
     def testCreate(self):
         r = self.getRecipe()
@@ -148,7 +148,7 @@ class ManifestTest(rephelp.RepositoryHelper):
             man.manifestFile = os.path.join(man.manifestsDir,
                     os.path.basename(man.manifestFile))
             man.create()
-            self.assertEquals('/foo\n', open(man.manifestFile).read())
+            self.assertEqual('/foo\n', open(man.manifestFile).read())
         finally:
             util.rmtree(man.manifestsDir)
 
@@ -173,7 +173,7 @@ class ManifestTest(rephelp.RepositoryHelper):
         r = self.getRecipe()
         r._pathTranslations.append(('/foo', '/bar'))
         man = manifest.ExplicitManifest('foo', r)
-        self.assertEquals(man.translatePath('/foo'), '/bar')
+        self.assertEqual(man.translatePath('/foo'), '/bar')
 
     def testDocRemap(self):
         recipestr1 = """
@@ -193,8 +193,8 @@ class RenamedDocs(PackageRecipe):
         (built, d) = self.buildRecipe(recipestr1, "RenamedDocs")
 
         # first prove the package spec for Doc worked.
-        self.assertEquals(len(built), 1)
-        self.assertEquals(built[0][0], 'foo:supdoc')
+        self.assertEqual(len(built), 1)
+        self.assertEqual(built[0][0], 'foo:supdoc')
 
         repos = self.openRepository()
         trvNVF = repos.findTrove(None, built[0])
@@ -202,7 +202,7 @@ class RenamedDocs(PackageRecipe):
         fileInfo = [x for x in trv.iterFileList()][0]
 
         # prove the name was changed
-        self.assertEquals(fileInfo[1], '/usr/share/doc/test-0/sourcefile-1')
+        self.assertEqual(fileInfo[1], '/usr/share/doc/test-0/sourcefile-1')
 
     def testInstallRemap(self):
         recipestr1 = """
@@ -222,8 +222,8 @@ class RenamedInstalls(PackageRecipe):
         (built, d) = self.buildRecipe(recipestr1, "RenamedInstalls")
 
         # first prove the package spec for Install worked.
-        self.assertEquals(len(built), 1)
-        self.assertEquals(built[0][0], 'foo:runtime')
+        self.assertEqual(len(built), 1)
+        self.assertEqual(built[0][0], 'foo:runtime')
 
         repos = self.openRepository()
         trvNVF = repos.findTrove(None, built[0])
@@ -231,7 +231,7 @@ class RenamedInstalls(PackageRecipe):
         fileInfo = [x for x in trv.iterFileList()][0]
 
         # prove the name was changed
-        self.assertEquals(fileInfo[1], '/foo-1')
+        self.assertEqual(fileInfo[1], '/foo-1')
 
     def testJavaDocRemap(self):
         recipestr1 = """
@@ -251,8 +251,8 @@ class RenamedJavaDocs(PackageRecipe):
         (built, d) = self.buildRecipe(recipestr1, "RenamedJavaDocs")
 
         # first prove the package spec for JavaDoc worked.
-        self.assertEquals(len(built), 1)
-        self.assertEquals(built[0][0], 'foo:doc')
+        self.assertEqual(len(built), 1)
+        self.assertEqual(built[0][0], 'foo:doc')
 
         repos = self.openRepository()
         trvNVF = repos.findTrove(None, built[0])
@@ -260,7 +260,7 @@ class RenamedJavaDocs(PackageRecipe):
         fileInfo = [x for x in trv.iterFileList()][0]
 
         # prove the name was changed
-        self.assertEquals(fileInfo[1], '/usr/share/javadoc/test-0/sourcefile-1')
+        self.assertEqual(fileInfo[1], '/usr/share/javadoc/test-0/sourcefile-1')
 
     def testMakeDirsRemap(self):
         recipestr1 = """
@@ -280,8 +280,8 @@ class RenamedDirs(PackageRecipe):
         (built, d) = self.buildRecipe(recipestr1, "RenamedDirs")
 
         # first prove the package spec for MakeDirs worked.
-        self.assertEquals(len(built), 1)
-        self.assertEquals(built[0][0], 'foo:runtime')
+        self.assertEqual(len(built), 1)
+        self.assertEqual(built[0][0], 'foo:runtime')
 
         repos = self.openRepository()
         trvNVF = repos.findTrove(None, built[0])
@@ -289,7 +289,7 @@ class RenamedDirs(PackageRecipe):
         fileInfo = [x for x in trv.iterFileList()][0]
 
         # prove the name was changed
-        self.assertEquals(fileInfo[1], '/foo-1')
+        self.assertEqual(fileInfo[1], '/foo-1')
 
     def testMakeFIFORemap(self):
         recipestr1 = """
@@ -308,8 +308,8 @@ class MkFIFO(PackageRecipe):
         (built, d) = self.buildRecipe(recipestr1, "MkFIFO")
 
         # first prove the package spec for MakeFIFO worked.
-        self.assertEquals(len(built), 1)
-        self.assertEquals(built[0][0], 'foo:runtime')
+        self.assertEqual(len(built), 1)
+        self.assertEqual(built[0][0], 'foo:runtime')
 
         repos = self.openRepository()
         trvNVF = repos.findTrove(None, built[0])
@@ -317,7 +317,7 @@ class MkFIFO(PackageRecipe):
         fileInfo = [x for x in trv.iterFileList()][0]
 
         # prove the name was changed
-        self.assertEquals(fileInfo[1], '/foo-1')
+        self.assertEqual(fileInfo[1], '/foo-1')
 
     def testSymlinkDirRemap(self):
         recipestr1 = """
@@ -336,8 +336,8 @@ class SymlinkDirRemap(PackageRecipe):
         (built, d) = self.buildRecipe(recipestr1, "SymlinkDirRemap")
 
         # first prove the package spec for Symlink worked.
-        self.assertEquals(len(built), 1)
-        self.assertEquals(built[0][0], 'foo:runtime')
+        self.assertEqual(len(built), 1)
+        self.assertEqual(built[0][0], 'foo:runtime')
 
         repos = self.openRepository()
         trvNVF = repos.findTrove(None, built[0])
@@ -345,7 +345,7 @@ class SymlinkDirRemap(PackageRecipe):
         fileInfo = [x for x in trv.iterFileList()][0]
 
         # prove the name was changed
-        self.assertEquals(fileInfo[1], '/foo/symlink-1')
+        self.assertEqual(fileInfo[1], '/foo/symlink-1')
 
     def testSymlinkFileRemap(self):
         recipestr1 = """
@@ -366,8 +366,8 @@ class SymlinkFileRemap(PackageRecipe):
         (built, d) = self.buildRecipe(recipestr1, "SymlinkFileRemap")
 
         # first prove the package spec for Symlink worked.
-        self.assertEquals(len(built), 1)
-        self.assertEquals(built[0][0], 'foo:runtime')
+        self.assertEqual(len(built), 1)
+        self.assertEqual(built[0][0], 'foo:runtime')
 
         repos = self.openRepository()
         trvNVF = repos.findTrove(None, built[0])
@@ -396,8 +396,8 @@ class LinkFileRemap(PackageRecipe):
         (built, d) = self.buildRecipe(recipestr1, "LinkFileRemap")
 
         # first prove the package spec for Symlink worked.
-        self.assertEquals(len(built), 1)
-        self.assertEquals(built[0][0], 'foo:runtime')
+        self.assertEqual(len(built), 1)
+        self.assertEqual(built[0][0], 'foo:runtime')
 
         repos = self.openRepository()
         trvNVF = repos.findTrove(None, built[0])
@@ -425,8 +425,8 @@ class XInetdServiceRemap(PackageRecipe):
         (built, d) = self.buildRecipe(recipestr1, "XInetdServiceRemap")
 
         # first prove the package spec for XInetdService worked.
-        self.assertEquals(len(built), 1)
-        self.assertEquals(built[0][0], 'foo:config')
+        self.assertEqual(len(built), 1)
+        self.assertEqual(built[0][0], 'foo:config')
 
         repos = self.openRepository()
         trvNVF = repos.findTrove(None, built[0])
@@ -434,7 +434,7 @@ class XInetdServiceRemap(PackageRecipe):
         fileInfo = [x for x in trv.iterFileList()][0]
 
         # prove the name was changed
-        self.assertEquals(fileInfo[1], '/etc/xinetd.d/foo-1')
+        self.assertEqual(fileInfo[1], '/etc/xinetd.d/foo-1')
 
     def testFixupManpagePaths(self):
         recipestr0 = """
@@ -449,7 +449,7 @@ class TestFilesInMandir(PackageRecipe):
 """
         self.reset()
         (built, d) = self.buildRecipe(recipestr0, "TestFilesInMandir")
-        self.assertEquals(built[0][0], 'manpage:doc')
+        self.assertEqual(built[0][0], 'manpage:doc')
 
     def testFixupManpagePathsLegacyCompat(self):
         # prove that conary-policy will work with older versions of conary
@@ -468,7 +468,7 @@ class TestFilesInMandir(PackageRecipe):
         self.assertFalse(os.path.exists(filePath))
 
         # we expect that the move wasn't recorded
-        self.assertEquals(r._pathTranslations, [])
+        self.assertEqual(r._pathTranslations, [])
 
     def testFixObsoletePathsLegacyCompat(self):
         # prove that conary-policy will work with older versions of conary
@@ -487,7 +487,7 @@ class TestFilesInMandir(PackageRecipe):
         self.assertFalse(os.path.exists(filePath))
 
         # we expect that the move wasn't recorded
-        self.assertEquals(r._pathTranslations, [])
+        self.assertEqual(r._pathTranslations, [])
 
     def testFixMultilibPathsLegacyCompat(self):
         # prove that conary-policy will work with older versions of conary
@@ -521,7 +521,7 @@ class TestFilesInMandir(PackageRecipe):
             'libXX', 'symlink.so')))
 
         # we expect that the move wasn't recorded
-        self.assertEquals(r._pathTranslations, [])
+        self.assertEqual(r._pathTranslations, [])
 
     def testFixMultilibPaths(self):
         # prove that conary-policy will work with older versions of conary
@@ -557,7 +557,7 @@ class TestFilesInMandir(PackageRecipe):
         # we expect that the move was recorded
         # the order foo vs symlink get evaluated isn't stable. sorting here
         # doesn't hurt anything
-        self.assertEquals(sorted(r._pathTranslations),
+        self.assertEqual(sorted(r._pathTranslations),
                 sorted([('/lib/foo.so', '/libXX/foo.so'),
                     ('/lib/symlink.so', '/libXX/symlink.so')]))
 
@@ -575,7 +575,7 @@ class TestFilesInMandir(PackageRecipe):
         self.assertFalse(os.path.exists(filePath))
 
         # we expect that no move was recorded
-        self.assertEquals(r._pathTranslations, [])
+        self.assertEqual(r._pathTranslations, [])
 
     def testNormalizePkgConfig(self):
         r = self.getRecipe()
@@ -591,7 +591,7 @@ class TestFilesInMandir(PackageRecipe):
         self.assertFalse(os.path.exists(filePath))
 
         # we expect that no move was recorded
-        self.assertEquals(r._pathTranslations,
+        self.assertEqual(r._pathTranslations,
                 [('/usr/share/pkgconfig/foo',
                     r.macros.libdir + '/pkgconfig/foo')])
 
@@ -618,7 +618,7 @@ class TestFilesInMandir(PackageRecipe):
         # we expect that moves were recorded
         # the order foo/bar get evaluated isn't stable. we'll just sort for
         # test purposes
-        self.assertEquals(sorted(r._pathTranslations),
+        self.assertEqual(sorted(r._pathTranslations),
                 sorted([('/usr/share/man/man1/foo.1.gz',
                     '/usr/share/man/man1/foo.1'),
                  ('/usr/share/man/man1/bar.1.bz2',
@@ -649,7 +649,7 @@ class TestFilesInMandir(PackageRecipe):
         self.assertFalse(os.path.exists(filePath2))
 
         # we expect that no moves were recorded
-        self.assertEquals(r._pathTranslations, [])
+        self.assertEqual(r._pathTranslations, [])
 
     def testNormalizeInfoPagesLegacy(self):
         r = self.getLegacyRecipe()
@@ -674,7 +674,7 @@ class TestFilesInMandir(PackageRecipe):
         self.assertFalse(not os.path.exists(util.joinPaths(self.destdir, newPath)))
 
         # we expect that no moves were recorded
-        self.assertEquals(r._pathTranslations, [])
+        self.assertEqual(r._pathTranslations, [])
 
     def testNormalizeInfoPages(self):
         r = self.getRecipe()
@@ -699,7 +699,7 @@ class TestFilesInMandir(PackageRecipe):
         self.assertFalse(not os.path.exists(util.joinPaths(self.destdir, newPath)))
 
         # we expect that moves were recorded
-        self.assertEquals(r._pathTranslations,
+        self.assertEqual(r._pathTranslations,
                 [('/usr/share/info/man1/foo.gz', '/usr/share/info/foo.gz')])
 
     def testNormalizeBz2InfoPages(self):
@@ -725,7 +725,7 @@ class TestFilesInMandir(PackageRecipe):
         self.assertFalse(not os.path.exists(util.joinPaths(self.destdir, newPath)))
 
         # we expect that moves were recorded
-        self.assertEquals(r._pathTranslations,
+        self.assertEqual(r._pathTranslations,
                 [('/usr/share/info/man1/foo.bz2',
                     '/usr/share/info/foo.bz2'),
                  ('/usr/share/info/foo.bz2',
@@ -746,7 +746,7 @@ class TestFilesInMandir(PackageRecipe):
         self.assertFalse(os.path.exists(filePath))
 
         # we expect that no move was recorded
-        self.assertEquals(r._pathTranslations, [])
+        self.assertEqual(r._pathTranslations, [])
 
     def testNormalizeInitscriptLocation(self):
         r = self.getRecipe()
@@ -763,7 +763,7 @@ class TestFilesInMandir(PackageRecipe):
         self.assertFalse(os.path.exists(filePath))
 
         # we expect that no move was recorded
-        self.assertEquals(r._pathTranslations,
+        self.assertEqual(r._pathTranslations,
                 [('/etc/rc.d/init.d/foo', '/foo/foo')])
 
     def testNormalizeAppDefaultsLegacy(self):
@@ -780,7 +780,7 @@ class TestFilesInMandir(PackageRecipe):
         self.assertFalse(os.path.exists(filePath))
 
         # we expect that no move was recorded
-        self.assertEquals(r._pathTranslations, [])
+        self.assertEqual(r._pathTranslations, [])
 
     def testNormalizeAppDefaults(self):
         r = self.getRecipe()
@@ -796,6 +796,6 @@ class TestFilesInMandir(PackageRecipe):
         self.assertFalse(os.path.exists(filePath))
 
         # we expect that no move was recorded
-        self.assertEquals(r._pathTranslations,
+        self.assertEqual(r._pathTranslations,
                 [('/etc/X11/app-defaults/foo',
                     '/usr/X11R6/lib/X11/app-defaults/foo')])

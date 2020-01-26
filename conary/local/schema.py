@@ -33,7 +33,7 @@ def resetTable(cu, name):
     try:
         cu.execute("DELETE FROM %s" % name, start_transaction = False)
         return True
-    except Exception, e:
+    except Exception as e:
         return False
 
 def _createVersions(db, cu = None):
@@ -418,7 +418,7 @@ class SchemaMigration(migration.SchemaMigration):
     def message(self, msg = None):
         if msg is None:
             msg = self.msg
-        print "\r%s\r" %(' '*len(self.msg)),
+        print("\r%s\r" %(' '*len(self.msg)), end=' ')
         self.msg = msg
         sys.stdout.write(msg)
         sys.stdout.flush()
@@ -461,7 +461,7 @@ class MigrateTo_5(SchemaMigration):
         self.cu.execute("delete from dependencies")
         self.cu.execute("delete from requires")
         self.cu.execute("delete from provides")
-        for instanceId, trv in itertools.izip(instances, troves):
+        for instanceId, trv in zip(instances, troves):
             dtbl.add(self.cu, trv, instanceId)
         return self.Version
 
@@ -848,7 +848,7 @@ class MigrateTo_20(SchemaMigration):
         self.db.commit()
         cu.execute("ATTACH '%s' AS newdb" %fn, start_transaction=False)
 
-        for t in newdb.tables.keys():
+        for t in list(newdb.tables.keys()):
             self.message('Converting database schema to version 20 '
                          '- current table: %s' %t)
             cu.execute('INSERT OR REPLACE INTO newdb.%s '
@@ -867,7 +867,7 @@ class MigrateTo_20(SchemaMigration):
         self.db.commit()
         self.message('')
         newdb.close()
-        os.chmod(fn, 0644)
+        os.chmod(fn, 0o644)
         os.rename(dbPath, dbPath + '-pre-schema-update')
         os.rename(fn, dbPath)
         self.db.reopen()

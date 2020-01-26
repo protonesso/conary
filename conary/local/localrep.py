@@ -18,9 +18,9 @@
 import gzip
 import zlib
 try:
-    from cStringIO import StringIO
+    from io import StringIO
 except ImportError:
-    from StringIO import StringIO
+    from io import StringIO
 
 from conary.repository import errors, repository, datastore
 from conary.lib import digestlib
@@ -118,7 +118,7 @@ class LocalRepositoryChangeSetJob(repository.ChangeSetJob):
         self.oldFile(pathId, fileId, sha1)
 
     def iterDbRemovals(self):
-        return self.replacedFiles.iteritems()
+        return iter(self.replacedFiles.items())
 
     def __init__(self, repos, cs, callback, autoPinList,
                  allowIncomplete = False, replaceFileCheck = False,

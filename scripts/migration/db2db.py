@@ -110,7 +110,7 @@ def verify_table(src, dst, table, quick=False):
     srcCu = src.iterRows(table, fields)
     dstCu = dst.iterRows(table, fields)
     callback = Callback(table, srcCount, "Verify")
-    for row1, row2 in itertools.izip(srcCu, dstCu):
+    for row1, row2 in zip(srcCu, dstCu):
         for a,b in zip(row1, row2):
             assert (a==b), "\nrow differences in table %s:\nsrc: %s\ndst: %s\n" %(
                 table, row1, row2)
@@ -158,10 +158,10 @@ if __name__ == '__main__':
     # check that the source and target match schemas
     diff = set(src.getTables()).difference(set(dst.getTables()))
     if diff:
-        print "WARNING: Only in Source (%s): %s" % (src.driver, diff)
+        print("WARNING: Only in Source (%s): %s" % (src.driver, diff))
     diff = set(dst.getTables()).difference(set(src.getTables()))
     if diff:
-        print "WARNING: Only in Target (%s): %s" % (dst.driver, diff)
+        print("WARNING: Only in Target (%s): %s" % (dst.driver, diff))
     # compare each table's schema between the source and target
     for table in tablelist.TableList:
         srcFields = src.getFields(table)
@@ -187,4 +187,4 @@ if __name__ == '__main__':
     src.close()
     dst.close()
     if options.verbose:
-        print "Done"
+        print("Done")

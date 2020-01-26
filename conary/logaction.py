@@ -23,7 +23,7 @@ if 'CONARY_PATH' in os.environ:
     sys.path.insert(0, os.environ['CONARY_PATH'])
     sys.path.insert(0, os.environ['CONARY_PATH']+"/conary/scripts")
 
-import StringIO
+import io
 import optparse
 
 from conary import versions
@@ -45,11 +45,11 @@ class OptionError(Exception):
         return "OptionError[%d]: %s %s" % (self.errcode, self.errmsg, self.args)
     
 def fail(code, srcMap, pkgMap, grpMap, argv):
-    print >>sys.stderr, "An error occurred while processing logaction.  Code: %d" % code
-    print >>sys.stderr, "    srcMap=%s" % srcMap.items()
-    print >>sys.stderr, "    pkgMap=%s" % pkgMap.items()
-    print >>sys.stderr, "    grpMap=%s" % grpMap.items()
-    print >>sys.stderr, "    argv=%s" % argv
+    print("An error occurred while processing logaction.  Code: %d" % code, file=sys.stderr)
+    print("    srcMap=%s" % list(srcMap.items()), file=sys.stderr)
+    print("    pkgMap=%s" % list(pkgMap.items()), file=sys.stderr)
+    print("    grpMap=%s" % list(grpMap.items()), file=sys.stderr)
+    print("    argv=%s" % argv, file=sys.stderr)
     sys.stderr.flush()
 
 def process(repos, cfg, commitList, srcMap, pkgMap, grpMap, argv, otherArgs):
@@ -168,7 +168,7 @@ def getDB(dbfile, create = False):
 def doCommit(repos, cfg, commitList, user, dbfile):
     db = getDB(dbfile, create = True)
     if commitList:
-        s = StringIO.StringIO()
+        s = io.StringIO()
         cfg.store(s, False)
         cfgStr = s.getvalue()
         cu = db.transaction()
@@ -196,7 +196,7 @@ def usage():
         "or"
         "%prog --dbfile=DBFILE [--stdin --user=USER] [--list] [--show=ID]"
         ])
-    print usage
+    print(usage)
 
 def parseArgs(argv):
     usage = "\n".join([
@@ -241,7 +241,7 @@ def doList(dbfile):
     cu = db.cursor()
     cu.execute("select commitId, username, changed from Commits")
     for commitId, username, changed in cu:
-        print "ID:%d\tUSERNAME:%-20s\tTIME:%14d" % (commitId, username, int(changed))
+        print("ID:%d\tUSERNAME:%-20s\tTIME:%14d" % (commitId, username, int(changed)))
     db.close()
 
 def doShow(dbfile, commitId):
@@ -256,9 +256,9 @@ def doShow(dbfile, commitId):
     for n, vStr, fStr in cu:
         if fStr:
             f = deps.ThawFlavor(fStr)
-            print "%s=%s[%s]" % (n, vStr, deps.formatFlavor(f))
+            print("%s=%s[%s]" % (n, vStr, deps.formatFlavor(f)))
         else:
-            print "%s=%s" % (n, vStr)
+            print("%s=%s" % (n, vStr))
     db.close()
     
 def main(argv = None):
@@ -268,7 +268,7 @@ def main(argv = None):
     if options.stdin:
         data = [x[:-1] for x in sys.stdin.readlines()]
         # [1,2,3,4,5,6,...] -> [(1,2,3), (4,5,6), ...]
-        commitList = zip(data, data[1:], data[2:])[::3]
+        commitList = list(zip(data, data[1:], data[2:]))[::3]
         cfg = conarycfg.ConaryConfiguration()
         doCommit(None, cfg, commitList, user = options.user, dbfile = options.dbfile)
     elif options.list:

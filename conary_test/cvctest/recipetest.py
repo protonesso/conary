@@ -64,7 +64,7 @@ class MacroTest(unittest.TestCase):
         self.macros['foo'] = 'bar2 %(baz)s'
         try:
             self.macros['baz']
-        except RuntimeError, exc:
+        except RuntimeError as exc:
             if str(exc) != 'maximum recursion depth exceeded':
                 self.fail('expected maximum recursion RuntimeError when expanding macro loop')
         else:
@@ -126,7 +126,7 @@ class NoVersion(PackageRecipe):
         self.writeFile('test.recipe', recipestr1)
         try:
             RecipeLoader(d + '/test.recipe', self.cfg)
-        except RecipeFileError, m:
+        except RecipeFileError as m:
             errstr = ("Recipe in file/component 'test' did not contain "
                         "both a name and a version attribute.")
             assert(m.args[0].endswith(errstr))
@@ -148,7 +148,7 @@ class Empty(PackageRecipe):
             try:
                 self.cookItem(repos, self.cfg, 'empty.recipe')
                 self.fail("CookError not raised")
-            except CookError, e:
+            except CookError as e:
                 self.assertEqual(str(e), "unable to load recipe file "
                     "%s/empty.recipe:\nempty release string" % os.getcwd())
         finally:
@@ -173,7 +173,7 @@ class BadName(PackageRecipe):
         self.writeFile('test.recipe', recipestr1)
         try:
             RecipeLoader(d + '/test.recipe', self.cfg)
-        except RecipeFileError, m:
+        except RecipeFileError as m:
             errstr = ('Error in recipe file \"test.recipe\": package '
                       'name must start with an ascii letter or digit.')
             assert(m.args[0].endswith(errstr))
@@ -188,7 +188,7 @@ class BadName(PackageRecipe):
         self.writeFile('test.recipe', recipestr1)
         try:
             RecipeLoader(d + '/test.recipe', self.cfg)
-        except RecipeFileError, m:
+        except RecipeFileError as m:
             errstr = ("file/component 'test' did not contain a valid recipe")
             assert(m.args[0].endswith(errstr))
 

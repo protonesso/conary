@@ -19,7 +19,7 @@ from testrunner.testhelp import context
 
 import os
 import shutil
-from StringIO import StringIO
+from io import StringIO
 import gzip
 
 import conary_test
@@ -109,7 +109,7 @@ class CloneTest(rephelp.RepositoryHelper):
             self.clone('/localhost@rpl:linux//localhost@rpl:shadow', 
                        'testcase:source=localhost@rpl:linux')
             assert 0, "Should have raised CloneError"
-        except clone.CloneError, msg:
+        except clone.CloneError as msg:
             assert(str(msg) == ("clone only supports cloning troves to sibling"
                                 " branches, parents, and siblings of parent"
                                 " branches"))
@@ -598,7 +598,7 @@ class FooRecipe(LoadRecipe):
         try:
             self.clone('/localhost@rpl:devel', 'foo=:shadow')
             assert 0, 'should have raised error'
-        except clone.CloneError, msg:
+        except clone.CloneError as msg:
               assert(str(msg) == "Cannot find cloned source for foo:source=/localhost@rpl:devel//shadow/2.0-3.1")
 
 
@@ -698,7 +698,7 @@ class TestRecipe(PackageRecipe):
         self.cookFromRepository('simple')
         try:
             self.clone('/localhost@rpl:clone', 'simple:runtime')
-        except errors.ParseError, err:
+        except errors.ParseError as err:
             assert(str(err) == 'Cannot clone components: simple:runtime')
 
     @context('clone')
@@ -729,7 +729,7 @@ class TestRecipe(PackageRecipe):
     def testErrors(self):
         try:
             self.clone('/localhost@rpl:devel/1.0-1-1', 'simple=:shadow')
-        except errors.ParseError, err:
+        except errors.ParseError as err:
             assert(str(err) == 'Cannot specify full version "/localhost@rpl:devel/1.0-1-1" to clone to - must specify target branch')
         else:
             assert(0)
@@ -757,7 +757,7 @@ mv $WORKDIR/output $1
 ''' % (self.workDir, message))
         else:
             open(editor, 'w').write('#!/bin/sh\n') # do nothing
-        os.chmod(editor, 0755)
+        os.chmod(editor, 0o755)
         oldEditor = os.environ.get('EDITOR', None)
         os.environ['EDITOR'] = editor
         return oldEditor
@@ -904,7 +904,7 @@ The following clones will be created:
                           deps.parseFlavor('') )
         try:
             cb.getCloneChangeLog(trv)
-        except ValueError, e:
+        except ValueError as e:
             assert(str(e) ==
                     "name and contact information must be set for clone")
         else:
@@ -1170,14 +1170,14 @@ class testRedirect(RedirectRecipe):
                        ('redirect:runtime', '/localhost@rpl:1'),
                        ('redirect:source', '/localhost@rpl:1')]))
 
-        trvCs = [ x for x in cs.newTroves.itervalues()
+        trvCs = [ x for x in cs.newTroves.values()
                   if x.getName().endswith(':runtime') ][0]
         oldTrv = repos.getTrove(*trvCs.getOldNameVersionFlavor())
         oldTrv.applyChangeSet(trvCs)
         redirList = [x for x in oldTrv.redirects.iter()]
-        self.assertEquals(len(redirList), 1)
+        self.assertEqual(len(redirList), 1)
         redir = redirList[0]
-        self.assertEquals(redir.branch().asString(), '/localhost@rpl:1')
+        self.assertEqual(redir.branch().asString(), '/localhost@rpl:1')
 
     def testPromoteOnlyByDefault(self):
         def _getTroves(cs):
@@ -1272,7 +1272,7 @@ class testRedirect(RedirectRecipe):
                          cloneOnlyByDefaultTroves=True,
                          cloneSources=True)
             assert(0)
-        except clone.CloneError, msg:
+        except clone.CloneError as msg:
             assert(str(msg) == 'Clone would result in empty collection group-foo=/localhost@rpl:linux/1-1-1[]')
 
     def testPromoteOnlyPackagesOnDifferentLabel(self):
@@ -1310,8 +1310,8 @@ class testRedirect(RedirectRecipe):
             cs = self.promote('foo[is:x86]', 'foo=:branch[is:x86]', '--:1',
                               cloneSources=True)
             assert(0)
-        except clone.CloneError, msg:
-            self.assertEquals(str(msg), 'Cannot clone multiple versions of foo[is: x86] to branch /localhost@rpl:1 at the same time.  Attempted to clone versions /localhost@rpl:branch/1-1-1 and /localhost@rpl:linux/1-1-1')
+        except clone.CloneError as msg:
+            self.assertEqual(str(msg), 'Cannot clone multiple versions of foo[is: x86] to branch /localhost@rpl:1 at the same time.  Attempted to clone versions /localhost@rpl:branch/1-1-1 and /localhost@rpl:linux/1-1-1')
 
     def testRepromote(self):
         self.addComponent('foo:source', '1')
@@ -1353,8 +1353,8 @@ class testRedirect(RedirectRecipe):
         try:
             self.promote('foo:runtime', 'bar:runtime',
                          'localhost@rpl:linux--localhost@branch:2')
-        except errors.CvcError, msg:
-            self.assertEquals(str(msg),  "Cannot promote/clone components: 'bar:runtime','foo:runtime'.  Please specify package names instead.")
+        except errors.CvcError as msg:
+            self.assertEqual(str(msg),  "Cannot promote/clone components: 'bar:runtime','foo:runtime'.  Please specify package names instead.")
         # it's ok if you specify the package _and_ the component
         self.promote('bar', 'bar:runtime',
                      'localhost@rpl:linux--localhost@branch:2',
@@ -1387,8 +1387,8 @@ class testRedirect(RedirectRecipe):
         try:
             clone._computeLabelPath('bar', labelPathMap)
             assert(0)
-        except clone.CloneError, err:
-            self.assertEquals(str(err),
+        except clone.CloneError as err:
+            self.assertEqual(str(err),
                     'Multiple clone targets for label l@rpl:1'
                     ' - cannot build labelPath for bar')
 
@@ -1398,8 +1398,8 @@ class testRedirect(RedirectRecipe):
         self.addCollection('foo', '1', [':run'])
         try:
             self.promote('foo', ':linux--:branch', cloneSources=False)
-        except clone.CloneError, err:
-            self.assertEquals(str(err),
+        except clone.CloneError as err:
+            self.assertEqual(str(err),
                     'Cannot find cloned source for foo:source=/localhost@rpl:linux/1-1')
 
     def testCloneNoSource(self):
@@ -1408,8 +1408,8 @@ class testRedirect(RedirectRecipe):
         self.addCollection('foo', '1', [':run'])
         try:
             self.clone('/localhost@rpl:branch', 'foo', cloneSources=False)
-        except clone.CloneError, err:
-            self.assertEquals(str(err),
+        except clone.CloneError as err:
+            self.assertEqual(str(err),
                     'Cannot find cloned source for foo:source=/localhost@rpl:linux/1-1')
 
     def testPromoteDifferentVersionAndFlavor(self):
@@ -1426,8 +1426,8 @@ class testRedirect(RedirectRecipe):
             self.promote('foo[is:x86]', 'foo[is:x86_64]', 
                          ':linux--:branch', cloneSources=True)
             assert 0
-        except Exception, err:
-            self.assertEquals(str(err), 'Cannot clone multiple versions of foo:source to branch /localhost@rpl:branch at the same time.  Attempted to clone versions /localhost@rpl:linux/1-1 and /localhost@rpl:linux/2-1')
+        except Exception as err:
+            self.assertEqual(str(err), 'Cannot clone multiple versions of foo:source to branch /localhost@rpl:branch at the same time.  Attempted to clone versions /localhost@rpl:linux/1-1 and /localhost@rpl:linux/2-1')
 
     def testAllFlavors(self):
         self.addComponent('foo:source', '1')
@@ -1498,7 +1498,7 @@ class testRedirect(RedirectRecipe):
 
         cs = self.promote('/localhost@rpl:linux--/localhost@rpl:branch',
                           'bar', cloneSources=False, allFlavors=True)
-        self.assertEquals(
+        self.assertEqual(
             len(set( [ x.getNewVersion() for x in cs.iterNewTroveList()])), 1)
 
     def testAlwaysBumpGroupVersions(self):
@@ -1520,13 +1520,13 @@ class testRedirect(RedirectRecipe):
         cs = self.promote('/localhost@rpl:linux--:branch', 'group-foo')
         groupVersion = [ x.getNewVersion() for x in cs.iterNewTroveList()
                          if x.getName() == 'group-foo' ][0]
-        self.assertEquals(str(groupVersion), '/localhost@rpl:branch/1-1-2')
+        self.assertEqual(str(groupVersion), '/localhost@rpl:branch/1-1-2')
         fooVersion = [ x.getNewVersion() for x in cs.iterNewTroveList()
                          if x.getName() == 'foo' ][0]
         # we changed the version of group-foo because we have the bump
         # group version behavior turned on, but moved foo to be side-by-side
         # w/ the existing foo because we don't have any reason not to.
-        self.assertEquals(str(fooVersion), '/localhost@rpl:branch/1-1-1')
+        self.assertEqual(str(fooVersion), '/localhost@rpl:branch/1-1-1')
 
         # ok, now, what if we now realize we forgot to promote flavor ssl
         # and want to go back and promote it now?
@@ -1535,7 +1535,7 @@ class testRedirect(RedirectRecipe):
         self.addCollection('group-foo', '1', [('foo', '1')], 
                             defaultFlavor='readline', flavor='ssl')
         cs = self.promote('/localhost@rpl:linux--:branch', 'group-foo')
-        self.assertEquals([ x.getNewVersion() for x in cs.iterNewTroveList() ],
+        self.assertEqual([ x.getNewVersion() for x in cs.iterNewTroveList() ],
                           [VFS('/localhost@rpl:branch/1-1-3'),
                            VFS('/localhost@rpl:branch/1-1-3')])
         self.logFilter.add()
@@ -1658,10 +1658,10 @@ class testRedirect(RedirectRecipe):
 
         cs = self.promote(':linux--:branch', 'fileset-foo', cloneSources=True,
                            test=True)
-        trvCs = cs.iterNewTroveList().next()
+        trvCs = next(cs.iterNewTroveList())
         trv = origTrv.copy()
         trv.applyChangeSet(trvCs)
-        fileId, path, pathId, fileVersion = trv.iterFileList().next()
+        fileId, path, pathId, fileVersion = next(trv.iterFileList())
         assert((path, str(fileVersion)) == ('/foo', '/localhost@rpl:2/1-1-1'))
 
         # now do a clone where we _are_ transporting the file's branch
@@ -1670,10 +1670,10 @@ class testRedirect(RedirectRecipe):
         cs = self.promote(':linux--:branch', ':2--:3',
                           'fileset-foo', cloneSources=True,
                           test=True)
-        trvCs = cs.iterNewTroveList().next()
+        trvCs = next(cs.iterNewTroveList())
         trv = origTrv.copy()
         trv.applyChangeSet(trvCs)
-        fileId, path, pathId, fileVersion = trv.iterFileList().next()
+        fileId, path, pathId, fileVersion = next(trv.iterFileList())
         assert((path, str(fileVersion)) == ('/foo',
                                             '/localhost@rpl:branch/1-1-1'))
 
@@ -1715,7 +1715,7 @@ class testRedirect(RedirectRecipe):
         self.addComponent('foo:source=/localhost@rpl:linux//1-devel/1-3.6')
         cs = self.promote(':1-branch--/localhost@rpl:linux//1-devel',
                           'foo:source=:1-branch', cloneSources=True, test=True)
-        trvCs = cs.iterNewTroveList().next()
+        trvCs = next(cs.iterNewTroveList())
         assert(str(trvCs.getNewVersion()) ==
                         '/localhost@rpl:linux//1-devel/1-3.7')
 
@@ -1859,11 +1859,11 @@ class testRedirect(RedirectRecipe):
         self.addComponent('foo:source=/localhost@rpl:linux//1/1-1.1')
         cs = self.promote(':1--:1',
                           'foo:source=:1/1-1', cloneSources=True, test=True)
-        trvCs = cs.iterNewTroveList().next()
+        trvCs = next(cs.iterNewTroveList())
         assert(str(trvCs.getNewVersion()) == '/localhost@rpl:linux//1/1-1.2')
 
     def _checkMetadata(self, d, **kw):
-        for key, value in d.items():
+        for key, value in list(d.items()):
             if value is None:
                 assert(key not in kw or kw[key] == None)
             else:

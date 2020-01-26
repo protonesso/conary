@@ -602,14 +602,14 @@ class TestRecipe(GroupSetRecipe):
 
         built, d = self.buildRecipe(redirectRecipe, "testRedirect")
 
-        self.assertRaisesRegexp(cook.CookError,
+        self.assertRaisesRegex(cook.CookError,
                 '^' + re.escape('Cannot include redirect '
                 'redirect:runtime=/localhost@rpl:linux/2.0-1-1[] in a group'
                 ) + '$',
 
                 self._build, 'g = world["redirect"]', 'r.Group(g)')
 
-        self.assertRaisesRegexp(cook.CookError,
+        self.assertRaisesRegex(cook.CookError,
                 '^' + re.escape('Cannot include redirect '
                 'redirect:runtime=/localhost@rpl:linux/2.0-1-1[] in a group'
                 ) + '$',
@@ -692,7 +692,7 @@ class TestRecipe(GroupSetRecipe):
     def testSearchPathErrors(self):
         e = self.assertRaises(cook.CookError, self._build,
             "world = r.SearchPath('host@ns:v', 'trv=host@ns:v2')")
-        self.assertEquals(str(e),
+        self.assertEqual(str(e),
             "/test.recipe:9:\n CookError: Invalid arguments"
             " 'host@ns:v', 'trv=host@ns:v2':"
             " SearchPath arguments must be Repository or TroveSet")
@@ -965,7 +965,7 @@ class TestRecipe(GroupSetRecipe):
             scripts = grp.troveInfo.scripts
             for scriptType in scriptTypes:
                 script = getattr(scripts, scriptType).script()
-                self.assertEquals(script, '# %s' % scriptType)
+                self.assertEqual(script, '# %s' % scriptType)
 
         self.addComponent('foo:runtime=1.0')
         self.addComponent('foo:lib=1.0')
@@ -1005,13 +1005,13 @@ class TestRecipe(GroupSetRecipe):
                   self._build, "grp = world.find('group-test', 'foo')",
                                "scripts = grp.scripts()",
                                "r.Group(grp, scripts = scripts)")
-        self.assertEquals(str(e), 'Multiple troves in trove set for scripts()')
+        self.assertEqual(str(e), 'Multiple troves in trove set for scripts()')
 
         e = self.assertRaises(cook.CookError,
                   self._build, "grp = world.find('group-test')",
                                "scripts = (grp - grp['group-test']).scripts()",
                                "r.Group(grp, scripts = scripts)")
-        self.assertEquals(str(e), 'Empty trove set for scripts()')
+        self.assertEqual(str(e), 'Empty trove set for scripts()')
 
     @testhelp.context('sysmodel')
     def testMultipleFinds(self):
@@ -1025,7 +1025,7 @@ class TestRecipe(GroupSetRecipe):
         )
         # ensure that the two lookups result in only one flatten
         # operation underneath; if this breaks, there will be two
-        self.assertEquals(1, len([
+        self.assertEqual(1, len([
             x for x in open('%s/graph.dot' % self.workDir).readlines()
             if 'Flatten' in x]))
 
@@ -1040,7 +1040,7 @@ class TestRecipe(GroupSetRecipe):
                 'return r.Group(subGroup)')
 
         buildRefs = trv.getBuildRefs()
-        self.assertEquals(buildRefs, [ ( 'group-foo', trv.getVersion(),
+        self.assertEqual(buildRefs, [ ( 'group-foo', trv.getVersion(),
                                          trv.getFlavor() ) ] )
         repos = self.openRepository()
         subGroup = repos.getTrove('group-sub', trv.getVersion(),

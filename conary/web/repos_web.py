@@ -15,7 +15,7 @@
 #
 
 
-from urllib import unquote
+from urllib.parse import unquote
 import itertools
 import kid
 import os
@@ -65,7 +65,7 @@ class ReposWeb(object):
         try:
             try:
                 return self._getResponse()
-            except exc.HTTPException, err:
+            except exc.HTTPException as err:
                 return err
         finally:
             self.repServer.reset()
@@ -118,11 +118,11 @@ class ReposWeb(object):
                 raise exc.HTTPForbidden()
             else:
                 return self._requestAuth()
-        except WebError, err:
+        except WebError as err:
             result = self._write("error", error=str(err))
 
         # Convert response if necessary
-        if isinstance(result, basestring):
+        if isinstance(result, str):
             result = self.responseFactory(
                     body=result,
                     content_type='text/html',
@@ -210,7 +210,7 @@ class ReposWeb(object):
             filter = lambda x, char=char: x[0].upper() == char
 
         for trv in troves:
-            if not filter(trv):
+            if not list(filter(trv)):
                 continue
             if ":" not in trv:
                 packages.append(trv)
@@ -241,7 +241,7 @@ class ReposWeb(object):
             return self._write("error",
                                error = '%s was not found on this server.' %t)
 
-        versionList = sorted(leaves[t].keys(), reverse = True)
+        versionList = sorted(list(leaves[t].keys()), reverse = True)
 
         if not v:
             reqVer = versionList[0]
@@ -310,7 +310,7 @@ class ReposWeb(object):
         except (errors.FileStreamMissing, errors.FileStreamNotFound):
             return self._write("error",
                     error="The content of that file is not available.")
-        except errors.FileHasNoContents, err:
+        except errors.FileHasNoContents as err:
             return self._write("error", error=str(err))
 
         response = self.responseFactory(body_file=contents.get())
@@ -373,7 +373,7 @@ class ReposWeb(object):
         try:
             self.repServer.addAcl(self.authToken, 60, role, trove, label,
                                   write = writeperm, remove = remove)
-        except errors.PermissionAlreadyExists, e:
+        except errors.PermissionAlreadyExists as e:
             return self._write("error", shortError = "Duplicate Permission",
                                error = ("Permissions have already been set "
                                         "for %s, please go back and select a "
@@ -395,7 +395,7 @@ class ReposWeb(object):
             self.repServer.editAcl(auth, 60, role, oldtrove, oldlabel,
                                    trove, label, write = writeperm,
                                    canRemove = remove)
-        except errors.PermissionAlreadyExists, e:
+        except errors.PermissionAlreadyExists as e:
             return self._write("error", shortError="Duplicate Permission",
                                error = ("Permissions have already been set "
                                         "for %s, please go back and select "

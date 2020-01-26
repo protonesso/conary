@@ -18,7 +18,7 @@
 import base64
 import errno
 import glob
-import httplib
+import http.client
 import os
 import select
 import socket
@@ -89,7 +89,7 @@ class Connection(object):
             # request then discard and try again.
             try:
                 return self.requestOnce(self.cached, req)
-            except http_error.RequestError, err:
+            except http_error.RequestError as err:
                 err.wrapped.clear()
                 self.cached.close()
                 self.cached = None
@@ -117,7 +117,7 @@ class Connection(object):
         sock.settimeout(socket.getdefaulttimeout())
 
         host, port = self.endpoint.hostport
-        conn = httplib.HTTPConnection(host, port, strict=True)
+        conn = http.client.HTTPConnection(host, port, strict=True)
         conn.sock = wrapped
         conn.auto_open = False
         return conn
@@ -149,10 +149,10 @@ class Connection(object):
         sock.sendall('\r\n'.join(lines))
 
         # Parse response to make sure the tunnel was opened successfully.
-        resp = httplib.HTTPResponse(sock, strict=True)
+        resp = http.client.HTTPResponse(sock, strict=True)
         try:
             resp.begin()
-        except httplib.BadStatusLine:
+        except http.client.BadStatusLine:
             raise socket.error(-42, "Bad Status Line from proxy %s" %
                     (self.proxy,))
         if resp.status != 200:
@@ -182,7 +182,7 @@ class Connection(object):
         except ImportError:
             # Python < 2.6
             sslSock = socket.ssl(sock, None, None)
-            return httplib.FakeSocket(sock, sslSock)
+            return http.client.FakeSocket(sock, sslSock)
 
     def requestOnce(self, conn, req):
         if self.proxy and self.proxy.userpass[0] and not self.doTunnel:
@@ -205,7 +205,7 @@ class Connection(object):
             # Wait 5 seconds for a response.
             try:
                 active = select.select([conn.sock], [], [], 5)[0]
-            except select.error, err:
+            except select.error as err:
                 if err.args[0] == errno.EINTR:
                     # Interrupted system call -- we caught a signal but it was
                     # handled safely.

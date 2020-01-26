@@ -25,7 +25,7 @@ try:
     WebTestCase = _WebTestCase
     webunitPresent = True
 except ImportError:
-    print "warning: webunit module not available; skipping web front-end tests"
+    print("warning: webunit module not available; skipping web front-end tests")
     class WebTestCase(object):
         def __init__(self, *args):
             pass

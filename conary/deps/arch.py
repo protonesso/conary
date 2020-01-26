@@ -32,7 +32,7 @@ def x86flags(archTag, baseArch, extraFlags, ofInterest):
         if fields[0] != "flags": continue
 
         for flag in fields[2:]:
-            if ofInterest.has_key(flag):
+            if flag in ofInterest:
                 rc.append((flag, deps.FLAG_SENSE_PREFERRED))
 
         return deps.Dependency(archTag, rc)
@@ -79,7 +79,7 @@ def canInstall(other):
 def initializeArch():
     global currentArch
     localNamespace = globals()
-    if localNamespace.has_key("flags_" + baseArch):
+    if "flags_" + baseArch in localNamespace:
         currentArch = localNamespace["flags_" + baseArch]()
 
     del localNamespace

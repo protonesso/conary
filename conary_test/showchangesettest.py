@@ -107,12 +107,12 @@ testcase:runtime=1.0-1-0.1
         lines = res.split('\n')
         files = self._parseFileList(lines)
         assert(len(files) == 5)
-        paths  = files.keys()
+        paths  = list(files.keys())
         paths.sort()
         assert(paths == [ '/etc/changedconfig', '/etc/unchangedconfig',
                         '/usr/bin/hello', '/usr/share/changed', 
                         '/usr/share/unchanged'])
-        for f in files.values():
+        for f in list(files.values()):
             assert f.change == 'New'
         rc, res = self.captureOutput(displayChangeSet, None, cs, 
                                     ['testcase:runtime=1.0-1-0.1'], 
@@ -136,7 +136,7 @@ testcase:runtime=1.0-1-0.1
                                       t.getNameVersionFlavor()[1:], False) ])
         rc, res = self.captureOutput(displayChangeSet, None, cs, [],
                                     self.cfg, asDiff=True)
-        self.assertEquals(res,
+        self.assertEqual(res,
             "diff --git a/foo b/foo\n"
             "new user root\n"
             "new group root\n"
@@ -201,7 +201,7 @@ test1=1.0-1-1
         rc, res = self.captureOutput(displayChangeSet, None, cs, 
                                     None, self.cfg, lsl=True, showChanges=True)
         lines = res.split('\n')
-        self.assertEquals(lines[3].split()[1], '52')
+        self.assertEqual(lines[3].split()[1], '52')
         rc, res = self.captureOutput(displayChangeSet, None, cs, 
                                     None, self.cfg, lsl=True, showChanges=True,
                                     tags=True)

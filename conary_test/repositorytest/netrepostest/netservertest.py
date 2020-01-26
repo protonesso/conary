@@ -21,7 +21,7 @@ import base64
 import os
 import time
 import tempfile
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 
 from conary_test import rephelp
 from conary_test import resources
@@ -47,13 +47,13 @@ class NetServerTest(rephelp.RepositoryHelper):
     @testhelp.context('performance')
     def testMassiveGetFileVersions(self):
         raise testhelp.SkipTestException('testMassiveGetFileVersions is massively slow')
-        vers = [ '%d.0' %x for x in xrange(20) ]
+        vers = [ '%d.0' %x for x in range(20) ]
         needed = set()
         repos = self.openRepository()
         csFile = open(self.workDir + '/test.ccs', 'w')
         for v in vers:
             merged = None
-            for i in xrange(100):
+            for i in range(100):
                 trv, cs = self.Component('test%d:source' %i, filePrimer=i,
                                          version=v)
                 fn = self.workDir + '%d.ccs' %i
@@ -90,7 +90,7 @@ class NetServerTest(rephelp.RepositoryHelper):
             # this trove doesn't actually exist!
             repos.getTrove('foo:run', trv.getVersion(), trv.getFlavor())
             assert(0)
-        except errors.TroveMissing, err:
+        except errors.TroveMissing as err:
             pass
 
     def testPublicCallsAccessDecorator(self):
@@ -159,7 +159,7 @@ class NetServerTest(rephelp.RepositoryHelper):
         cfg.readOnlyRepository = False
 
         # And override the defaults with any values supplied as arguments
-        for k, v in kw.iteritems():
+        for k, v in kw.items():
             assert(hasattr(cfg, k))
             setattr(cfg, k, v)
 
@@ -182,8 +182,8 @@ class NetServerTest(rephelp.RepositoryHelper):
         # returns a 400 error
         repos = self.openRepository()
         url = repos.c.map['localhost']
-        e = self.assertRaises(urllib2.HTTPError,
-                urllib2.urlopen, url + 'changeset')
+        e = self.assertRaises(urllib.error.HTTPError,
+                urllib.request.urlopen, url + 'changeset')
         self.assertIn(e.code, [400, 403])
 
     def testTroveCacheInvalidation(self):
@@ -210,7 +210,7 @@ class NetServerTest(rephelp.RepositoryHelper):
 
         def _dump(url):
             fd, fname = tempfile.mkstemp(dir=self.workDir)
-            uo = urllib2.urlopen(url)
+            uo = urllib.request.urlopen(url)
             while 1:
                 buf = uo.read(16384)
                 if not buf:
@@ -423,7 +423,7 @@ class NetServerTest(rephelp.RepositoryHelper):
         huge = self.workDir + '/hugefile'
         f = open(huge, 'w')
         #f.seek(long(4.5 * 1024 * 1024 * 1024))
-        f.seek(long(4.5 * 1024))
+        f.seek(int(4.5 * 1024))
         f.write('1')
         f.close()
         sb = os.stat(huge)
@@ -999,7 +999,7 @@ class NetServerTest(rephelp.RepositoryHelper):
         repos.c.map.append(('localhost', repos.c.map['localhost1']))
         try:
             repos.commitChangeSetFile(csPath)
-        except errors.RepositoryMismatch, e:
+        except errors.RepositoryMismatch as e:
             assert(e.wrong == 'localhost')
             assert(e.right == [ 'localhost1' ])
         else:
@@ -1013,7 +1013,7 @@ class NetServerTest(rephelp.RepositoryHelper):
         def _checkLog(path, expected):
             cl = reposlog.RepositoryCallLogger(path, None)
             got = [ x.methodName for x in cl ]
-            self.assertEquals(expected, got)
+            self.assertEqual(expected, got)
 
         repos = self.openRepository()
         comp = self.addComponent('foo:runtime', '1.0')
@@ -1046,7 +1046,7 @@ class NetServerTest(rephelp.RepositoryHelper):
                 systemId = set([systemId ])
             elif not systemId:
                 systemId = set()
-            self.assertEquals(systemId, got)
+            self.assertEqual(systemId, got)
 
         repos = self.openRepository()
         server = self.servers.getServer()
@@ -1117,7 +1117,7 @@ class NetServerTest(rephelp.RepositoryHelper):
         # If there is a proxy, rewrite localhost to 127.0.0.1
         if repos.c.proxyMap:
             p = repos.c.proxyMap.__class__()
-            for filter, targets in repos.c.proxyMap.items():
+            for filter, targets in list(repos.c.proxyMap.items()):
                 p.addStrategy(filter, [
                     request.URL(str(v).replace('localhost', '127.0.0.1'))
                     for v in targets])
@@ -1161,7 +1161,7 @@ class NetServerTest(rephelp.RepositoryHelper):
         f.write('echo $* > %s\n' % resultsPath)
         f.write('cat >> %s\n' % resultsPath)
         f.close()
-        os.chmod(scriptPath, 0755)
+        os.chmod(scriptPath, 0o755)
 
         repos = self.openRepository(commitAction = scriptPath)
         comp = self.addComponent('foo:runtime', '1.0')
@@ -1281,12 +1281,12 @@ foo:runtime
                                 [ trv.getNameVersionFlavor() ])[0]
         mdi = mdFromRepo.flatten()[0]
         assert(mdi.shortDesc() == 'short description')
-        assert(mdi.keyValue.items() == [])
+        assert(list(mdi.keyValue.items()) == [])
         tiList = repos.getNewTroveInfo('localhost', mark,
                                    [ trove._TROVEINFO_TAG_METADATA ])
         mdi = tiList[0][2].metadata.flatten()[0]
         assert(mdi.shortDesc() == 'short description')
-        assert(mdi.keyValue.items() == [])
+        assert(list(mdi.keyValue.items()) == [])
 
     def testListTrovesMultiLabelsSameServer(self):
         # CNY-3187
@@ -1305,7 +1305,7 @@ foo:runtime
             res = source.findTroves([ (None, None, None) ],
                     allowMissing = True, acrossLabels = True)
             self.assertEqual([ (k, sorted([ (j[0], str(j[1]), str(j[2])) for j in v]))
-                                    for k, v in res.items()],
+                                    for k, v in list(res.items())],
                 [((None, None, None), [
                     ('foo:runtime', '/localhost@test:label1/1-1-1', ''),
                     ('foo:runtime', '/localhost@test:label2/1-1-1', ''),
@@ -1339,7 +1339,7 @@ foo:runtime
                                                contents = 'normal\n',
                                                owner = 'root', group = 'root',
                                                version = '/localhost1@foo:bar',
-                                               mode = 0644)) ]
+                                               mode = 0o644)) ]
         other = self.addComponent("foo:rpm=1.0",
                             fileContents = fl,
                             capsule = archivePath + '/simple-1.0-1.i386.rpm')
@@ -1351,7 +1351,7 @@ foo:runtime
         fl = [ ('/normal', rephelp.RegularFile(
                                                contents = 'normal\n',
                                                owner = 'root', group = 'root',
-                                               mode = 0644)) ]
+                                               mode = 0o644)) ]
         other = self.addComponent("foo:rpm=2.0",
                             fileContents = fl,
                             capsule = archivePath + '/simple-1.0-1.i386.rpm')
@@ -1363,7 +1363,7 @@ foo:runtime
         fl = [ ('/normal', rephelp.RegularFile(
                                                contents = 'normal\n',
                                                owner = 'root', group = 'root',
-                                               mode = 0644)) ]
+                                               mode = 0o644)) ]
         other = self.addComponent("foo:runtime=1.0",
                             fileContents = fl)
 
@@ -1455,10 +1455,10 @@ foo:runtime
         armored = armored.read()
 
         repos.addNewPGPKey(self.cfg.buildLabel, 'test', keyData)
-        self.assertEquals(repos.getAsciiOpenPGPKey(self.cfg.buildLabel,
+        self.assertEqual(repos.getAsciiOpenPGPKey(self.cfg.buildLabel,
             fingerprint), armored)
         repos.deleteUserByName(self.cfg.buildLabel, 'test')
-        self.assertEquals(repos.getAsciiOpenPGPKey(self.cfg.buildLabel,
+        self.assertEqual(repos.getAsciiOpenPGPKey(self.cfg.buildLabel,
             fingerprint), armored)
 
     def testMultiVersionChangeset(self):

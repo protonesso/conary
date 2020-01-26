@@ -135,7 +135,7 @@ class OpenPGPTest(BaseTestHelper):
             'E0DE948B813E14A1F14D40DEABA356F97D527792' : TRUST_UNTRUSTED,
             '03B9CDDB42E9764275181784910E85FD7FA9DDBC' : TRUST_UNTRUSTED,
             }
-        for fingerprint, trust in trustKeys.iteritems():
+        for fingerprint, trust in trustKeys.items():
             pass
             #if trust != getKeyTrust(trustDbFile, fingerprint):
                 #self.fail("Trust of %d returned when expecting %d for key: %s" %(getKeyTrust(trustDbFile, fingerprint), trust, fingerprint))
@@ -251,7 +251,7 @@ class OpenPGPTest(BaseTestHelper):
             sig.getSignatureHash)
         try:
             sig.getSignatureHash()
-        except openpgpfile.UnsupportedHashAlgorithm, e:
+        except openpgpfile.UnsupportedHashAlgorithm as e:
             self.assertEqual(str(e), 'Unsupported hash algorithm code 0')
 
         # Use md5
@@ -280,7 +280,7 @@ class OpenPGPTest(BaseTestHelper):
         sig.setParentPacket(mkey)
         try:
             sig.parse()
-        except openpgpfile.PGPError, e:
+        except openpgpfile.PGPError as e:
             self.assertEqual(str(e), "Expected 5 octets of length of "
                                  "hashed material, got 4")
         else:
@@ -303,7 +303,7 @@ class OpenPGPTest(BaseTestHelper):
         sig = PGP_Message.newPacket(openpgpfile.PKT_SIG, sigTest)
         try:
             sig.getSigId()
-        except openpgpfile.InvalidPacketError, e:
+        except openpgpfile.InvalidPacketError as e:
             self.assertEqual(str(e), "Expected 8 bytes, got 10 instead")
         else:
             self.assertFalse(True, "Should have raised InvalidPacketError")
@@ -315,7 +315,7 @@ class OpenPGPTest(BaseTestHelper):
         # read the key data for the main key and the subkey
         keyRing = open(self.getPublicFile())
         pkt = seekKeyById(fingerprint, keyRing)
-        subpkt = pkt.iterSubKeys().next()
+        subpkt = next(pkt.iterSubKeys())
 
         # prove that the signature is good.
         pkt.verifySelfSignatures()
@@ -331,7 +331,7 @@ class OpenPGPTest(BaseTestHelper):
         sio.seek(0)
 
         pkt = seekKeyById(fingerprint, sio)
-        subpkt = pkt.iterSubKeys().next()
+        subpkt = next(pkt.iterSubKeys())
 
         pkt.verifySelfSignatures()
         # Subpacket signature should fail
@@ -343,7 +343,7 @@ class OpenPGPTest(BaseTestHelper):
 
         # read the key data for the main key and the subkey
         pubkey = openpgpfile.seekKeyById(fingerprint, self.getPublicFile())
-        subkey = pubkey.iterSubKeys().next()
+        subkey = next(pubkey.iterSubKeys())
         self.assertEqual(subkey.getKeyFingerprint(), subkeyFingerprint)
 
         # Add binding sig as a revocation in the main key
@@ -359,7 +359,7 @@ class OpenPGPTest(BaseTestHelper):
 
         # read the key data for the main key and the subkey
         pubkey = openpgpfile.seekKeyById(fingerprint, self.getPublicFile())
-        subkey = pubkey.iterSubKeys().next()
+        subkey = next(pubkey.iterSubKeys())
         self.assertEqual(subkey.getKeyFingerprint(), subkeyFingerprint)
 
         pubkey.verifySelfSignatures()
@@ -374,7 +374,7 @@ class OpenPGPTest(BaseTestHelper):
         sio.seek(0)
 
         pkt = seekKeyById(fingerprint, sio)
-        subKey = pkt.iterSubKeys().next()
+        subKey = next(pkt.iterSubKeys())
 
         # The userId is part of the main key, but as part of verifying a
         # subkey we verify the main key too
@@ -722,7 +722,7 @@ class OpenPGPMessageTest(BaseTestHelper):
         fobj = util.SeekableNestedFile(sio, sio.tell(), start = 0)
         try:
             openpgpfile.PGP_Signature._getNextSubpacket(fobj)
-        except openpgpfile.ShortReadError, e:
+        except openpgpfile.ShortReadError as e:
             self.assertEqual(e.expected, pktlen + 1)
             self.assertEqual(e.actual, 12)
 
@@ -743,7 +743,7 @@ class OpenPGPMessageTest(BaseTestHelper):
         fobj = util.SeekableNestedFile(sio, sio.tell(), start = 0)
         try:
             openpgpfile.PGP_Signature._getNextSubpacket(fobj)
-        except openpgpfile.ShortReadError, e:
+        except openpgpfile.ShortReadError as e:
             self.assertEqual(e.expected, pktlen + 2)
             self.assertEqual(e.actual, 13)
 
@@ -767,7 +767,7 @@ class OpenPGPMessageTest(BaseTestHelper):
         fobj = util.SeekableNestedFile(sio, sio.tell(), start = 0)
         try:
             openpgpfile.PGP_Signature._getNextSubpacket(fobj)
-        except openpgpfile.ShortReadError, e:
+        except openpgpfile.ShortReadError as e:
             self.assertEqual(e.expected, pktlen + 5)
             self.assertEqual(e.actual, 16)
 
@@ -786,14 +786,14 @@ class OpenPGPMessageTest(BaseTestHelper):
 
         s = util.ExtendedStringIO()
         msg = openpgpfile.PGP_Message(s)
-        self.assertRaises(StopIteration, msg.iterPackets().next)
+        self.assertRaises(StopIteration, msg.iterPackets().__next__)
 
     def testIterSubPackets(self):
         s = util.ExtendedStringIO()
         s.write(pubkey4)
         s.write(pubkey4)
         msg = openpgpfile.PGP_Message(s, 0)
-        key = msg.iterPackets().next()
+        key = next(msg.iterPackets())
         for i, pkt in enumerate(key._iterSubPackets([openpgpfile.PKT_PUBLIC_KEY])):
             pass
         self.assertEqual(i, 6)
@@ -819,7 +819,7 @@ class OpenPGPMessageTest(BaseTestHelper):
         s = util.ExtendedStringIO(seckey4)
 
         msg = openpgpfile.PGP_Message(s)
-        pkt = msg.iterPackets().next()
+        pkt = next(msg.iterPackets())
         self.assertEqual(pkt.tag, openpgpfile.PKT_SECRET_KEY)
         pkt = pkt.toPublicKey()
 
@@ -852,7 +852,7 @@ class OpenPGPMessageTest(BaseTestHelper):
         s = util.ExtendedStringIO(pubkey4)
 
         msg = openpgpfile.PGP_Message(s)
-        pkt = msg.iterPackets().next()
+        pkt = next(msg.iterPackets())
         self.assertEqual(pkt.tag, openpgpfile.PKT_PUBLIC_KEY)
 
         self.assertEqual(pkt.getKeyFingerprint(),
@@ -868,7 +868,7 @@ class OpenPGPMessageTest(BaseTestHelper):
         s = util.ExtendedStringIO(pubkey4)
 
         msg = openpgpfile.PGP_Message(s)
-        pkt = msg.iterPackets().next()
+        pkt = next(msg.iterPackets())
         self.assertEqual(pkt.tag, openpgpfile.PKT_PUBLIC_KEY)
 
         self.assertEqual(list(pkt.getUserIds()),
@@ -884,7 +884,7 @@ class OpenPGPMessageTest(BaseTestHelper):
         self.assertEqual(len(list(msg.iterKeys())), 4)
 
         msg = openpgpfile.PGP_Message(self.getPrivateFile())
-        pkt1 = msg.iterKeys().next()
+        pkt1 = next(msg.iterKeys())
         self.assertEqual(pkt1.getKeyFingerprint(),
             '95B457D16843B21EA3FC73BBC7C32FC1F94E405E')
 
@@ -915,33 +915,33 @@ class OpenPGPMessageTest(BaseTestHelper):
     def testIterSignatures(self):
         s = util.ExtendedStringIO(pubkey4)
         msg = openpgpfile.PGP_Message(s)
-        pkt = msg.iterKeys().next()
+        pkt = next(msg.iterKeys())
         self.assertEqual(len(list(pkt.iterSignatures())), 0)
-        uid = pkt.iterUserIds().next()
+        uid = next(pkt.iterUserIds())
         self.assertEqual(len(list(uid.iterSignatures())), 4)
 
         mpis = [ x.parseMPIs() for x in uid.iterSignatures() ]
         self.assertEqual(mpis, [
-            [1168068347633389024057926590005833843608616043828L,
-                595964825934114565175348781234100148284520973233L],
-            [821271448733149948345119563341076761482837395791L,
-                654076866302568233756291427376364923552050626524L],
-            [181372414576175374700012339219841736509870038901L,
-                1088891501137002445099755118192266649532480357195L],
-            [812476287238655482742968776229377983693375534522L,
-                402689699558782885094775308192779683558940348977L]
+            [1168068347633389024057926590005833843608616043828,
+                595964825934114565175348781234100148284520973233],
+            [821271448733149948345119563341076761482837395791,
+                654076866302568233756291427376364923552050626524],
+            [181372414576175374700012339219841736509870038901,
+                1088891501137002445099755118192266649532480357195],
+            [812476287238655482742968776229377983693375534522,
+                402689699558782885094775308192779683558940348977]
         ])
 
     def testGetEndOfLife(self):
         s = util.ExtendedFile(self.getPublicFile(), buffering = False)
         msg = openpgpfile.PGP_Message(s)
-        pkt = msg.iterByKeyId('DA44E4BD').next()
+        pkt = next(msg.iterByKeyId('DA44E4BD'))
 
         pkt.uids[0].signatures[0].parse()
         pkt.uids[0].signatures[0].setVerifies(True)
         self.assertEqual(pkt.getEndOfLife(), (False, 1142264067))
 
-        pkt = msg.iterByKeyId('017111F7').next()
+        pkt = next(msg.iterByKeyId('017111F7'))
         pkt.bindingSig.parse()
         pkt.bindingSig.setVerifies(True)
         # Verify self sigs on the parent key too
@@ -954,7 +954,7 @@ class OpenPGPMessageTest(BaseTestHelper):
         for i in range(5):
             fname = "expkey%s.gpg" % (i + 1)
             msg = openpgpfile.PGP_Message(self.getKeyring(fname))
-            key = msg.iterMainKeys().next()
+            key = next(msg.iterMainKeys())
             key.verifySelfSignatures()
             revoked, eol = key.getEndOfLife()
             self.assertFalse(revoked)
@@ -989,10 +989,10 @@ class OpenPGPMessageTest(BaseTestHelper):
     def testSecretKeyDecrypt(self):
         s = util.ExtendedStringIO(seckey4)
         msg = openpgpfile.PGP_Message(s)
-        pkt = msg.iterKeys().next()
+        pkt = next(msg.iterKeys())
 
         self.assertEqual(pkt.decrypt('key32'),
-            [708255119797086932650717083595073066992696472566L])
+            [708255119797086932650717083595073066992696472566])
 
         self.assertRaises(openpgpfile.BadPassPhrase, pkt.decrypt, 'blah')
 
@@ -1012,9 +1012,9 @@ class OpenPGPMessageTest(BaseTestHelper):
     def testSecretKeyRecryptNoPass(self):
         s = util.ExtendedStringIO(seckey4)
         msg = openpgpfile.PGP_Message(s)
-        pkt = msg.iterKeys().next()
+        pkt = next(msg.iterKeys())
 
-        mpis = [708255119797086932650717083595073066992696472566L]
+        mpis = [708255119797086932650717083595073066992696472566]
         self.assertEqual(pkt.decrypt('key32'), mpis)
 
         subkeyMpis = [ sk.decrypt('key32') for sk in pkt.iterSubKeys() ]
@@ -1028,7 +1028,7 @@ class OpenPGPMessageTest(BaseTestHelper):
         sio.seek(0)
 
         msg = openpgpfile.PGP_Message(sio)
-        pkt = msg.iterKeys().next()
+        pkt = next(msg.iterKeys())
         self.assertEqual(pkt.decrypt(None), mpis)
 
         self.assertEqual([ sk.decrypt(None) for sk in pkt.iterSubKeys() ],
@@ -1037,9 +1037,9 @@ class OpenPGPMessageTest(BaseTestHelper):
     def testSecretKeyRecryptWithPass(self):
         s = util.ExtendedStringIO(seckey4)
         msg = openpgpfile.PGP_Message(s)
-        pkt = msg.iterKeys().next()
+        pkt = next(msg.iterKeys())
 
-        mpis = [708255119797086932650717083595073066992696472566L]
+        mpis = [708255119797086932650717083595073066992696472566]
         self.assertEqual(pkt.decrypt('key32'), mpis)
 
         subkeyMpis = [ sk.decrypt('key32') for sk in pkt.iterSubKeys() ]
@@ -1055,7 +1055,7 @@ class OpenPGPMessageTest(BaseTestHelper):
         sio.seek(0)
 
         msg = openpgpfile.PGP_Message(sio)
-        pkt = msg.iterKeys().next()
+        pkt = next(msg.iterKeys())
         self.assertEqual(pkt.decrypt(newPassphrase), mpis)
         self.assertEqual(
             [ sk.decrypt(newPassphrase) for sk in pkt.iterSubKeys() ],
@@ -1129,7 +1129,7 @@ class OpenPGPMessageTest(BaseTestHelper):
         sigfile = self.getKeyring('pk2.gpg.sig')
         # Read signature
         msg = openpgpfile.PGP_Message(sigfile)
-        sig = msg.iterPackets().next()
+        sig = next(msg.iterPackets())
 
         digest = sig.getDocumentHash(doc)
 
@@ -1224,7 +1224,7 @@ class OpenPGPMessageTest(BaseTestHelper):
         sio = util.ExtendedStringIO("cadfadf")
         try:
             openpgpfile.readSignature(sio)
-        except openpgpfile.InvalidPacketError, e:
+        except openpgpfile.InvalidPacketError as e:
             self.assertEqual(str(e), "No data found")
         else:
             self.fail("Expected an InvalidPacketError")
@@ -1232,7 +1232,7 @@ class OpenPGPMessageTest(BaseTestHelper):
         sio.truncate(0)
         try:
             openpgpfile.readSignature(sio)
-        except openpgpfile.InvalidPacketError, e:
+        except openpgpfile.InvalidPacketError as e:
             self.assertEqual(str(e), "No data found")
         else:
             self.fail("Expected an InvalidPacketError")
@@ -1241,14 +1241,14 @@ class OpenPGPMessageTest(BaseTestHelper):
         sio.seek(0)
         try:
             openpgpfile.readSignature(sio)
-        except openpgpfile.InvalidPacketError, e:
+        except openpgpfile.InvalidPacketError as e:
             self.assertEqual(str(e), "Error reading signature packet")
         else:
             self.fail("Expected an InvalidPacketError")
 
         try:
             openpgpfile.readSignature(open(self.getKeyring('pubringrev.gpg')))
-        except openpgpfile.InvalidPacketError, e:
+        except openpgpfile.InvalidPacketError as e:
             self.assertEqual(str(e), "Not a signature packet")
         else:
             self.fail("Expected an InvalidPacketError")
@@ -1312,15 +1312,15 @@ class OpenPGPMessageTest(BaseTestHelper):
 
     def testSigV3(self):
         msg = openpgpfile.PGP_Message(self.getKeyring('v3key.gpg'))
-        key = msg.iterKeys().next()
+        key = next(msg.iterKeys())
         # We can now verify self signatures on v3 keys
         key.verifySelfSignatures()
         self.assertEqual(key.getKeyId(), '7123BC13ED9D77D5')
         self.assertEqual(key.getKeyFingerprint(), 'D334F25FD714E0906203EF2D7E4AA598')
         # Test that we can fetch the key both by fingerprint and by key id
         # (which, for v3 keys, have no relationship one to another)
-        pkt = msg.iterByKeyId('ED9D77D5').next()
-        pkt = msg.iterByKeyId('EF2D7E4AA598').next()
+        pkt = next(msg.iterByKeyId('ED9D77D5'))
+        pkt = next(msg.iterByKeyId('EF2D7E4AA598'))
 
     def testIsSupersetOf(self):
         pkey0 = openpgpfile.seekKeyById('29BF4FCA',
@@ -1387,7 +1387,7 @@ class OpenPGPMessageTest(BaseTestHelper):
         pkey3.writeAll(sio)
         sio.seek(0)
 
-        npk3 = openpgpfile.PGP_Message(sio).iterMainKeys().next()
+        npk3 = next(openpgpfile.PGP_Message(sio).iterMainKeys())
         userIdsList = [ x for x in npk3.iterUserIds()]
         self.assertEqual(len(userIdsList), 3)
         userAttr = userIdsList[0]
@@ -1408,7 +1408,7 @@ class OpenPGPMessageTest(BaseTestHelper):
     def testSomeFailingSelfSigs(self):
         # CNY-2439
         msg = PGP_Message(self.getKeyring('pk-bad-self-sigs.gpg'))
-        key = msg.iterMainKeys().next()
+        key = next(msg.iterMainKeys())
 
         key.verifySelfSignatures()
 
@@ -1459,7 +1459,7 @@ class OpenPGPMessageTest(BaseTestHelper):
 
     def testMergeKeys(self):
         msg = openpgpfile.PGP_Message(self.getKeyring('pk2.gpg'))
-        pkt = msg.iterKeys().next()
+        pkt = next(msg.iterKeys())
 
         merged = pkt.merge(pkt)
         self.assertFalse(merged)
@@ -1493,7 +1493,7 @@ class OpenPGPMessageTest(BaseTestHelper):
 
     def testMergeKeyUids(self):
         msg = openpgpfile.PGP_Message(self.getKeyring('pk2.gpg'))
-        pkt = msg.iterKeys().next()
+        pkt = next(msg.iterKeys())
 
         pkt1 = self._cloneKey(pkt)
         pkt2 = self._cloneKey(pkt)
@@ -1544,7 +1544,7 @@ class OpenPGPMessageTest(BaseTestHelper):
     def testMergeAssertions(self):
         # Verify assertions
         msg = openpgpfile.PGP_Message(self.getKeyring('pk3.gpg'))
-        pkt = msg.iterKeys().next()
+        pkt = next(msg.iterKeys())
 
         uid = pkt.uids[0]
         uatt = pkt.uids[2]
@@ -1567,7 +1567,7 @@ class OpenPGPMessageTest(BaseTestHelper):
 
     def testMergeKeySubkeys(self):
         msg = openpgpfile.PGP_Message(self.getKeyring('pk2.gpg'))
-        pkt = msg.iterKeys().next()
+        pkt = next(msg.iterKeys())
 
         pkt1 = self._cloneKey(pkt)
         pkt2 = self._cloneKey(pkt)
@@ -1652,7 +1652,7 @@ class OpenPGPMessageTest(BaseTestHelper):
 
     def testSignatureRewrite(self):
         msg = openpgpfile.PGP_Message(self.getKeyring('pk3.gpg'))
-        pkt = msg.iterKeys().next()
+        pkt = next(msg.iterKeys())
 
         # Grab one of the signatures
         sig = pkt.uids[0].signatures[0]
@@ -1692,7 +1692,7 @@ class OpenPGPMessageTest(BaseTestHelper):
             sig.parseMPIs)
         try:
             sig.parseMPIs()
-        except openpgpfile.UnsupportedEncryptionAlgorithm, e:
+        except openpgpfile.UnsupportedEncryptionAlgorithm as e:
             self.assertEqual(str(e), "Unsupported encryption algorithm code 99")
 
         # Make sure parse() does nothing
@@ -1874,7 +1874,7 @@ class OpenPGPMessageTest(BaseTestHelper):
 
     def testGetSignatureHash(self):
         msg = openpgpfile.PGP_Message(self.getKeyring('pk2.gpg'))
-        pkt = msg.iterKeys().next()
+        pkt = next(msg.iterKeys())
 
         sig = pkt.uids[0].signatures[0]
         shash = sig.getSignatureHash()
@@ -1993,12 +1993,12 @@ class OpenPGPMessageTest(BaseTestHelper):
         keyring = self.getKeyring('pubringrev.gpg')
         kId1 = 'A8E762BF91E3E6C5'
         sio = openpgpfile.exportKey(kId1, keyring)
-        key1 = openpgpfile.PGP_Message(sio).iterMainKeys().next()
+        key1 = next(openpgpfile.PGP_Message(sio).iterMainKeys())
         self.assertEqual(key1.getKeyId(), kId1)
         # Subkey
         kId2 = '384E90BDA4F246A3'
         sio = openpgpfile.exportKey(kId2, keyring)
-        key2 = openpgpfile.PGP_Message(sio).iterMainKeys().next()
+        key2 = next(openpgpfile.PGP_Message(sio).iterMainKeys())
         self.assertEqual(key2.getKeyId(), kId1)
         self.assertEqual(key2.subkeys[0].getKeyId(), kId2)
 
@@ -2013,7 +2013,7 @@ class OpenPGPMessageTest(BaseTestHelper):
         # CNY-2420
         for f in ['v3key.gpg', 'v3key.gpg']:
             msg = openpgpfile.PGP_Message(self.getKeyring(f))
-            key = msg.iterMainKeys().next()
+            key = next(msg.iterMainKeys())
             key.verifySelfSignatures()
 
     def testVersion3Sig(self):
@@ -2021,13 +2021,13 @@ class OpenPGPMessageTest(BaseTestHelper):
         sig = openpgpfile.parseAsciiArmorKey(file(sig).read())
         sio = util.ExtendedStringIO(sig)
         msg = openpgpfile.PGP_Message(sio)
-        sigpkt = msg.iterPackets().next()
+        sigpkt = next(msg.iterPackets())
         self.assertEqual(sigpkt.getSigId(), '\xc8k\xa0jQ}\x0f\x0e')
 
     def testKeyWithVersion2Sig(self):
         # CNY-2417
         msg = openpgpfile.PGP_Message(self.getKeyring('keyv2sig.gpg'))
-        key = msg.iterMainKeys().next()
+        key = next(msg.iterMainKeys())
         self.assertTrue(key.verifySelfSignatures())
 
     def testKeyWithExtraSigsOnSubkey(self):

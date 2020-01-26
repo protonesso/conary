@@ -13,7 +13,7 @@ except ImportError:
     have_datetime = 0
 
 def sqlite_is_at_least(major, minor, micro):
-    version = map(int, _sqlite.sqlite_version().split("."))
+    version = list(map(int, _sqlite.sqlite_version().split(".")))
     return version >= (major, minor, micro)
 
 class MyType:
@@ -62,11 +62,11 @@ class ExpectedTypes(unittest.TestCase, testsupport.TestSupport):
         #self.cur.execute("-- types int, float, str")
         self.cur.execute("select * from test")
         res = self.cur.fetchone()
-        self.failUnless(isinstance(res.a, types.IntType),
+        self.assertTrue(isinstance(res.a, int),
                         "The built-in int converter didn't work.")
-        self.failUnless(isinstance(res.b, types.FloatType),
+        self.assertTrue(isinstance(res.b, float),
                         "The built-in float converter didn't work.")
-        self.failUnless(isinstance(res.c, types.StringType),
+        self.assertTrue(isinstance(res.c, bytes),
                         "The built-in string converter didn't work.")
 
     def CheckExpectedTypesStandardTypesNull(self):
@@ -75,11 +75,11 @@ class ExpectedTypes(unittest.TestCase, testsupport.TestSupport):
         #self.cur.execute("-- types int, float, str")
         self.cur.execute("select * from test")
         res = self.cur.fetchone()
-        self.failUnless(res.a == None,
+        self.assertTrue(res.a == None,
                         "The built-in int converter should have returned None.")
-        self.failUnless(res.b == None,
+        self.assertTrue(res.b == None,
                         "The built-in float converter should have returned None.")
-        self.failUnless(res.c == None,
+        self.assertTrue(res.c == None,
                         "The built-in string converter should have returned None.")
 
     def CheckExpectedTypesCustomTypes(self):
@@ -92,9 +92,9 @@ class ExpectedTypes(unittest.TestCase, testsupport.TestSupport):
         self.cur.execute("select a from test")
         res = self.cur.fetchone()
 
-        self.failUnless(isinstance(res.a, MyType),
+        self.assertTrue(isinstance(res.a, MyType),
                         "The converter did return the wrong type.")
-        self.failUnlessEqual(value, res.a,
+        self.assertEqual(value, res.a,
                              "The returned value and the inserted one are different.")
 
     def CheckNewQuoteMethod(self):
@@ -105,7 +105,7 @@ class ExpectedTypes(unittest.TestCase, testsupport.TestSupport):
         self.cur.execute("select a from test")
         res = self.cur.fetchone()
 
-        self.failUnlessEqual(10, res.a,
+        self.assertEqual(10, res.a,
                              "The returned value and the inserted one are different.")
 
     def CheckExpectedTypesCustomTypesNull(self):
@@ -115,7 +115,7 @@ class ExpectedTypes(unittest.TestCase, testsupport.TestSupport):
         self.cur.execute("select a from test")
         res = self.cur.fetchone()
 
-        self.failUnless(res.a == None,
+        self.assertTrue(res.a == None,
                         "The converter should have returned None.")
 
     def CheckResetExpectedTypes(self):
@@ -126,11 +126,11 @@ class ExpectedTypes(unittest.TestCase, testsupport.TestSupport):
         #self.cur.execute("-- types int")
         self.cur.execute("select a from test")
         res = self.cur.fetchone()
-        self.assert_(isinstance(res.a, types.IntType),
+        self.assertTrue(isinstance(res.a, int),
                      "The built-in int converter didn't work.")
         self.cur.execute("select a from test")
         res = self.cur.fetchone()
-        self.assert_(isinstance(res.a, types.StringType),
+        self.assertTrue(isinstance(res.a, bytes),
                      "'resetting types' didn't succeed.")
 
     if have_datetime:
@@ -143,7 +143,7 @@ class ExpectedTypes(unittest.TestCase, testsupport.TestSupport):
             self.cur.execute("select t from test")
             res = self.cur.fetchone()
 
-            self.failUnlessEqual(dt, res.t,
+            self.assertEqual(dt, res.t,
                 "DateTime object should have been %s, was %s"
                     % (repr(dt), repr(res.t)))
 
@@ -153,7 +153,7 @@ class ExpectedTypes(unittest.TestCase, testsupport.TestSupport):
             self.cur.execute("select i from test")
             res = self.cur.fetchone()
 
-            self.failUnlessEqual(dtd, res.i,
+            self.assertEqual(dtd, res.i,
                 "DateTimeDelta object should have been %s, was %s"
                     % (repr(dtd), repr(res.i)))
 
@@ -173,15 +173,15 @@ class UnicodeTestsLatin1(unittest.TestCase, testsupport.TestSupport):
             pass
 
     def CheckGetSameBack(self):
-        test_str = unicode("÷sterreich", "latin1")
+        test_str = str("÷sterreich", "latin1")
         self.cur.execute("create table test (a UNICODE)")
         self.cur.execute("insert into test(a) values (?)", test_str)
         self.cur.execute("select a from test")
         res = self.cur.fetchone()
-        self.failUnlessEqual(type(test_str), type(res.a),
+        self.assertEqual(type(test_str), type(res.a),
             "Something other than a Unicode string was fetched: %s"
                 % (str(type(res.a))))
-        self.failUnlessEqual(test_str, res.a,
+        self.assertEqual(test_str, res.a,
             "Fetching the unicode string doesn't return the inserted one.")
 
 class UnicodeTestsUtf8(unittest.TestCase, testsupport.TestSupport):
@@ -201,16 +201,16 @@ class UnicodeTestsUtf8(unittest.TestCase, testsupport.TestSupport):
 
     def CheckGetSameBack(self):
         # PREZIDENT ROSSI'SKO' FEDERACII ÷sterreich
-        test_str = unicode("–ü–†–ï–ó–ò–î–ï–ù–¢ –†–û–°–°–ò–ô–°–ö–û–ô –§–ï–î–ï–†–ê–¶–ò–ò √ñsterreich", "utf-8")
+        test_str = str("–ü–†–ï–ó–ò–î–ï–ù–¢ –†–û–°–°–ò–ô–°–ö–û–ô –§–ï–î–ï–†–ê–¶–ò–ò √ñsterreich", "utf-8")
 
         self.cur.execute("create table test (a UNICODE)")
         self.cur.execute("insert into test(a) values (?)", test_str)
         self.cur.execute("select a from test")
         res = self.cur.fetchone()
-        self.failUnlessEqual(type(test_str), type(res.a),
+        self.assertEqual(type(test_str), type(res.a),
             "Something other than a Unicode string was fetched: %s"
                 % (str(type(res.a))))
-        self.failUnlessEqual(test_str, res.a,
+        self.assertEqual(test_str, res.a,
             "Fetching the unicode string doesn't return the inserted one.")
 
 class UnicodeTestsKOI8R(unittest.TestCase, testsupport.TestSupport):
@@ -231,16 +231,16 @@ class UnicodeTestsKOI8R(unittest.TestCase, testsupport.TestSupport):
     def CheckGetSameBack(self):
         # PREZIDENT ROSSI'SKO' FEDERACII
         # (President of the Russian Federation)
-        test_str = unicode("ÚÂ˙È‰ÂÓÙ ÚÔÛÛÈÍÛÎÔÍ ÊÂ‰ÂÚ·„ÈÈ", "koi8-r")
+        test_str = str("ÚÂ˙È‰ÂÓÙ ÚÔÛÛÈÍÛÎÔÍ ÊÂ‰ÂÚ·„ÈÈ", "koi8-r")
 
         self.cur.execute("create table test (a UNICODE)")
         self.cur.execute("insert into test(a) values (?)", test_str)
         self.cur.execute("select a from test")
         res = self.cur.fetchone()
-        self.failUnlessEqual(type(test_str), type(res.a),
+        self.assertEqual(type(test_str), type(res.a),
             "Something other than a Unicode string was fetched: %s"
                 % (str(type(res.a))))
-        self.failUnlessEqual(test_str, res.a,
+        self.assertEqual(test_str, res.a,
             "Fetching the unicode string doesn't return the inserted one.")
 
 class SQLiteBuiltinTypeSupport(unittest.TestCase, testsupport.TestSupport):
@@ -263,7 +263,7 @@ class SQLiteBuiltinTypeSupport(unittest.TestCase, testsupport.TestSupport):
         self.cur.execute("insert into test(a) values (?)", 5)
         self.cur.execute("select a from test")
         res = self.cur.fetchone()
-        self.failUnlessEqual(type(5), type(res.a),
+        self.assertEqual(type(5), type(res.a),
             "Something other than an INTEGER was fetched: %s"
                 % (str(type(res.a))))
 
@@ -272,7 +272,7 @@ class SQLiteBuiltinTypeSupport(unittest.TestCase, testsupport.TestSupport):
         self.cur.execute("insert into test(a) values(?)", 5.7)
         self.cur.execute("select a from test")
         res = self.cur.fetchone()
-        self.failUnlessEqual(type(5.7), type(res.a),
+        self.assertEqual(type(5.7), type(res.a),
             "Something other than a FLOAT was fetched: %s"
                 % (str(type(res.a))))
 
@@ -281,7 +281,7 @@ class SQLiteBuiltinTypeSupport(unittest.TestCase, testsupport.TestSupport):
         self.cur.execute("insert into test(a) values (?)", "foo")
         self.cur.execute("select a from test")
         res = self.cur.fetchone()
-        self.failUnlessEqual(type("foo"), type(res.a),
+        self.assertEqual(type("foo"), type(res.a),
             "Something other than a VARCHAR was fetched: %s"
                 % (str(type(res.a))))
 
@@ -291,8 +291,8 @@ class SQLiteBuiltinTypeSupport(unittest.TestCase, testsupport.TestSupport):
         self.cur.execute("insert into test(b) values(?)", bindata)
         self.cur.execute("select b from test")
         res = self.cur.fetchone()
-        self.failUnlessEqual(bindata, res.b, "Binary roundtrip didn't produce original string")
-        self.failUnlessEqual(self.cur.description[0][1], sqlite.BINARY, "Wrong type code")
+        self.assertEqual(bindata, res.b, "Binary roundtrip didn't produce original string")
+        self.assertEqual(self.cur.description[0][1], sqlite.BINARY, "Wrong type code")
 
     if have_datetime:
         def CheckDate(self):

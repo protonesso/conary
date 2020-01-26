@@ -62,7 +62,7 @@ class TroveSpec(_namedtuple('TroveSpec', 'name version flavor')):
                 withFrozenFlavor=withFrozenFlavor)
 
         # TroveSpec(name, version, flavor)
-        if isinstance(flavor, basestring):
+        if isinstance(flavor, str):
             flavor = cls._thawFlavor(flavor, withFrozenFlavor)
         return tuple.__new__(cls, (name, version, flavor))
 
@@ -145,9 +145,9 @@ class TroveTuple(_namedtuple('TroveTuple', 'name version flavor')):
             return cls.fromString(name)
 
         # TroveTuple(name, version, flavor)
-        if isinstance(version, basestring):
+        if isinstance(version, str):
             version = cls._thawVerFunc(version)
-        if isinstance(flavor, basestring):
+        if isinstance(flavor, str):
             flavor = cls._thawFlavFunc(flavor)
         return tuple.__new__(cls, (name, version, flavor))
 
@@ -281,6 +281,6 @@ class JobTuple(_namedtuple('JobTuple', 'name old new absolute')):
 
 def _cast(val):
     "Return C{val.encode('ascii')} if it is a unicode, or C{val} otherwise."
-    if isinstance(val, unicode):
+    if isinstance(val, str):
         val = val.encode('ascii')
     return val

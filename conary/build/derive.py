@@ -187,7 +187,7 @@ class %(className)sRecipe(%(recipeBaseClass)s):
                         os.rmdir(path)
                     else:
                         os.unlink(path)
-                except OSError, e:
+                except OSError as e:
                     log.warning("cannot remove %s: %s" % (path, e.strerror))
 
         conaryState.write('CONARY')

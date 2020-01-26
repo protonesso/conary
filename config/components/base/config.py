@@ -18,6 +18,6 @@
 # Implements the default :config component (CNY-172)
 
 # :config component only if no executable bits set (CNY-1260)
-filters = ('config', (('%(sysconfdir)s/', None, 0111),))
+filters = ('config', (('%(sysconfdir)s/', None, 0o111),))
 # taghandler and tagdescription must not be in :config (CNY-2256)
 follows = ('taghandler',)

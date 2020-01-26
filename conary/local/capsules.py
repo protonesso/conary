@@ -88,7 +88,7 @@ class SingleCapsuleOperation(CapsuleOperation):
     def apply(self, fileDict, justDatabase = False, noScripts = False):
         if not justDatabase and self.preserveSet:
             capsuleJournal = ConaryOwnedJournal(self.root)
-            for path, unlink in self.preserveSet.iteritems():
+            for path, unlink in self.preserveSet.items():
                 fullPath = self.root + path
                 capsuleJournal.backup(fullPath, skipDirs = True)
                 if unlink and not util.removeIfExists(fullPath):
@@ -219,7 +219,7 @@ class MetaCapsuleOperations(CapsuleOperation):
             for kind, obj in sorted(self.capsuleClasses.items()):
                 obj.apply(fileDict, justDatabase = justDatabase, noScripts = noScripts)
         finally:
-            for tmpPath in fileDict.values():
+            for tmpPath in list(fileDict.values()):
                 try:
                     os.unlink(tmpPath)
                 except:
@@ -285,7 +285,7 @@ class MetaCapsuleOperations(CapsuleOperation):
 
     def getErrors(self):
         e = []
-        for capsule in self.capsuleClasses.values():
+        for capsule in list(self.capsuleClasses.values()):
             e += capsule.getErrors()
 
         return e
@@ -318,10 +318,10 @@ class MetaCapsuleDatabase(object):
         """
         db = self._db()
         for kind, (module, className, checkFunc
-                ) in self.availablePlugins.iteritems():
+                ) in self.availablePlugins.items():
             if kind in self._loadedPlugins:
                 continue
-            if isinstance(checkFunc, basestring):
+            if isinstance(checkFunc, str):
                 path = util.joinPaths(db.root, checkFunc)
                 try:
                     if not os.stat(path).st_size:
@@ -338,7 +338,7 @@ class MetaCapsuleDatabase(object):
     def getChangeSetForCapsuleChanges(self, callback):
         self.loadPlugins()
         changeSet = changeset.ChangeSet()
-        for plugin in self._loadedPlugins.itervalues():
+        for plugin in self._loadedPlugins.values():
             callback.capsuleSyncScan(plugin.kind)
             plugin.addCapsuleChangesToChangeSet(changeSet, callback)
         return changeSet
@@ -432,7 +432,7 @@ class BaseCapsulePlugin(object):
         addedPkgs = [x[1] for x in sorted(
             (y, target[y]) for y in targetSet - localSet)]
         # Remove duplicate phantom troves
-        for key, tups in local.iteritems():
+        for key, tups in local.items():
             if len(tups) == 1:
                 continue
             real = [x for x in tups if not x[1].onPhantomLabel()]

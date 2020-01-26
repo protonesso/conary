@@ -47,8 +47,8 @@ class HarnessTest(rephelp.RepositoryHelper):
         ret = repos.getTroveVersionList("localhost", { None : None })
         ret1 = repos.getTroveVersionList("localhost1", { None : None })
         # databases should have been emptied, though
-        self.assertEqual(ret.keys(), [])
-        self.assertEqual(ret1.keys(), [])
+        self.assertEqual(list(ret.keys()), [])
+        self.assertEqual(list(ret1.keys()), [])
         self.stopRepository(1)
         self.stopRepository()
         repos = self.getRepositoryClient()

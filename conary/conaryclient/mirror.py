@@ -18,7 +18,7 @@ import copy
 import itertools
 import optparse
 import os
-import Queue
+import queue
 import sys
 import threading
 import time
@@ -207,7 +207,7 @@ def Main(argv=None):
         argv = argv=sys.argv[1:]
     try:
         options = parseArgs(argv)
-    except OptionError, e:
+    except OptionError as e:
         sys.stderr.write(e.errmsg)
         sys.stderr.write("\n")
         return e.errcode
@@ -227,8 +227,8 @@ def Main(argv=None):
                  sync = options.sync, infoSync = options.infoSync,
                  fastSync = options.fastSync, checkSync = options.checkSync)
     except KeyboardInterrupt:
-        print >> sys.stderr
-        print >> sys.stderr, 'Terminating due to user interrupt'
+        print(file=sys.stderr)
+        print('Terminating due to user interrupt', file=sys.stderr)
         sys.exit(1)
 
 
@@ -241,7 +241,7 @@ def groupTroves(troveList):
         (n, v, f) = info[1]
         crtGrp = grouping.setdefault((v,f), [])
         crtGrp.append(info)
-    grouping = grouping.values()
+    grouping = list(grouping.values())
     # make sure the groups are sorted in ascending order of their mark
     def _groupsort(a, b):
         ret = cmp(a[0][0], b[0][0])
@@ -283,12 +283,12 @@ def buildJobList(src, target, groupList, absolute=False, splitNodes=True,
         latestAvailable = dict(
                     (name, dict(
                         (version, set(flavors))
-                        for (version, flavors) in versions.iteritems()
-                    )) for (name, versions) in latestAvailable.iteritems())
+                        for (version, flavors) in versions.items()
+                    )) for (name, versions) in latestAvailable.items())
     if len(latestAvailable):
         def _tol(d):
-            for n, vd in d.iteritems():
-                for v, fl in vd.iteritems():
+            for n, vd in d.items():
+                for v, fl in vd.items():
                     for f in fl:
                         yield (n,v,f)
         ret = src.hasTroves(list(_tol(latestAvailable)), hidden=True)
@@ -336,7 +336,7 @@ def buildJobList(src, target, groupList, absolute=False, splitNodes=True,
                 job = (name, (None, None), (version, flavor), True)
             else:
                 d = latestAvailable[name]
-                for repVersion, flavorList in d.iteritems():
+                for repVersion, flavorList in d.items():
                     # the versions have to be on the same host to be
                     # able to generate relative changesets
                     if version.getHost() != repVersion.getHost():
@@ -434,7 +434,7 @@ def formatTroveNames(names):
             package, component = name, ''
         packages.setdefault(package, []).append(component)
     # If all the component sets are the same, collapse them.
-    componentSets = set(tuple(x) for x in packages.values())
+    componentSets = set(tuple(x) for x in list(packages.values()))
     if len(componentSets) == 1:
         components = list(componentSets)[0]
         if len(components) > 1:
@@ -469,7 +469,7 @@ def displayBundle(bundle):
         trovesByVF.setdefault((oldVF, newVF), set()).add(name)
     # Within each VF set, sort and fold the names and format for display.
     lines = []
-    for (oldVF, newVF), names in trovesByVF.items():
+    for (oldVF, newVF), names in list(trovesByVF.items()):
         allNames = formatTroveNames(names)
         # Add version and flavor info
         if oldVF[0]:
@@ -502,7 +502,7 @@ def splitJobList(jobList, src, targetSet, hidden = False, callback = ChangesetCa
         l = jobs.setdefault(name, [])
         l.append(job)
     i = 0
-    for smallJobList in jobs.itervalues():
+    for smallJobList in jobs.values():
         (outFd, tmpName) = util.mkstemp()
         os.close(outFd)
         log.debug("jobsplit %d of %d %s" % (
@@ -542,8 +542,8 @@ def _getAllInfo(src, cfg):
     troveDict = src.getTroveVersionList(cfg.host, { None : None })
     troveList = []
     # filter out the stuff we don't need
-    for name, versionD in troveDict.iteritems():
-        for version, flavorList in versionD.iteritems():
+    for name, versionD in troveDict.items():
+        for version, flavorList in versionD.items():
             for flavor in flavorList:
                 tup = (name, version, flavor)
                 troveList.append(tup)
@@ -552,7 +552,7 @@ def _getAllInfo(src, cfg):
     sigList = src.getTroveSigs(troveList)
     metaList = src.getTroveInfo(trove._TROVEINFO_TAG_METADATA, troveList)
     infoList = []
-    for t, s, ti in itertools.izip(troveList, sigList, metaList):
+    for t, s, ti in zip(troveList, sigList, metaList):
         if ti is None:
             ti = trove.TroveInfo()
         ti.sigs.thaw(s)
@@ -581,13 +581,13 @@ def _getNewSigs(src, cfg, mark):
         return ti
     sigs = [ _sig2info(s) for s in sigs]
     # we're gonna iterate repeatedely over the returned set, no itertools can do
-    return [(m, t, ti) for (m,t),ti in itertools.izip(sigList, sigs) ]
+    return [(m, t, ti) for (m,t),ti in zip(sigList, sigs) ]
 
 # get the changed trove info entries for the troves comitted
 def _getNewInfo(src, cfg, mark):
     # first, try the new getNewTroveInfo call
     labels = cfg.labels or []
-    mark = str(long(mark)) # xmlrpc chokes on longs
+    mark = str(int(mark)) # xmlrpc chokes on longs
     infoTypes = [trove._TROVEINFO_TAG_SIGS, trove._TROVEINFO_TAG_METADATA]
     try:
         infoList = src.getNewTroveInfo(cfg.host, mark, infoTypes, labels)
@@ -612,7 +612,7 @@ def _parallel(targets, classMethod, *args, **kwargs):
     """
     if len(targets) == 1:
         return [classMethod(targets[0], *args, **kwargs)]
-    results = Queue.Queue()
+    results = queue.Queue()
     threads = []
     for index in range(len(targets)):
         thread = threading.Thread(target=_parallel_run,
@@ -703,10 +703,10 @@ class TargetRepository:
     def getMirrorMark(self):
         if self.mark is None:
             self.mark = self.repo.getMirrorMark(self.cfg.host)
-        self.mark = str(long(self.mark))
-        return long(self.mark)
+        self.mark = str(int(self.mark))
+        return int(self.mark)
     def setMirrorMark(self, mark):
-        self.mark = str(long(mark))
+        self.mark = str(int(mark))
         log.debug("%s setting mirror mark to %s", self.name, self.mark)
         if self.test:
             return
@@ -714,7 +714,7 @@ class TargetRepository:
     def mirrorGPG(self, src, host):
         if self.cfg.noPGP:
             return
-        if self.__gpg.has_key(host):
+        if host in self.__gpg:
             return
         keyList = src.getNewPGPKeys(host, -1)
         self.__gpg[host] = keyList
@@ -729,7 +729,7 @@ class TargetRepository:
         # Items whose mark is the same as currentMark might not have their trove
         # available on the server (it might be coming as part of this mirror
         # run).
-        inQuestion = [ x[1] for x in infoList if str(long(x[0])) >= self.mark ]
+        inQuestion = [ x[1] for x in infoList if str(int(x[0])) >= self.mark ]
         present = self.repo.hasTroves(inQuestion, hidden=True)
         # filter out the not present troves which will get mirrored in
         # the current mirror run
@@ -796,7 +796,7 @@ def getTroveList(src, cfg, mark):
     # the labels we're interested in
     log.debug("looking for new troves")
     # make sure we always treat the mark as an integer
-    troveList = [(long(m), (n,v,f), t) for m, (n,v,f), t in
+    troveList = [(int(m), (n,v,f), t) for m, (n,v,f), t in
                   src.getNewTroveList(cfg.host, str(mark))]
     if not len(troveList):
         # this should be the end - no more troves to look at
@@ -909,7 +909,7 @@ def mirrorRepository(sourceRepos, targetRepos, cfg,
             return -1 # call again
         return 0
     # prepare a new max mark to be used when we need to break out of a loop
-    crtMaxMark = max(long(x[0]) for x in troveList)
+    crtMaxMark = max(int(x[0]) for x in troveList)
     if currentMark > 0 and crtMaxMark == currentMark:
         # if we're hung on the current max then we need to
         # forcibly advance the mark in case we're stuck
@@ -934,7 +934,7 @@ def mirrorRepository(sourceRepos, targetRepos, cfg,
                     troveInfo = referenceRepos.getTroveInfo(
                         trove._TROVEINFO_TAG_SOURCENAME, recTroves)
                     sourceComps = set()
-                    for nvf, source in itertools.izip(recTroves, troveInfo):
+                    for nvf, source in zip(recTroves, troveInfo):
                         sourceComps.add((source(), nvf[1].getSourceVersion(),
                                          parseFlavor('')))
                     recTroves.extend(sourceComps)
@@ -963,7 +963,7 @@ def mirrorRepository(sourceRepos, targetRepos, cfg,
                 bt = byTrove.setdefault(t, set())
                 bt.add(i)
         # invert the dict by target now
-        for trv, ts in byTrove.iteritems():
+        for trv, ts in byTrove.items():
             targetSet = [ targets[i] for i in ts ]
             try:
                 targetIdx = targetSetList.index(targetSet)
@@ -1062,8 +1062,8 @@ def checkSyncRepos(config, sourceRepos, targetRepos):
     def _getTroveSet(config, repo):
         def _flatten(troveSpec):
             l = []
-            for name, versionD in troveSpec.iteritems():
-                for version, flavorList in versionD.iteritems():
+            for name, versionD in troveSpec.items():
+                for version, flavorList in versionD.items():
                     l += [ (name, version, flavor) for flavor in flavorList ]
             return set(l)
         troveSpecs = {}

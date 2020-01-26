@@ -23,7 +23,7 @@ class TransactionTests(unittest.TestCase, testsupport.TestSupport):
         self.cur.execute("insert into test (a) values (?)", "foo")
         self.cur.execute("select count(a) as count from test")
         res = self.cur.fetchone()
-        self.failUnlessEqual(res.count, 1,
+        self.assertEqual(res.count, 1,
                              "Wrong number of rows during transaction.")
 
     def CheckValueAfterCommit(self):
@@ -32,7 +32,7 @@ class TransactionTests(unittest.TestCase, testsupport.TestSupport):
         self.cnx.commit()
         self.cur.execute("select count(a) as count from test")
         res = self.cur.fetchone()
-        self.failUnlessEqual(res.count, 1,
+        self.assertEqual(res.count, 1,
                              "Wrong number of rows during transaction.")
 
     def CheckValueAfterRollback(self):
@@ -42,7 +42,7 @@ class TransactionTests(unittest.TestCase, testsupport.TestSupport):
         self.cnx.rollback()
         self.cur.execute("select count(a) as count from test")
         res = self.cur.fetchone()
-        self.failUnlessEqual(res.count, 0,
+        self.assertEqual(res.count, 0,
                              "Wrong number of rows during transaction.")
 
     def CheckImmediateCommit(self):
@@ -71,7 +71,7 @@ class TransactionTests(unittest.TestCase, testsupport.TestSupport):
         cu1.execute('insert into test values(1)')
         try:
             cu2.execute('insert into test values(2)')
-        except sqlite.InternalError, e:
+        except sqlite.InternalError as e:
             assert(str(e) == "database is locked")
         db2.rollback()
         db1.commit()
@@ -113,7 +113,7 @@ class AutocommitTests(unittest.TestCase, testsupport.TestSupport):
 
     def CheckRollback(self):
         self.cur.execute("select abs(5)")
-        self.failUnlessRaises(sqlite.ProgrammingError, self.cnx.rollback)
+        self.assertRaises(sqlite.ProgrammingError, self.cnx.rollback)
 
 class ChangeAutocommitTests(unittest.TestCase):
     pass

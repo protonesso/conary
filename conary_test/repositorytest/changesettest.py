@@ -18,7 +18,7 @@
 import os
 
 import gzip
-from StringIO import StringIO
+from io import StringIO
 
 from conary_test import rephelp
 
@@ -34,7 +34,7 @@ class ChangesetTest(rephelp.RepositoryHelper):
         csFile = self.workDir + '/foo.ccs'
         try:
             changeset.ChangeSetFromFile(csFile)
-        except errors.ConaryError, err:
+        except errors.ConaryError as err:
             assert(str(err) == "Error opening changeset '%s': No such file or directory" % csFile)
         else:
             assert(0)
@@ -43,11 +43,11 @@ class ChangesetTest(rephelp.RepositoryHelper):
         os.chmod(csFile, 0000)
         try:
             changeset.ChangeSetFromFile(csFile)
-        except errors.ConaryError, err:
+        except errors.ConaryError as err:
             assert(str(err) == "Error opening changeset '%s': Permission denied" % csFile)
         else:
             assert(0)
-        os.chmod(csFile, 0666)
+        os.chmod(csFile, 0o666)
 
 
     def testChangeSetFromFile(self):

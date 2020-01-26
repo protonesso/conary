@@ -16,7 +16,7 @@
 
 
 import random
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 from conary.lib import networking
 from conary.lib import util
@@ -32,7 +32,7 @@ class ProxyMap(object):
         self.filterList = []
         self._blacklist = util.TimestampedMap(self.BLACKLIST_TTL)
 
-    def __nonzero__(self):
+    def __bool__(self):
         return bool(self.filterList)
 
     def __eq__(self, other):
@@ -50,7 +50,7 @@ class ProxyMap(object):
         filterSpec = FilterSpec(matchHost)
         targets2 = []
         for target in targets:
-            if isinstance(target, basestring):
+            if isinstance(target, str):
                 if target.lower() == 'direct':
                     target = DirectConnection
                 else:
@@ -67,7 +67,7 @@ class ProxyMap(object):
     def fromDict(cls, values):
         val = cls()
         if isinstance(values, dict):
-            values = values.iteritems()
+            values = iter(values.items())
         elif values is None:
             return val
         for scheme, url in sorted(values):
@@ -97,7 +97,7 @@ class ProxyMap(object):
         @param url: Destination URL
         @param protocolFilter: Use only proxies with these protocols.
         """
-        if isinstance(url, basestring):
+        if isinstance(url, str):
             url = req_mod.URL.parse(url)
 
         hasMatches = False

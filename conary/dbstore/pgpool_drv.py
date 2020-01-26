@@ -15,9 +15,9 @@
 #
 
 
-from postgresql_drv import Cursor as PgCursor
-from postgresql_drv import Database as PgDatabase
-import sqllib
+from .postgresql_drv import Cursor as PgCursor
+from .postgresql_drv import Database as PgDatabase
+from . import sqllib
 
 class Cursor(PgCursor):
     driver = "pgpool"

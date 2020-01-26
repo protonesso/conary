@@ -977,7 +977,7 @@ class SigTest(rephelp.RepositoryHelper):
             self.cfg.signatureKey = signatureKey
 
     def testCookFileset(self):
-        from buildtest.filesettest import basicFileset, packageRecipe
+        from .buildtest.filesettest import basicFileset, packageRecipe
 
         self.buildRecipe(packageRecipe, "testRecipe")
 
@@ -998,7 +998,7 @@ class SigTest(rephelp.RepositoryHelper):
             self.cfg.signatureKey = signatureKey
 
     def testCookFilesetCascade(self):
-        from buildtest.filesettest import basicFileset, packageRecipe
+        from .buildtest.filesettest import basicFileset, packageRecipe
 
         repos = self.openRepository()
         v = versions.VersionFromString('/localhost@rpl:linux/1.0-1-1')

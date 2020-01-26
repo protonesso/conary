@@ -16,7 +16,7 @@
 
 
 try:
-    import cPickle as _pickle
+    import pickle as _pickle
     pickle = _pickle
 except ImportError:
     import pickle
@@ -133,7 +133,7 @@ class DirBasedModuleFinder(modulefinder.ModuleFinder):
         # to just direct references from fqname and to handle some false
         # positives.
         missing = []
-        for name, refs in self.badmodules.items():
+        for name, refs in list(self.badmodules.items()):
             if fqname not in refs or name in self.excludes:
                 continue
             i = name.rfind(".")
@@ -205,11 +205,11 @@ def getData(inFile):
 def _deunicode(obj):
     if sys.version.startswith('3'):
         return obj
-    if isinstance(obj, unicode):
+    if isinstance(obj, str):
         return obj.encode('ascii')
     if isinstance(obj, dict):
         return dict((_deunicode(x), _deunicode(y))
-                    for x, y in obj.iteritems())
+                    for x, y in obj.items())
     for typ in (list, set, tuple):
         if isinstance(obj, typ):
             return typ(_deunicode(x) for x in obj)

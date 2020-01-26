@@ -25,7 +25,7 @@ sys.excepthook = util.genExcepthook()
 
 import os
 import time
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import tempfile
 
 from conary import conarycfg
@@ -48,7 +48,7 @@ class GPG(object):
             self.pubringfn, self.tsdbPath)
 
     def _downloadKey(self, keyServer, fingerprint):
-        print 'downloading from %s' % keyServer
+        print('downloading from %s' % keyServer)
         opener = transport.URLOpener()
         url = ('http://%s:11371/pks/lookup?op=get&search=0x%s'
             % (keyServer, fingerprint))
@@ -64,9 +64,9 @@ class GPG(object):
                 keyData = self._downloadKey(ks, fingerprint)
                 if keyData:
                     break
-            except transport.TransportError, e:
-                print >>sys.stderr, ('error retrieving PGP key %s'
-                    % fingerprint)
+            except transport.TransportError as e:
+                print(('error retrieving PGP key %s'
+                    % fingerprint), file=sys.stderr)
                 continue
 
         if not keyData and e:
@@ -93,10 +93,10 @@ class GPG(object):
         self.keyring.addKeysAsStrings([keyData])
 
     def _uploadKey(self, keyServer, key):
-        print 'uploading to %s' % keyServer
+        print('uploading to %s' % keyServer)
         opener = transport.URLOpener()
         url = 'http://%s:11371/pks/add' % keyServer
-        handle = opener.open(url, data=urllib.urlencode({'keytext': key}),
+        handle = opener.open(url, data=urllib.parse.urlencode({'keytext': key}),
             method='POST')
         assert handle.code == 200
 
@@ -105,8 +105,8 @@ class GPG(object):
         for ks in self.key_servers:
             try:
                 self._uploadKey(ks, ascii_key)
-            except transport.TransportError, e:
-                print >>sys.stderr, 'Error uploading key to keyserver %s' % ks
+            except transport.TransportError as e:
+                print('Error uploading key to keyserver %s' % ks, file=sys.stderr)
                 continue
 
 
@@ -124,7 +124,7 @@ class KeySync(object):
                 server_name, fingerprint)
             self._uploadKeyToKeyServer(fingerprint)
         else:
-            print >>sys.stderr, 'already cached'
+            print('already cached', file=sys.stderr)
         return self.keys[fingerprint]
 
     def _uploadKeyToKeyServer(self, fingerprint):
@@ -139,7 +139,7 @@ class KeySync(object):
             key = self._getKeyFromKeyServer(fingerprint)
             self.keys[fingerprint] = key
         else:
-            print >>sys.stderr, 'already cached'
+            print('already cached', file=sys.stderr)
         ascii_key = self.keys.get(fingerprint)
         binary_key = openpgpfile.parseAsciiArmorKey(ascii_key)
         ascii_key.seek(0)
@@ -147,15 +147,15 @@ class KeySync(object):
         try:
             user = self.cfg.user.find(server_name)[0]
         except:
-            print >>sys.stderr, ('could not find user for %s in conary '
-                'configuration' % server_name)
+            print(('could not find user for %s in conary '
+                'configuration' % server_name), file=sys.stderr)
             raise
 
         self.client.repos.addNewPGPKey(server_name, user, binary_key)
 
 
 def usage(args):
-    print >>sys.stderr, 'usage: %s <get|set> [keyring]' % args[0]
+    print('usage: %s <get|set> [keyring]' % args[0], file=sys.stderr)
     return 1
 
 def main(args, fingerprints):
@@ -175,16 +175,16 @@ def main(args, fingerprints):
         method = sync.setKey
 
 
-    for server_name, fps in fingerprints.iteritems():
+    for server_name, fps in fingerprints.items():
         for fp in fps.split():
             fp = fp.strip()
             if not fp:
                 continue
             try:
-                print >>sys.stdout, '%s: %s %s' % (server_name, msg, fp)
+                print('%s: %s %s' % (server_name, msg, fp), file=sys.stdout)
                 method(server_name, fp)
-            except Exception, e:
-                print >>sys.stderr, str(e)
+            except Exception as e:
+                print(str(e), file=sys.stderr)
                 return 1
 
             time.sleep(1)

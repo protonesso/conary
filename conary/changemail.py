@@ -45,11 +45,11 @@ def usage(exitcode=1):
     return exitcode
 
 def fail(code, srcMap, pkgMap, grpMap, argv):
-    print >>sys.stderr, "An error occurred while processing changemail.  Code: %d" % code
-    print >>sys.stderr, "    srcMap=%s" % srcMap.items()
-    print >>sys.stderr, "    pkgMap=%s" % pkgMap.items()
-    print >>sys.stderr, "    grpMap=%s" % grpMap.items()
-    print >>sys.stderr, "    argv=%s" % argv
+    print("An error occurred while processing changemail.  Code: %d" % code, file=sys.stderr)
+    print("    srcMap=%s" % list(srcMap.items()), file=sys.stderr)
+    print("    pkgMap=%s" % list(pkgMap.items()), file=sys.stderr)
+    print("    grpMap=%s" % list(grpMap.items()), file=sys.stderr)
+    print("    argv=%s" % argv, file=sys.stderr)
     sys.stderr.flush()
 
 def process(repos, cfg, commitList, srcMap, pkgMap, grpMap, argv, otherArgs):
@@ -147,29 +147,29 @@ def doWork(repos, cfg, srcMap, pkgMap, grpMap, sourceuser, binaryuser, fromaddr,
                     old = ' (previous: %s)'%oldV.trailingRevision().asString()
                 else:
                     old = ''
-                print '================================'
-                print '%s=%s%s' %(sourceName, shortver, old)
-                print 'cvc rdiff %s -1 %s' %(sourceName[:-7], ver)
-                print '================================'
+                print('================================')
+                print('%s=%s%s' %(sourceName, shortver, old))
+                print('cvc rdiff %s -1 %s' %(sourceName[:-7], ver))
+                print('================================')
                 try:
                     checkin.rdiff(repos, cfg.buildLabel, sourceName, '-1', ver)
                 except:
                     exitCode = 2
-                    print 'rdiff failed for %s' %sourceName
+                    print('rdiff failed for %s' %sourceName)
                     try:
                         t, v, tb = sys.exc_info()
                         tbd = traceback.format_exception(t, v, tb)
                         sys.stdout.write(''.join(tbd[-min(2, len(tbd)):]))
                         sys.stderr.write(''.join(tbd))
                     except:
-                        print 'Failed to print exception information'
+                        print('Failed to print exception information')
 
-                    print ''
-                    print 'Please include a copy of this message in an issue'
-                    print 'filed at https://issues.rpath.com/'
-                print
+                    print('')
+                    print('Please include a copy of this message in an issue')
+                    print('filed at https://issues.rpath.com/')
+                print()
         if sourceuser:
-            print 'Committed by: %s' %sourceuser
+            print('Committed by: %s' %sourceuser)
 
         sendMail(tmpfile, subject, fromaddr, maxsize, argSet['email'], mailhost)
 
@@ -189,31 +189,31 @@ def doWork(repos, cfg, srcMap, pkgMap, grpMap, sourceuser, binaryuser, fromaddr,
         )
 
         if binaries:
-            print "Binary package commits:"
+            print("Binary package commits:")
             if binaryuser:
-                print 'Committed by: %s' %binaryuser
+                print('Committed by: %s' %binaryuser)
         for package in binaries:
             for version in sorted(pkgMap[package].keys()):
-                print '================================'
-                print '%s=%s' %(package, version)
+                print('================================')
+                print('%s=%s' %(package, version))
                 flavorDict = pkgMap[package][version]
                 for flavor in sorted(flavorDict.keys()):
-                    print wrap.fill('%s:%s [%s]' %(package,
+                    print(wrap.fill('%s:%s [%s]' %(package,
                         ' :'.join(sorted(flavorDict[flavor])),
-                        ', '.join(flavor.split(','))))
-                print
+                        ', '.join(flavor.split(',')))))
+                print()
 
         if groups:
-            print "Group commits:"
+            print("Group commits:")
         for group in groups:
             for version in sorted(grpMap[group].keys()):
-                print '================================'
-                print '%s=%s' %(group, version)
+                print('================================')
+                print('%s=%s' %(group, version))
                 flavorSet = grpMap[group][version]
                 for flavor in sorted(flavorSet):
-                    print wrap.fill('[%s]' %
-                        ', '.join(flavor.split(',')))
-                print
+                    print(wrap.fill('[%s]' %
+                        ', '.join(flavor.split(','))))
+                print()
 
         sendMail(tmpfile, subject, fromaddr, maxsize, argSet['email'], mailhost)
         os.dup2(oldStdOut, 1)

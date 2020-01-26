@@ -25,8 +25,8 @@ import os
 import socket
 import sys
 import textwrap
-import urllib2
-import urlparse
+import urllib.request, urllib.error, urllib.parse
+from . import urlparse
 
 from conary.lib import util, api
 from conary.lib.http import proxy_map
@@ -61,7 +61,7 @@ class ConfigDefinition(object):
         self.hidden = set(x.lower() for x in hidden)
         self.directives = directives
         self.lowerCaseMap = dict((x.lower(), y)
-                for (x, y) in options.iteritems())
+                for (x, y) in options.items())
         for key_from, key_to in aliases:
             self.lowerCaseMap[key_from.lower()] = self[key_to]
 
@@ -86,7 +86,7 @@ class ConfigDefinition(object):
         self.sections.update(other.sections)
         self.hidden.update(other.sections)
         self.lowerCaseMap = dict((x.lower(), y)
-                for (x, y) in self.options.iteritems())
+                for (x, y) in self.options.items())
 
 
 class OptionDefinition(object):
@@ -302,13 +302,13 @@ class _ConfigMeta(type):
                 sections.update(cls._cfg_def.sections)
                 directives.update(cls._cfg_def.directives)
         # Add options from this class
-        for key, value in clsdict.items():
+        for key, value in list(clsdict.items()):
             if key[0] == '_':
                 continue
             elif isinstance(value, (list, tuple)):
                 # foo = (CfgThing, default, doc)
                 args = value
-            elif value is None or isinstance(value, basestring):
+            elif value is None or isinstance(value, str):
                 # foo = 'default'
                 args = (CfgString, value)
             elif inspect.isclass(value):
@@ -342,7 +342,7 @@ class _ConfigMeta(type):
         hidden = metacls._fold(bases, clsdict, '_cfg_hidden', [], list.extend)
         # Copy definition to class dictionary to act as a data descriptor,
         # enabling attribute get/set/delete.
-        for key, optdef in options.iteritems():
+        for key, optdef in options.items():
             clsdict[key] = optdef
 
         clsdict['_cfg_def'] = ConfigDefinition(options, aliases, hidden,
@@ -368,11 +368,11 @@ class _ConfigMeta(type):
         the config classes but not instanes of those classes.
         """
         clself._cfg_def.extend(other._cfg_def)
-        for key, optdef in clself._cfg_def.options.iteritems():
+        for key, optdef in clself._cfg_def.options.items():
             setattr(clself, key, optdef)
 
 
-class _Config(object):
+class _Config(object, metaclass=_ConfigMeta):
     """ Base configuration class.  Supports defining a configuration object,
         and displaying that object, but has no knowledge of how the input.
 
@@ -392,7 +392,6 @@ class _Config(object):
         a string into a configuration item, and display it.  The
         expected interface is documented in ConfigType.
     """
-    __metaclass__ = _ConfigMeta
 
     # To be filled in by the metaclass.
     _cfg_def = None
@@ -493,13 +492,13 @@ class _Config(object):
             del self._values[key]
 
     def keys(self):
-        return self._cfg_def.options.keys()
+        return list(self._cfg_def.options.keys())
 
     def iterkeys(self):
-        return self._cfg_def.options.iterkeys()
+        return iter(self._cfg_def.options.keys())
 
     def items(self):
-        return list(self.iteritems())
+        return list(self.items())
 
     def iteritems(self):
         for name in self._cfg_def.options:
@@ -535,7 +534,7 @@ class _Config(object):
 
     def _write(self, out, options, includeDocs=True):
         hidden = options.get('displayHidden', False)
-        for name, optdef in sorted(self._cfg_def.options.iteritems()):
+        for name, optdef in sorted(self._cfg_def.options.items()):
             if not hidden and optdef.name.lower() in self._cfg_def.hidden:
                 continue
             if includeDocs:
@@ -555,7 +554,7 @@ class _Config(object):
         return {
                 'flags': {},
                 'options': [ (key, value.value)
-                    for (key, value) in self._values.iteritems()
+                    for (key, value) in self._values.items()
                     if not value.isDefault()
                     ],
                 }
@@ -579,7 +578,7 @@ class _Config(object):
         obj = cls.__new__(cls)
         obj.__dict__ = self.__dict__.copy()
         obj._values = dict((key, value.copy(shallow=True))
-                for (key, value) in self._values.iteritems())
+                for (key, value) in self._values.items())
         return obj
 
     # --- metadata backwards compatibility ---
@@ -640,11 +639,11 @@ class ConfigFile(_Config):
                 self.configLine(line, path, lineno)
                 lineno = lineno + lineCount
             f.close()
-        except urllib2.HTTPError, err:
+        except urllib.error.HTTPError as err:
             raise CfgEnvironmentError(err.filename, err.filename)
-        except urllib2.URLError, err:
+        except urllib.error.URLError as err:
             raise CfgEnvironmentError(path, err.reason.args[1])
-        except EnvironmentError, err:
+        except EnvironmentError as err:
             raise CfgEnvironmentError(err.filename, err.strerror)
 
         # We're done with this config file, remove it from the include stack
@@ -654,7 +653,7 @@ class ConfigFile(_Config):
         if os.path.exists(path):
             try:
                 return open(path, "r")
-            except EnvironmentError, err:
+            except EnvironmentError as err:
                 if exception:
                     raise CfgEnvironmentError(err.strerror, err.filename)
                 else:
@@ -719,7 +718,7 @@ class ConfigFile(_Config):
             fn = getattr(self, funcName)
             try:
                 fn(val, *args, **kwargs)
-            except Exception, err:
+            except Exception as err:
                 if errors.exceptionIsUncatchable(err):
                     raise
                 util.rethrow(ParseError("%s:%s: when processing %s: %s"
@@ -740,11 +739,11 @@ class ConfigFile(_Config):
                 return
             value = self._cow(key)
             value.updateFromString(val, fileName, lineno)
-        except ParseError, msg:
+        except ParseError as msg:
             if not self._ignoreErrors:
-                raise ParseError, "%s:%s: %s for configuration item '%s'" \
+                raise ParseError("%s:%s: %s for configuration item '%s'" \
                                                             % (fileName,
-                                                               lineno, msg, key)
+                                                               lineno, msg, key))
 
     def getProxyMap(self):
         return proxy_map.ProxyMap()
@@ -777,12 +776,12 @@ class ConfigFile(_Config):
                     timeout *= 2
                     socket.setdefaulttimeout(timeout)
                     continue
-                except (IOError, socket.error), err:
+                except (IOError, socket.error) as err:
                     if len(err.args) > 1:
                         raise CfgEnvironmentError(url, err.args[1])
                     else:
                         raise CfgEnvironmentError(url, err.args[0])
-                except EnvironmentError, err:
+                except EnvironmentError as err:
                     raise CfgEnvironmentError(err.filename, err.msg)
             else: # for
                 # URL timed out
@@ -878,23 +877,23 @@ class SectionedConfigFile(ConfigFile):
         ConfigFile.__init__(self)
         self._sections = {}
         self._sectionName = ''
-        for key, (sectionType, _, doc) in self._cfg_def.sections.items():
+        for key, (sectionType, _, doc) in list(self._cfg_def.sections.items()):
             section = sectionType(self, doc)
             self._addSection(key, section)
             setattr(self, key, section)
 
     def iterSections(self):
-        return self._sections.itervalues()
+        return iter(self._sections.values())
 
     def iterSectionNames(self):
-        return self._sections.iterkeys()
+        return iter(self._sections.keys())
 
     def hasSection(self, sectionName):
         return sectionName in self._sections
 
     def getSection(self, sectionName):
         if not self.hasSection(sectionName):
-            raise ParseError, 'Unknown section "%s"' % sectionName
+            raise ParseError('Unknown section "%s"' % sectionName)
         return self._sections[sectionName]
 
     def setSection(self, sectionName, sectionType = None):
@@ -904,7 +903,7 @@ class SectionedConfigFile(ConfigFile):
                     sectionType = self._defaultSectionType
                 self._addSection(sectionName, sectionType(self))
             else:
-                raise ParseError, 'Unknown section "%s"' % sectionName
+                raise ParseError('Unknown section "%s"' % sectionName)
         self._sectionName = sectionName
         return self._sections[sectionName]
 
@@ -972,5 +971,5 @@ class SectionedConfigFile(ConfigFile):
 
     def __setstate__(self, state):
         ConfigFile.__setstate__(self, state)
-        for name, section in state['sections'].iteritems():
+        for name, section in state['sections'].items():
             self._addSection(name, section)

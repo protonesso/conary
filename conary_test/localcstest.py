@@ -71,14 +71,14 @@ class LocalCsTest(rephelp.RepositoryHelper):
         elif use.Arch.x86_64:
             d = { 'flavor': 'is: x86_64' }
         else:
-            raise NotImplementedError, 'edit test for this arch'
+            raise NotImplementedError('edit test for this arch')
         try:
             trove.TROVE_VERSION = 1
             trove.TROVE_VERSION_1_1 = 2
             self.logFilter.add()
             try:
                 path = self._testBasic1(built, info)
-            except errors.ConaryError, err:
+            except errors.ConaryError as err:
                 assert(str(err) == '''\
 Cannot create a local changeset using an incomplete troves:  Please ensure 
 you have the latest conary and then reinstall these troves:
@@ -102,11 +102,11 @@ you have the latest conary and then reinstall these troves:
             db = self.openDatabase()
             tups = db.findTroves(None, [('info-%(user)s' % info, None, None),
                                           ('testcase', None, None)])
-            tups = list(itertools.chain(*tups.itervalues()))
+            tups = list(itertools.chain(*iter(tups.values())))
             assert([ x for x in db.getTroves(tups) if not x.troveInfo.incomplete()] == [])
             try:
                 self._testBasic2(path, info)
-            except errors.ConaryError, err:
+            except errors.ConaryError as err:
                 assert(re.match(r'Cannot apply a relative changeset to an incomplete trove.  Please upgrade conary and/or reinstall testcase:?.*=/localhost@rpl:linux/1.0-1-1\[%(flavor)s\].' %d, str(err)))
             else:
                 assert(0)
@@ -126,7 +126,7 @@ you have the latest conary and then reinstall these troves:
         self.writeFile(self.rootDir + "/etc/changedconfig", 'new contents\n')
         self.writeFile(self.rootDir + "/usr/share/changed", 
                        'more contents\n')
-        os.chmod(self.rootDir + "/usr/bin/hello", 0700)
+        os.chmod(self.rootDir + "/usr/bin/hello", 0o700)
         self.localChangeset(self.rootDir, 'testcase', path)
 
         self.resetRoot()
@@ -138,8 +138,8 @@ you have the latest conary and then reinstall these troves:
                         'new contents\n')
         self.verifyFile(self.rootDir + "/usr/share/changed",
                         'more contents\n')
-        assert((os.stat(self.rootDir + "/usr/bin/hello").st_mode & 0700) 
-                            == 0700)
+        assert((os.stat(self.rootDir + "/usr/bin/hello").st_mode & 0o700) 
+                            == 0o700)
         self.erasePkg(self.rootDir, 'testcase')
         return path
 
@@ -155,8 +155,8 @@ you have the latest conary and then reinstall these troves:
                         'new contents\n')
         self.verifyFile(self.rootDir + "/usr/share/changed",
                         'more contents\n')
-        assert((os.stat(self.rootDir + "/usr/bin/hello").st_mode & 0700) 
-                            == 0700)
+        assert((os.stat(self.rootDir + "/usr/bin/hello").st_mode & 0o700) 
+                            == 0o700)
         self.erasePkg(self.rootDir, 'testcase')
         os.remove(path)
 

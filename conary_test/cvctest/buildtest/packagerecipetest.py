@@ -36,7 +36,7 @@ class PackageRecipeTest(rephelp.RepositoryHelper):
     def testCrossCompileSetup(self):
         siteConfigPath = os.path.abspath(resources.get_archive('site'))
         def _checkSite(macros, *paths):
-            self.assertEquals(macros.env_siteconfig,
+            self.assertEqual(macros.env_siteconfig,
                           ' '.join([siteConfigPath + '/' + x for x in paths]))
 
         self.cfg.siteConfigPath = [ siteConfigPath]
@@ -426,7 +426,7 @@ class UserInfoRecipe(UserGroupInfoRecipe, BaseRequiresRecipe):
         open(os.path.join(laDir, 'userinfo.recipe'), 'w').write('')
         self.cfg.baseClassDir = '/usr/share/conary/baseclasses'
         res = self.buildRecipe(userInfoRecipe, 'UserInfoRecipe')
-        self.assertEquals(res[0][0][0], 'userinfo:recipe')
+        self.assertEqual(res[0][0][0], 'userinfo:recipe')
 
     def testUserInfoRecipeCook2(self):
         userInfoRecipe = """
@@ -447,7 +447,7 @@ class UserInfoRecipe(UserGroupInfoRecipe, BaseRequiresRecipe):
         cs = client.createSourceTrove('userinfo:source', str(self.cfg.buildLabel), '1', fileDict, chLog)
         repos.commitChangeSet(cs)
         res = self.cookFromRepository('userinfo:source', buildLabel = self.cfg.buildLabel, repos = repos, logBuild = True)
-        self.assertEquals(res[0][0], 'userinfo:recipe')
+        self.assertEqual(res[0][0], 'userinfo:recipe')
 
     def testGroupInfoRecipeDeps(self):
         pkgRecipe = """class BaseRequiresRecipe(AbstractPackageRecipe):
@@ -500,7 +500,7 @@ class GroupInfoRecipe(UserGroupInfoRecipe, BaseRequiresRecipe):
         open(os.path.join(laDir, 'groupinfo.recipe'), 'w').write('')
         self.cfg.baseClassDir = '/usr/share/conary/baseclasses'
         res = self.buildRecipe(groupInfoRecipe, 'GroupInfoRecipe')
-        self.assertEquals(res[0][0][0], 'groupinfo:recipe')
+        self.assertEqual(res[0][0][0], 'groupinfo:recipe')
 
     def testGroupInfoRecipeCook2(self):
         groupInfoRecipe = """
@@ -521,7 +521,7 @@ class GroupInfoRecipe(UserGroupInfoRecipe, BaseRequiresRecipe):
         cs = client.createSourceTrove('groupinfo:source', str(self.cfg.buildLabel), '1', fileDict, chLog)
         repos.commitChangeSet(cs)
         res = self.cookFromRepository('groupinfo:source', buildLabel = self.cfg.buildLabel, repos = repos, logBuild = True)
-        self.assertEquals(res[0][0], 'groupinfo:recipe')
+        self.assertEqual(res[0][0], 'groupinfo:recipe')
 
     def testUserInfoGroupInfoSplitting(self):
         """
@@ -566,7 +566,7 @@ class InfoBin(UserInfoRecipe):
 
         # Make sure there is a :user and :group component for each package.
         for comps in (comps1, comps2, comps3):
-            self.failUnlessEqual(len([ x for x in comps
+            self.assertEqual(len([ x for x in comps
                 if x[0].endswith(':user') or x[0].endswith(':group') ]), 2)
 
         group1, user1 = sorted(comps1)
@@ -592,34 +592,34 @@ class InfoBin(UserInfoRecipe):
 
         # info-daemon:user should require info-bin:group, info-daemon:group,
         # and info-lp:group.
-        self.failUnlessEqual(user1trv.requires,
+        self.assertEqual(user1trv.requires,
             deps.ThawDependencySet('8#bin|8#daemon|8#lp'))
         # info-lp:user should require info-daemon:group and info-lp:group.
-        self.failUnlessEqual(user2trv.requires,
+        self.assertEqual(user2trv.requires,
             deps.ThawDependencySet('8#daemon|8#lp'))
         # info-bin:user should require info-bin:group and info-dameon:group.
-        self.failUnlessEqual(user3trv.requires,
+        self.assertEqual(user3trv.requires,
             deps.ThawDependencySet('8#bin|8#daemon'))
 
         # Make sure the user components don't provide groups.
-        self.failUnlessEqual(user1trv.provides,
+        self.assertEqual(user1trv.provides,
             deps.ThawDependencySet('4#info-daemon::user|7#daemon'))
-        self.failUnlessEqual(user2trv.provides,
+        self.assertEqual(user2trv.provides,
             deps.ThawDependencySet('4#info-lp::user|7#lp'))
-        self.failUnlessEqual(user3trv.provides,
+        self.assertEqual(user3trv.provides,
             deps.ThawDependencySet('4#info-bin::user|7#bin'))
 
         # Make sure the group components provide the groups
-        self.failUnlessEqual(group1trv.provides,
+        self.assertEqual(group1trv.provides,
             deps.ThawDependencySet('4#info-daemon::group|8#daemon'))
-        self.failUnlessEqual(group2trv.provides,
+        self.assertEqual(group2trv.provides,
             deps.ThawDependencySet('4#info-lp::group|8#lp'))
-        self.failUnlessEqual(group3trv.provides,
+        self.assertEqual(group3trv.provides,
             deps.ThawDependencySet('4#info-bin::group|8#bin'))
 
         # And that the groups don't require anything
-        self.failUnlessEqual(group1trv.requires, deps.ThawDependencySet(''))
-        self.failUnlessEqual(group2trv.requires, deps.ThawDependencySet(''))
-        self.failUnlessEqual(group3trv.requires, deps.ThawDependencySet(''))
+        self.assertEqual(group1trv.requires, deps.ThawDependencySet(''))
+        self.assertEqual(group2trv.requires, deps.ThawDependencySet(''))
+        self.assertEqual(group3trv.requires, deps.ThawDependencySet(''))
 
         self.updatePkg('info-daemon:user', resolve=True)

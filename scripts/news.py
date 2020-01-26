@@ -75,12 +75,12 @@ def main():
         generate()
     elif command == 'preview':
         out, htmlOut, _ = preview()
-        print 'Text Version:\n'
+        print('Text Version:\n')
         for line in out:
-            print line
-        print 'Html Version:\n'
+            print(line)
+        print('Html Version:\n')
         for line in htmlOut:
-            print line
+            print(line)
     else:
         sys.exit("Usage: %s <preview|generate>" % sys.argv[0])
 
@@ -98,20 +98,20 @@ def preview(modifiedOK=True):
             continue
         issue, kind = filename.rsplit('.', 1)
         if kind not in KINDS:
-            print >> sys.stderr, "Ignoring '%s' due to unknown type '%s'" % (
-                    filename, kind)
+            print("Ignoring '%s' due to unknown type '%s'" % (
+                    filename, kind), file=sys.stderr)
             continue
 
         if path in changed:
             if modifiedOK:
-                print >> sys.stderr, "warning: '%s' is modified." % (path,)
+                print("warning: '%s' is modified." % (path,), file=sys.stderr)
             else:
                 sys.exit("File '%s' is modified and must be committed first." %
                         (path,))
         elif path not in ok:
             if modifiedOK:
-                print >> sys.stderr, "warning: '%s' is not checked in." % (
-                        path,)
+                print("warning: '%s' is not checked in." % (
+                        path,), file=sys.stderr)
             else:
                 sys.exit("File '%s' is not checked in and must be "
                         "committed first." % (path,))
@@ -171,12 +171,12 @@ def generate():
     codecs.open('NEWS.html', 'w', 'utf8').write(newHtml)
 
     sys.stdout.write(new)
-    print >> sys.stderr, "Updated NEWS"
-    print >> sys.stderr, "Wrote NEWS.html"
+    print("Updated NEWS", file=sys.stderr)
+    print("Wrote NEWS.html", file=sys.stderr)
 
     git(['rm'] + sorted(files))
     git(['add', 'NEWS'])
-    print >> sys.stderr, "Deleted %s news fragments" % len(files)
+    print("Deleted %s news fragments" % len(files), file=sys.stderr)
     os.system("git status")
 
 

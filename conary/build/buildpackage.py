@@ -82,12 +82,12 @@ class BuildComponent(dict):
         # ownerships according to Ownership settings anyway
         (f, linkCount, inode) = files.FileFromFilesystem(realPath, None,
                                         inodeInfo = True, assumeRoot = True)
-        f.inode.perms.set(f.inode.perms() & 01777)
+        f.inode.perms.set(f.inode.perms() & 0o1777)
         self[path] = (realPath, f)
-        if (f.inode.perms() & 0400) != 0400:
+        if (f.inode.perms() & 0o400) != 0o400:
             # we can safely change the permissions now, the original
             # permissions have been recorded
-            os.chmod(realPath, f.inode.perms() | 0400)
+            os.chmod(realPath, f.inode.perms() | 0o400)
 
         if linkCount > 1:
             if f.hasContents:
@@ -103,7 +103,7 @@ class BuildComponent(dict):
         return f
 
     def addDevice(self, path, devtype, major, minor,
-                  owner='root', group='root', perms=0660):
+                  owner='root', group='root', perms=0o660):
         """
         Add a device node to the build component
 
@@ -288,7 +288,7 @@ class AutoBuildPackage:
         del self.pathMap[path]
 
     def addDevice(self, path, devtype, major, minor,
-                  owner='root', group='root', perms=0660, package=None):
+                  owner='root', group='root', perms=0o660, package=None):
         """
         Add a device to the correct BuildComponent instance by matching
         the file name against the package and component filters
@@ -310,8 +310,8 @@ class AutoBuildPackage:
         @rtype: list
         """
         l = []
-        for componentName in self.components.keys():
-            if (self.components[componentName].keys() or
+        for componentName in list(self.components.keys()):
+            if (list(self.components[componentName].keys()) or
                 self.recipe._hasCapsulePackage(componentName)):
                 # there are files or there is a capsule
                 l.append(self.components[componentName])

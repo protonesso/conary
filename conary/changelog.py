@@ -79,7 +79,7 @@ class ChangeLog(streams.StreamSet):
             rows = []
             while 1:
                 try:
-                    row = raw_input('>> ')
+                    row = input('>> ')
                 except EOFError:
                     return None
                 if row == '.':

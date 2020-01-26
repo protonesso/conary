@@ -15,7 +15,7 @@
 #
 
 
-from StringIO import StringIO
+from io import StringIO
 from conary_test import rephelp
 
 from conary import changelog
@@ -67,29 +67,29 @@ class ClientNewTroveTest(rephelp.RepositoryHelper):
             fileObj = repos.getFileVersion(pathId, fileId, vers)
             if path == '/dir':
                 processed += 1
-                self.assertEquals(fileObj.lsTag, 'd')
-                self.assertEquals(fileObj.inode.perms(), 0755)
-                self.assertEquals(fileObj.hasContents, False)
+                self.assertEqual(fileObj.lsTag, 'd')
+                self.assertEqual(fileObj.inode.perms(), 0o755)
+                self.assertEqual(fileObj.hasContents, False)
             elif path == '/dir/sym':
                 processed += 1
-                self.assertEquals(fileObj.lsTag, 'l')
-                self.assertEquals(fileObj.target(), '../file')
-                self.assertEquals(fileObj.hasContents, False)
+                self.assertEqual(fileObj.lsTag, 'l')
+                self.assertEqual(fileObj.target(), '../file')
+                self.assertEqual(fileObj.hasContents, False)
             elif path == 'file':
                 processed += 1
-                self.assertEquals(fileObj.lsTag, '-')
-                self.assertEquals(fileObj.inode.perms(), 0644)
-                self.assertEquals(fileObj.hasContents, True)
+                self.assertEqual(fileObj.lsTag, '-')
+                self.assertEqual(fileObj.inode.perms(), 0o644)
+                self.assertEqual(fileObj.hasContents, True)
 
         # make sure we looked at all the files
-        self.assertEquals(processed, 3)
+        self.assertEqual(processed, 3)
 
         fileDict = client.getFilesFromTrove(n, v, f)
 
         # we don't want to see dir or sym in the list. they don't have contents
         # that can be retrieved
-        self.assertEquals(fileDict.keys(), ['file'])
-        self.assertEquals(fileDict['file'].read(), 'foo')
+        self.assertEqual(list(fileDict.keys()), ['file'])
+        self.assertEqual(fileDict['file'].read(), 'foo')
 
     def testNewFileTwice(self):
         repos = self.openRepository()
@@ -101,7 +101,7 @@ class ClientNewTroveTest(rephelp.RepositoryHelper):
                 'foo:source', self.cfg.buildLabel, '1.0', files,
                 changelog.ChangeLog('foo', 'bar'))
         n, v, f = cs.iterNewTroveList().next().getNewNameVersionFlavor()
-        self.assertEquals(str(v), '/localhost@rpl:linux/1.0-1')
+        self.assertEqual(str(v), '/localhost@rpl:linux/1.0-1')
         repos.commitChangeSet(cs)
 
         files = {'file': fil}
@@ -110,7 +110,7 @@ class ClientNewTroveTest(rephelp.RepositoryHelper):
                 'foo:source', self.cfg.buildLabel, '1.0', files,
                 changelog.ChangeLog('foo', 'bar'))
         n2, v2, f2 = cs.iterNewTroveList().next().getNewNameVersionFlavor()
-        self.assertEquals(str(v2), '/localhost@rpl:linux/1.0-2')
+        self.assertEqual(str(v2), '/localhost@rpl:linux/1.0-2')
         repos.commitChangeSet(cs)
 
         # repeat the creation to show the source count gets bumped
@@ -118,7 +118,7 @@ class ClientNewTroveTest(rephelp.RepositoryHelper):
                 'foo:source', self.cfg.buildLabel, '1.0', files,
                 changelog.ChangeLog('foo', 'bar'))
         n2, v2, f2 = cs.iterNewTroveList().next().getNewNameVersionFlavor()
-        self.assertEquals(str(v2), '/localhost@rpl:linux/1.0-3')
+        self.assertEqual(str(v2), '/localhost@rpl:linux/1.0-3')
         repos.commitChangeSet(cs)
 
         # prove that the source count gets reset for a new upstream version
@@ -126,7 +126,7 @@ class ClientNewTroveTest(rephelp.RepositoryHelper):
                 'foo:source', self.cfg.buildLabel, '1.1', files,
                 changelog.ChangeLog('foo', 'bar'))
         n2, v2, f2 = cs.iterNewTroveList().next().getNewNameVersionFlavor()
-        self.assertEquals(str(v2), '/localhost@rpl:linux/1.1-1')
+        self.assertEqual(str(v2), '/localhost@rpl:linux/1.1-1')
 
     def testNewFileNotSource(self):
         client = self.getConaryClient()
@@ -169,7 +169,7 @@ class ClientNewTroveTest(rephelp.RepositoryHelper):
         n, v, f = cs.iterNewTroveList().next().getNewNameVersionFlavor()
 
         # source troves don't have a flavor
-        self.assertEquals(f, deps.Flavor())
+        self.assertEqual(f, deps.Flavor())
 
     def testRemoveOldPathIds(self):
         class DummyTroveObj(object):
@@ -183,7 +183,7 @@ class ClientNewTroveTest(rephelp.RepositoryHelper):
         client = self.getConaryClient()
         trv = DummyTroveObj()
         client._removeOldPathIds(trv)
-        self.assertEquals(trv.tracked, ['a', 'b', 'c'])
+        self.assertEqual(trv.tracked, ['a', 'b', 'c'])
 
     def testPreservePathIds(self):
         self.openRepository()
@@ -217,8 +217,8 @@ class ClientNewTroveTest(rephelp.RepositoryHelper):
         repos.commitChangeSet(cs)
         trv = repos.getTrove(n, v, f)
         fileList3 = list(trv.iterFileList())
-        self.assertEquals(fileList1[0][0], fileList2[0][0])
-        self.assertEquals(fileList2[0][0], fileList3[0][0])
+        self.assertEqual(fileList1[0][0], fileList2[0][0])
+        self.assertEqual(fileList2[0][0], fileList3[0][0])
 
     def testNewFactory(self):
         repos = self.openRepository()
@@ -229,22 +229,22 @@ class ClientNewTroveTest(rephelp.RepositoryHelper):
                 'foo:source', self.cfg.buildLabel, '1.0', files,
                 changelog.ChangeLog('foo', 'bar'), factory = 'factory-foo')
         n, v, f = cs.iterNewTroveList().next().getNewNameVersionFlavor()
-        self.assertEquals(str(v), '/localhost@rpl:linux/1.0-1')
+        self.assertEqual(str(v), '/localhost@rpl:linux/1.0-1')
         repos.commitChangeSet(cs)
 
         trv = repos.getTrove(n, v, f)
 
-        self.assertEquals(trv.troveInfo.factory(), 'factory-foo')
+        self.assertEqual(trv.troveInfo.factory(), 'factory-foo')
 
         # repeat without factory
         cs = client.createSourceTrove( \
                 'foo:source', self.cfg.buildLabel, '1.0', files,
                 changelog.ChangeLog('foo', 'bar'))
         n, v, f = cs.iterNewTroveList().next().getNewNameVersionFlavor()
-        self.assertEquals(str(v), '/localhost@rpl:linux/1.0-2')
+        self.assertEqual(str(v), '/localhost@rpl:linux/1.0-2')
         repos.commitChangeSet(cs)
         trv = repos.getTrove(n, v, f)
-        self.assertEquals(trv.troveInfo.factory(), '')
+        self.assertEqual(trv.troveInfo.factory(), '')
 
     def testChangelog(self):
         repos = self.openRepository()
@@ -255,12 +255,12 @@ class ClientNewTroveTest(rephelp.RepositoryHelper):
                 'foo:source', self.cfg.buildLabel, '1.0', files,
                 changelog.ChangeLog('user', 'foo'))
         n, v, f = cs.iterNewTroveList().next().getNewNameVersionFlavor()
-        self.assertEquals(str(v), '/localhost@rpl:linux/1.0-1')
+        self.assertEqual(str(v), '/localhost@rpl:linux/1.0-1')
         repos.commitChangeSet(cs)
 
         trv = repos.getTrove(n, v, f)
 
-        self.assertEquals(trv.changeLog.freeze(),
+        self.assertEqual(trv.changeLog.freeze(),
                 changelog.ChangeLog('user', 'foo').freeze())
 
     def testDuplicateFileObj(self):
@@ -277,7 +277,7 @@ class ClientNewTroveTest(rephelp.RepositoryHelper):
 
         trv = repos.getTrove(n, v, f)
 
-        self.assertEquals(sorted([x[1] for x in trv.iterFileList()]),
+        self.assertEqual(sorted([x[1] for x in trv.iterFileList()]),
                 ['file1', 'file2'])
 
     def testSourceFlag(self):
@@ -286,7 +286,7 @@ class ClientNewTroveTest(rephelp.RepositoryHelper):
         client = self.getConaryClient()
         fil = filetypes.RegularFile(contents = 'foo', config = True)
         fileObj = fil.get('1234567890ABCDEF')
-        self.assertEquals(bool(fileObj.flags.isConfig()), True)
+        self.assertEqual(bool(fileObj.flags.isConfig()), True)
 
         files = {'file1': fil}
         cs = client.createSourceTrove( \
@@ -299,7 +299,7 @@ class ClientNewTroveTest(rephelp.RepositoryHelper):
         pathId, path, fileId, fileVersion = list(trv.iterFileList())[0]
         fileObj = repos.getFileVersion(pathId, fileId, fileVersion)
 
-        self.assertEquals(bool(fileObj.flags.isConfig()), True)
+        self.assertEqual(bool(fileObj.flags.isConfig()), True)
 
     def testPackageCreatorData(self):
         repos = self.openRepository()
@@ -332,7 +332,7 @@ class ClientNewTroveTest(rephelp.RepositoryHelper):
         cs = client.createSourceTrove(
                 'foo:source', self.cfg.buildLabel, '1.0', {},
                 changelog.ChangeLog('user', 'foo'))
-        trvCs = cs.iterNewTroveList().next()
+        trvCs = next(cs.iterNewTroveList())
         assert(str(trvCs.getNewVersion().trailingRevision()) == '1.0-3')
 
     def testCreateSourceTroveWithMetadata(self):
@@ -343,7 +343,7 @@ class ClientNewTroveTest(rephelp.RepositoryHelper):
                 'foo:source', self.cfg.buildLabel, '1.0', {},
                 changelog.ChangeLog('user', 'foo'),
                 metadata=metadata)
-        trvCs = cs.iterNewTroveList().next()
+        trvCs = next(cs.iterNewTroveList())
         trv = trove.Trove(trvCs)
 
         self.assertEqual(

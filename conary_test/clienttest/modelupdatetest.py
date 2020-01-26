@@ -259,7 +259,7 @@ class ModelUpdateTest(rephelp.RepositoryHelper):
         e = self.assertRaises(TroveSpecsNotFound,
             self._applyModel, ['search foo'])
         txt = 'No troves found matching: foo'
-        self.assertEquals(str(e), txt)
+        self.assertEqual(str(e), txt)
 
     @testhelp.context('sysmodel')
     def testInstallBadTrove(self):
@@ -267,7 +267,7 @@ class ModelUpdateTest(rephelp.RepositoryHelper):
         e = self.assertRaises(TroveSpecsNotFound,
             self._applyModel, ['install foo bar'])
         txt = 'No troves found matching: bar foo'
-        self.assertEquals(str(e), txt)
+        self.assertEqual(str(e), txt)
 
     @testhelp.context('sysmodel')
     def testErase(self):
@@ -374,7 +374,7 @@ class ModelUpdateTest(rephelp.RepositoryHelper):
 
         e = self.assertRaises(troveset.IncludeException,
                           self._applyModel, [ 'include inctrove:cml' ])
-        self.assertEquals(str(e),
+        self.assertEqual(str(e),
                     'Too many cml files found in '
                     'inctrove:cml=/localhost@rpl:linux/1.0-1-1[]: '
                     '/some/more.cml /some/path/to.cml')
@@ -382,7 +382,7 @@ class ModelUpdateTest(rephelp.RepositoryHelper):
         self.addComponent("inctrove:cml=2.0", fileContents = [ ])
         e = self.assertRaises(troveset.IncludeException,
                           self._applyModel, [ 'include inctrove:cml' ])
-        self.assertEquals(str(e),
+        self.assertEqual(str(e),
                           'No cml files found in '
                           'inctrove:cml=/localhost@rpl:linux/2.0-1-1[]')
 
@@ -390,13 +390,13 @@ class ModelUpdateTest(rephelp.RepositoryHelper):
         self.addCollection('inctrove=3.0', [ ':runtime' ])
         e = self.assertRaises(troveset.IncludeException,
                           self._applyModel, [ 'include inctrove' ])
-        self.assertEquals(str(e),
+        self.assertEqual(str(e),
             'Package inctrove=/localhost@rpl:linux/3.0-1-1[] does not '
             'contain a cml component for inclusion')
 
         e = self.assertRaises(troveset.IncludeException,
                           self._applyModel, [ 'include inctrove:runtime' ])
-        self.assertEquals(str(e), 'Include only supports source and cml '
+        self.assertEqual(str(e), 'Include only supports source and cml '
                           'components')
 
     @testhelp.context('sysmodel')
@@ -406,7 +406,7 @@ class ModelUpdateTest(rephelp.RepositoryHelper):
         self.addCollection("inctrove=1.0", [ ":cml" ])
         e = self.assertRaises(troveset.IncludeException,
                           self._applyModel, [ 'include inctrove:cml' ])
-        self.assertEquals(str(e), 'Include loop detected involving '
+        self.assertEqual(str(e), 'Include loop detected involving '
                             'inctrove:cml=/localhost@rpl:linux/1.0-1-1[]')
 
     @testhelp.context('sysmodel')
@@ -423,10 +423,10 @@ class ModelUpdateTest(rephelp.RepositoryHelper):
         self.addCollection("dep2=1.0", [ ":runtime" ])
 
         updJob, suggMap = self._applyModel(['install foo'])
-        self.assertEquals(len(suggMap), 2)
+        self.assertEqual(len(suggMap), 2)
         self.verifyFile(self.rootDir + '/dep2', '1')
         updJob, suggMap = self._applyModel(['install foo'])
-        self.assertEquals(len(suggMap), 0)
+        self.assertEqual(len(suggMap), 0)
         self.verifyFile(self.rootDir + '/dep2', '1')
 
     @testhelp.context('sysmodel')
@@ -524,7 +524,7 @@ class ModelUpdateTest(rephelp.RepositoryHelper):
                     '        r.addRedirect("redirect","localhost@rpl:linux")' ])
         built, d = self.buildRecipe(redirectRecipe, "testRedirect")
 
-        self.assertRaisesRegexp(conaryclient.UpdateError,
+        self.assertRaisesRegex(conaryclient.UpdateError,
                 '^Redirect loop found which includes troves redirect, foo$',
                 self._applyModel, [ 'install redirect=2.0' ])
 
