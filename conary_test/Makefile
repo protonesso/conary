@@ -32,4 +32,4 @@ clean:
 #	$(CC) $(CFLAGS) -shared -rdynamic -o $@ $^
 
 include ../Make.rules
-CFLAGS:=-Wall -std=c99 -I$(PYINCLUDE) -fPIC $(CFLAGS) -g -D_FILE_OFFSET_BITS=64
+CFLAGS:=-Wall -std=c99 $(PYINCLUDE) -fPIC $(CFLAGS) -g -D_FILE_OFFSET_BITS=64
