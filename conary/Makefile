@@ -17,7 +17,7 @@
 
 all: subdirs constants.py stubs
 
-SUBDIRS=build local repository server lib pysqlite3 deps web \
+SUBDIRS=build local repository server lib deps web \
         conaryclient dbstore ScanDeps cmds
 
 # These are stubs that must be maintained for as long as there is
