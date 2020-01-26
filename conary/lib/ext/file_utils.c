@@ -520,6 +520,14 @@ static CYTHON_INLINE PyObject* __Pyx_PyObject_Call(PyObject *func, PyObject *arg
 #define __Pyx_PyObject_Call(func, arg, kw) PyObject_Call(func, arg, kw)
 #endif
 
+#define PyInt_FromSize_t(x) PyLong_FromSize_t(x)
+#define PyString_Check(name) PyBytes_Check(name)
+#define PyString_FromString(x) PyUnicode_FromString(x)
+#define PyString_FromStringAndSize(x, len) PyUnicode_FromStringAndSize(x, len)
+#define PyString_Format(fmt, args)  PyUnicode_Format(fmt, args)
+#define PyString_AsString(str) PyBytes_AsString(str)
+#define PyString_Size(str) PyBytes_Size(str)
+
 static CYTHON_INLINE void __Pyx_ErrRestore(PyObject *type, PyObject *value, PyObject *tb);
 static CYTHON_INLINE void __Pyx_ErrFetch(PyObject **type, PyObject **value, PyObject **tb);
 
@@ -1323,12 +1331,14 @@ static PyObject *__pyx_pf_6conary_3lib_3ext_10file_utils_4fopenIfExists(CYTHON_U
  * 
  * 
  */
+/*
     __Pyx_XDECREF(__pyx_r);
     __pyx_t_2 = PyFile_FromFile(__pyx_v_fp, __pyx_v_path, __pyx_v_mode, fclose); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 101; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
     __pyx_r = __pyx_t_2;
     __pyx_t_2 = 0;
     goto __pyx_L0;
+*/
   }
 
   /* "conary/lib/ext/file_utils.pyx":91

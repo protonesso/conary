@@ -98,7 +98,7 @@ def fopenIfExists(char *path, char *mode):
     if fp == NULL:
         return None
     else:
-        return PyFile_FromFile(fp, path, mode, fclose)
+        return PyFile_FromFd(fp, path, mode, fclose)
 
 
 def lexists(char *path):

@@ -34,7 +34,10 @@ try:
 except ImportError:
     hasTelnet = False
 
-from pdb import _saferepr
+from reprlib import Repr
+_repr = Repr()
+_repr.maxstring = 3000
+_saferepr = _repr.repr
 
 class Epdb(pdb.Pdb):
     _historyPath = os.path.expanduser('~/.epdbhistory')
