@@ -16,8 +16,8 @@
 
 
 PYVER=$(shell python -c 'import sys; print(sys.version[0:3])')
-PYTHON = /usr/bin/python${PYVER}
-PYINCLUDE = /usr/include/python${PYVER}
+PYTHON = python3
+PYINCLUDE = $(shell pkg-config --cflags python3)
 CYTHON = $(PYTHON) /usr/bin/cython
 SED = sed
 INSTALL = install

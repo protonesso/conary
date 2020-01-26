@@ -23,7 +23,7 @@ clean:
 	rm -f $(bins)
 
 %.so: %.o
-	$(CC) $(LDFLAGS) -shared -rdynamic -o $@ $^ -lpython$(PYVER) $(LIBS)
+	$(CC) $(LDFLAGS) -shared -rdynamic -o $@ $^ $(shell pkg-config --libs python3) $(LIBS)
 
 #_norpmlock.so: norpmlock.c
 #	$(CC) $(CFLAGS) -shared -rdynamic -o $@ $^
